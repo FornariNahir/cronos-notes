@@ -1,0 +1,34 @@
+body {
+    background: linear-gradient(to bottom, #4c1352, #1f1e31);
+    color: white;
+}
+
+.login-fondo {
+    background-color: #26253d;
+    color: #ddd;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 25rem;
+}
+
+.form-control {
+    background-color: #3c3c5a;
+    color: black;
+    border: none;
+
+}
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+a {
+    color: #b136d9;
+}
+
+
+.btn-login {
+    background-color: #b136d9;
+    border: none;
+    color: white;
+}

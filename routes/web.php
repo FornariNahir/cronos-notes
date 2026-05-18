@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\TareaController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -24,4 +26,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+
+Route::middleware(['auth'])->group(function () {
+    
+    // Rutas para Perfiles
+    Route::post('/perfiles', [PerfilController::class, 'store'])->name('perfiles.store');
+    Route::get('/perfiles/{id}', [PerfilController::class, 'show'])->name('perfiles.show');
+    Route::post('/perfiles/activo', [PerfilController::class, 'setActivo'])->name('perfiles.setActivo');
+
+    // Rutas para Tareas
+    Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
+    Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
+    Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
+    Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
+});
 require __DIR__.'/auth.php';

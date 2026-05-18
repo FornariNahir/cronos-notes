@@ -12,11 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->id('idUsuario'); // Laravel usará esto como Primary Key
+            $table->string('nombre', 50);
+            $table->string('apellido', 50);
+            $table->string('email', 100)->unique();
             $table->string('password');
+            $table->timestamp('ultimoAcceso')->useCurrent()->useCurrentOnUpdate();
+            $table->boolean('usuarioConectado')->default(0);
+            
+            // Laravel añade estas columnas por defecto para seguridad y control de fechas
+            $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

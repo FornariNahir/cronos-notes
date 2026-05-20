@@ -1,11 +1,9 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
-    name: '', // Mapeado como Nombre de Usuario
+    nombre: '',
+    apellido: '',
     email: '',
     password: '',
     password_confirmation: '',
@@ -19,105 +17,148 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Crea tu cuenta" />
+    <Head title="Crear Cuenta" />
 
-        <div class="flex flex-col items-center justify-center mb-6">
-            <img src="/img/login-icon.png" alt="login-icon" class="h-28 w-28 object-contain mb-2" />
-            <h1 class="text-3xl font-bold text-white tracking-wide">Crea tu cuenta</h1>
-        </div>
+    <div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100 w-100">
+        
+        <div class="login-fondo p-5 rounded-5 shadow-lg">
+            <div class="d-flex justify-content-center">
+                <img src="/img/login-icon.png" alt="login-icon" style="height: 7rem;"/>
+            </div>
+            
+            <div class="text-center fs-2 fw-bold mb-4">Crea tu cuenta</div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <div class="flex items-center bg-[#3c3c5a] rounded-lg overflow-hidden shadow-inner focus-within:ring-2 focus-within:ring-[#b136d9] transition">
-                    <div class="px-3 py-2 bg-[#2d2d44] border-r border-[#4e4e6a]">
-                        <img src="/img/email-icon.png" alt="email-icon" class="h-4 w-4" />
-                    </div>
-                    <TextInput
-                        id="email"
-                        type="email"
-                        class="w-full !bg-transparent border-none text-white focus:ring-0 placeholder-gray-400"
-                        v-model="form.email"
-                        required
-                        autocomplete="username"
-                        placeholder="Email"
+            <form @submit.prevent="submit">
+                
+                <div class="input-group mt-3">
+                    <input 
+                        v-model="form.nombre" 
+                        class="form-control bg-light rounded" 
+                        type="text" 
+                        placeholder="Nombre" 
+                        required 
+                        autofocus 
+                        autocomplete="given-name" 
                     />
                 </div>
-                <InputError class="mt-2 text-red-400" :message="form.errors.email" />
-            </div>
+                <div v-if="form.errors.nombre" class="text-danger mt-1 small ms-1">{{ form.errors.nombre }}</div>
 
-            <div class="mt-4">
-                <div class="flex items-center bg-[#3c3c5a] rounded-lg overflow-hidden shadow-inner focus-within:ring-2 focus-within:ring-[#b136d9] transition">
-                    <div class="px-3 py-2 bg-[#2d2d44] border-r border-[#4e4e6a]">
-                        <img src="/img/email-icon.png" alt="user-icon" class="h-4 w-4" />
-                    </div>
-                    <TextInput
-                        id="name"
-                        type="text"
-                        class="w-full !bg-transparent border-none text-white focus:ring-0 placeholder-gray-400"
-                        v-model="form.name"
-                        required
-                        autofocus
-                        autocomplete="name"
-                        placeholder="Nombre de usuario"
+                <div class="input-group mt-3">
+                    <input 
+                        v-model="form.apellido" 
+                        class="form-control bg-light rounded" 
+                        type="text" 
+                        placeholder="Apellido" 
+                        required 
+                        autocomplete="family-name" 
                     />
                 </div>
-                <InputError class="mt-2 text-red-400" :message="form.errors.name" />
-            </div>
+                <div v-if="form.errors.apellido" class="text-danger mt-1 small ms-1">{{ form.errors.apellido }}</div>
 
-            <div class="mt-4">
-                <div class="flex items-center bg-[#3c3c5a] rounded-lg overflow-hidden shadow-inner focus-within:ring-2 focus-within:ring-[#b136d9] transition">
-                    <div class="px-3 py-2 bg-[#2d2d44] border-r border-[#4e4e6a]">
-                        <img src="/img/password-icon.png" alt="password-icon" class="h-4 w-4" />
+                <div class="input-group mt-3">
+                    <div class="input-group-text border-0" style="background-color: #e9ecef;">
+                        <img src="/img/email-iconpng.png" alt="email-icon" style="height: 1rem;"/>
                     </div>
-                    <TextInput
-                        id="password"
-                        type="password"
-                        class="w-full !bg-transparent border-none text-white focus:ring-0 placeholder-gray-400"
-                        v-model="form.password"
-                        required
-                        autocomplete="new-password"
-                        placeholder="Contraseña"
+                    <input 
+                        v-model="form.email" 
+                        class="form-control bg-light" 
+                        type="email" 
+                        placeholder="Email" 
+                        required 
+                        autocomplete="username" 
                     />
                 </div>
-                <InputError class="mt-2 text-red-400" :message="form.errors.password" />
-            </div>
+                <div v-if="form.errors.email" class="text-danger mt-1 small ms-1">{{ form.errors.email }}</div>
 
-            <div class="mt-4">
-                <div class="flex items-center bg-[#3c3c5a] rounded-lg overflow-hidden shadow-inner focus-within:ring-2 focus-within:ring-[#b136d9] transition">
-                    <div class="px-3 py-2 bg-[#2d2d44] border-r border-[#4e4e6a]">
-                        <img src="/img/password-icon.png" alt="password-icon" class="h-4 w-4" />
+                <div class="input-group mt-3">
+                    <div class="input-group-text border-0" style="background-color: #e9ecef;">
+                        <img src="/img/password-icon.png" alt="password-icon" style="height: 1rem;"/>
                     </div>
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        class="w-full !bg-transparent border-none text-white focus:ring-0 placeholder-gray-400"
-                        v-model="form.password_confirmation"
-                        required
-                        autocomplete="new-password"
-                        placeholder="Confirmar contraseña"
+                    <input 
+                        v-model="form.password" 
+                        class="form-control bg-light" 
+                        type="password" 
+                        placeholder="Contraseña" 
+                        required 
+                        autocomplete="new-password" 
                     />
                 </div>
-                <InputError class="mt-2 text-red-400" :message="form.errors.password_confirmation" />
-            </div>
+                <div v-if="form.errors.password" class="text-danger mt-1 small ms-1">{{ form.errors.password }}</div>
 
-            <div class="mt-6">
-                <button
-                    type="submit"
-                    class="w-full py-2.5 px-4 bg-gradient-to-r from-[#b136d9] to-[#8022a3] text-white font-semibold rounded-lg shadow-md hover:from-[#c54be8] hover:to-[#932cb8] focus:outline-none focus:ring-2 focus:ring-[#b136d9] focus:ring-offset-2 focus:ring-offset-[#26253d] transition-all duration-200"
-                    :class="{ 'opacity-25': form.processing }"
+                <div class="input-group mt-3">
+                    <div class="input-group-text border-0" style="background-color: #e9ecef;">
+                        <img src="/img/password-icon.png" alt="password-icon" style="height: 1rem;"/>
+                    </div>
+                    <input 
+                        v-model="form.password_confirmation" 
+                        class="form-control bg-light" 
+                        type="password" 
+                        placeholder="Confirmar Contraseña" 
+                        required 
+                        autocomplete="new-password" 
+                    />
+                </div>
+                <div v-if="form.errors.password_confirmation" class="text-danger mt-1 small ms-1">{{ form.errors.password_confirmation }}</div>
+
+                <button 
+                    type="submit" 
+                    class="btn btn-login text-white w-100 mt-4 fw-semibold shadow-sm"
+                    :class="{ 'opacity-50': form.processing }" 
                     :disabled="form.processing"
                 >
                     Registrarse
                 </button>
-            </div>
-        </form>
+            </form>
 
-        <div class="flex gap-1 justify-center mt-6 text-sm text-gray-300">
-            <div>¿Ya tienes una cuenta?</div>
-            <Link :href="route('login')" class="text-[#b136d9] font-semibold hover:underline">
-                Iniciar sesión
-            </Link>
+            <div class="d-flex gap-1 justify-content-center mt-3">
+                <div class="text-light">¿Ya tienes una cuenta?</div>
+                <Link :href="route('login')" class="text-decoration-none fw-semibold link-login">
+                    Iniciar sesión
+                </Link>
+            </div>
         </div>
-    </GuestLayout>
+    </div>
 </template>
+
+<style scoped>
+.login-wrapper {
+    background: linear-gradient(to bottom, #4c1352, #1f1e31);
+    color: white;
+}
+
+.login-fondo {
+    background-color: #26253d;
+    color: #ddd;
+    border-radius: 1rem;
+    padding: 2rem;
+    width: 25rem;
+}
+
+.form-control {
+    background-color: #3c3c5a;
+    color: #333;
+    border: none;
+}
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+.link-login {
+    color: #b136d9;
+}
+
+.link-login:hover {
+    color: #d156f9;
+}
+
+.btn-login {
+    background-color: #b136d9;
+    border: none;
+    color: white;
+}
+
+.btn-login:hover {
+    background-color: #9226b5;
+}
+</style>

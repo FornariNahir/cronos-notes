@@ -21,7 +21,7 @@ class PerfilController extends Controller
         Perfil::create([
             'titulo' => $request->tituloPerfil,
             'descripcion' => $request->descripcionPerfil,
-            'idUsuario' => auth()->user()->idUsuario 
+            'idUsuario' => Auth::user()->idUsuario
         ]);
 
         return redirect()->route('perfiles.index')->with('success', 'Perfil agregado exitosamente');
@@ -32,7 +32,7 @@ class PerfilController extends Controller
     {
         // Aseguramos que el perfil pertenezca al usuario autenticado
         $perfil = Perfil::where('idPerfil', $id)
-                        ->where('idUsuario', auth()->user()->idUsuario)
+                        ->where('idUsuario', Auth::user()->idUsuario)
                         ->firstOrFail();
 
         return view('perfiles.show', compact('perfil'));

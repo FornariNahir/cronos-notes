@@ -40,4 +40,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
 });
+
+Route::get('/uso', function () {
+    return Inertia::render('Uso');
+})->name('uso');
+
 require __DIR__.'/auth.php';

@@ -21,6 +21,47 @@ class User extends Authenticatable
         return $this->hasMany(Perfil::class, 'idUsuario', 'idUsuario');
     }
 
+    public function configuracionPomodoro()
+    {
+        return $this->hasOne(ConfiguracionPomodoro::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function configuracionAmbiente()
+    {
+        return $this->hasOne(ConfiguracionAmbiente::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function estadistica()
+    {
+        return $this->hasOne(Estadistica::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function rachas()
+    {
+        return $this->hasMany(Racha::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function sesionesUsuario()
+    {
+        return $this->hasMany(SesionUsuario::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function recuperacionesPassword()
+    {
+        return $this->hasMany(RecuperacionPassword::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function integracionExterna()
+    {
+        return $this->hasMany(IntegracionExterna::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function perfilesCompartidos()
+    {
+        return $this->belongsToMany(Perfil::class, 'PerfilCompartido', 'idUsuario', 'idPerfil')
+            ->withPivot('permiso');
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -34,7 +75,7 @@ class User extends Authenticatable
         'apellido',
         'email',
         'password',
-        'ultimoAcceso', 
+        'ultimoAcceso',
         'usuarioConectado'
     ];
 

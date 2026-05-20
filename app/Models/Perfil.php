@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Perfil extends Model
 {
     // Opcional, pero buena práctica para evitar que Laravel busque una tabla "perfils"
-    protected $table = 'Perfil'; 
-    
+    protected $table = 'Perfil';
+
     protected $primaryKey = 'idPerfil';
 
     // Campos que permitimos guardar en la base de datos
@@ -28,5 +28,16 @@ class Perfil extends Model
     public function tareas()
     {
         return $this->hasMany(Tarea::class, 'idPerfil', 'idPerfil');
+    }
+
+    public function apuntes()
+    {
+        return $this->hasMany(Apunte::class, 'idPerfil', 'idPerfil');
+    }
+
+    public function usuariosCompartidos()
+    {
+        return $this->belongsToMany(User::class, 'PerfilCompartido', 'idPerfil', 'idUsuario')
+            ->withPivot('permiso');
     }
 }

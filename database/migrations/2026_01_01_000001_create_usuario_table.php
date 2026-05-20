@@ -12,33 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('Usuario', function (Blueprint $table) {
-            $table->id('idUsuario'); // Laravel usará esto como Primary Key
+            $table->id('idUsuario');
             $table->string('nombre', 50);
             $table->string('apellido', 50);
             $table->string('email', 100)->unique();
             $table->string('password');
             $table->timestamp('ultimoAcceso')->useCurrent()->useCurrentOnUpdate();
             $table->boolean('usuarioConectado')->default(0);
-            
-            // Laravel añade estas columnas por defecto para seguridad y control de fechas
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
         });
     }
 
@@ -48,7 +31,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('Usuario');
-        Schema::dropIfExists('TokenReseteoPassword');
-        Schema::dropIfExists('Sesion');
     }
 };

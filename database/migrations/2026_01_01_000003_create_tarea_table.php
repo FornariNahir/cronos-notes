@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date('fechaLimite');
             $table->enum('estadoTarea', ['Pendiente', 'En Progreso', 'Completado'])->default('Pendiente');
             $table->enum('prioridadTarea', ['Baja', 'Media', 'Alta'])->nullable();
+            $table->integer('estimacionEsfuerzo');
             $table->timestamps();
 
             $table->foreign('idPerfil')

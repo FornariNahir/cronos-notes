@@ -11,23 +11,22 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tareas', function (Blueprint $table) {
+        Schema::create('Tarea', function (Blueprint $table) {
             $table->id('idTarea');
-        $table->unsignedBigInteger('idPerfil');
-        $table->string('tituloTarea', 45);
-        $table->string('descripcionTarea', 200)->nullable();
-        $table->date('fechaInicioTarea');
-        $table->date('fechaFinTarea')->nullable();
-        $table->date('fechaLimite');
-        $table->enum('estadoTarea', ['Pendiente', 'En Progreso', 'Completado'])->default('Pendiente');
-        $table->enum('prioridadTarea', ['Baja', 'Media', 'Alta'])->nullable();
-        $table->timestamps();
+            $table->unsignedBigInteger('idPerfil');
+            $table->string('tituloTarea', 45);
+            $table->string('descripcionTarea', 200)->nullable();
+            $table->date('fechaInicioTarea');
+            $table->date('fechaFinTarea')->nullable();
+            $table->date('fechaLimite');
+            $table->enum('estadoTarea', ['Pendiente', 'En Progreso', 'Completado'])->default('Pendiente');
+            $table->enum('prioridadTarea', ['Baja', 'Media', 'Alta'])->nullable();
+            $table->timestamps();
 
-        // Relación con la tabla perfiles
-        $table->foreign('idPerfil')
-              ->references('idPerfil')
-              ->on('perfiles')
-              ->onDelete('cascade');
+            $table->foreign('idPerfil')
+                ->references('idPerfil')
+                ->on('Perfil')
+                ->onDelete('cascade');
         });
     }
 
@@ -36,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tareas');
+        Schema::dropIfExists('Tarea');
     }
 };

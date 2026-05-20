@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Perfil extends Model
 {
     // Opcional, pero buena práctica para evitar que Laravel busque una tabla "perfils"
-    protected $table = 'perfiles'; 
+    protected $table = 'Perfil'; 
     
     protected $primaryKey = 'idPerfil';
 

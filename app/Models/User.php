@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    protected $table = 'Usuario';
     // 1. Le decimos a Laravel cuál es nuestra clave primaria real
     protected $primaryKey = 'idUsuario';
 

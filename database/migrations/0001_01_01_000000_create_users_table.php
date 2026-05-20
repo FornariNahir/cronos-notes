@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('Usuario', function (Blueprint $table) {
             $table->id('idUsuario'); // Laravel usará esto como Primary Key
             $table->string('nombre', 50);
             $table->string('apellido', 50);
@@ -47,8 +47,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('Usuario');
+        Schema::dropIfExists('TokenReseteoPassword');
+        Schema::dropIfExists('Sesion');
     }
 };

@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('perfiles', function (Blueprint $table) {
-           $table->id('idPerfil');
+        Schema::create('Perfil', function (Blueprint $table) {
+            $table->id('idPerfil');
             $table->unsignedBigInteger('idUsuario');
             $table->string('tituloPerfil', 30);
             $table->string('descripcionPerfil', 100)->nullable();
             $table->timestamps();
 
-            // Relación con la tabla users
             $table->foreign('idUsuario')
                 ->references('idUsuario')
-                ->on('users')
-                ->onDelete('cascade');
+                ->on('Usuario')
+                ->onDelete('no action');
         });
     }
 
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('perfiles');
+        Schema::dropIfExists('Perfil');
     }
 };

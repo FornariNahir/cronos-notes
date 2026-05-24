@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TareaController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -24,22 +25,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
+    // DASHBOARD (principalGestion.html)
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
-    
-    // Rutas para Perfiles
-    Route::post('/perfiles', [PerfilController::class, 'store'])->name('perfiles.store');
+    // PERFILES
+    Route::get('/perfiles', [PerfilController::class, 'index'])->name('perfiles.index');
     Route::get('/perfiles/{id}', [PerfilController::class, 'show'])->name('perfiles.show');
-    Route::post('/perfiles/activo', [PerfilController::class, 'setActivo'])->name('perfiles.setActivo');
+    Route::post('/perfiles', [PerfilController::class, 'store'])->name('perfiles.store');
+    Route::put('/perfiles/{id}', [PerfilController::class, 'update'])->name('perfiles.update');
+    Route::delete('/perfiles/{id}', [PerfilController::class, 'destroy'])->name('perfiles.destroy');
+    Route::post('/perfiles/activar', [PerfilController::class, 'setActivo'])->name('perfiles.activar');
 
-    // Rutas para Tareas
+    // TAREAS
+    Route::get('/tareas', [TareaController::class, 'index'])->name('tareas.index');
+    Route::get('/tareas/{id}', [TareaController::class, 'show'])->name('tareas.show');
     Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
     Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
+    
 });
+
 
 Route::get('/uso', function () {
     return Inertia::render('Uso');

@@ -5,47 +5,80 @@ namespace App\Http\Controllers;
 use App\Models\Perfil;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class PerfilController extends Controller
 {
-    // Reemplaza a agregarPerfil()
+    public function index()
+    {
+        $perfiles = Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
+
+        return Inertia::render('Profiles/Index', [
+            'perfiles' => $perfiles
+        ]);
+    }
+
     public function store(Request $request)
     {
-        // Validar que los campos no estén vacíos
         $request->validate([
-            'tituloPerfil' => 'required|string|max:255',
-            'descripcionPerfil' => 'required|string'
+            'tituloPerfil' => 'required|string|max:30',
+            'descripcionPerfil' => 'required|string|max:100'
         ]);
 
-        // Crear el perfil.
         Perfil::create([
-            'titulo' => $request->tituloPerfil,
-            'descripcion' => $request->descripcionPerfil,
+            'tituloPerfil' => $request->tituloPerfil,
+            'descripcionPerfil' => $request->descripcionPerfil,
             'idUsuario' => Auth::user()->idUsuario
         ]);
 
         return redirect()->route('perfiles.index')->with('success', 'Perfil agregado exitosamente');
     }
 
-    // Reemplaza a obtenerPerfil() y verificarPropietarioPerfil()
     public function show($id)
     {
-        // Aseguramos que el perfil pertenezca al usuario autenticado
         $perfil = Perfil::where('idPerfil', $id)
                         ->where('idUsuario', Auth::user()->idUsuario)
                         ->firstOrFail();
 
-        return view('perfiles.show', compact('perfil'));
+        return Inertia::render('Profiles/Show', [
+            'perfil' => $perfil
+        ]);
     }
 
-    // Reemplaza a setPerfilActivo()
+    public function update(Request $request, $id)
+    {
+        $perfil = Perfil::where('idPerfil', $id)
+                        ->where('idUsuario', Auth::user()->idUsuario)
+                        ->firstOrFail();
+
+        $request->validate([
+            'tituloPerfil' => 'required|string|max:30',
+            'descripcionPerfil' => 'required|string|max:100'
+        ]);
+
+        $perfil->update([
+            'tituloPerfil' => $request->tituloPerfil,
+            'descripcionPerfil' => $request->descripcionPerfil
+        ]);
+
+        return redirect()->route('perfiles.index')->with('success', 'Perfil actualizado');
+    }
+
+    public function destroy($id)
+    {
+        $perfil = Perfil::where('idPerfil', $id)
+                        ->where('idUsuario', Auth::user()->idUsuario)
+                        ->firstOrFail();
+
+        $perfil->delete();
+
+        return redirect()->route('perfiles.index')->with('success', 'Perfil eliminado');
+    }
+
     public function setActivo(Request $request)
     {
-        $request->validate(['idPerfil' => 'required|exists:perfiles,idPerfil']);
-        
-        // Guardamos el perfil activo en la sesión de Laravel
-        session(['perfil_activo' => $request->idPerfil]);
-
-        return redirect()->back()->with('success', 'Perfil activo establecido');
+        $request->validate(['idPerfil' => 'required|exists:Perfil,idPerfil']);
+        session(['perfilActivo' => $request->idPerfil]);
+        return redirect()->route('dashboard');
     }
 }

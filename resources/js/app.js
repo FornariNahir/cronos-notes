@@ -1,5 +1,8 @@
 import '../css/app.css';
 import './bootstrap';
+import '../css/main-paginas.css';
+import '../css/perfil/agregarPerfil.css';
+import '../css/perfil/main.css';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';

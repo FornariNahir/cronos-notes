@@ -19,7 +19,8 @@
       <Link href="/perfiles" @click="closeSidebarOnMobile">Perfil</Link>
       <Link href="#" @click="closeSidebarOnMobile">Racha</Link>
       <Link href="/tareas" @click="closeSidebarOnMobile">Tareas del perfil</Link>
-      <Link href="#" @click="closeSidebarOnMobile">Sesión de Pomodoro</Link>
+      <Link href="/pomodoro" @click="closeSidebarOnMobile">Sesión de Pomodoro</Link>
+      <Link href="/pomodoro/config" @click="closeSidebarOnMobile">Configuración Pomodoro</Link>
       <Link href="/dashboard" @click="closeSidebarOnMobile">Página principal</Link>
     </nav>
 

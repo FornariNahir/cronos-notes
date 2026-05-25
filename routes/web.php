@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PomodoroController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -44,7 +45,17 @@ Route::middleware('auth')->group(function () {
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
     Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
-    
+
+    // POMODORO
+    Route::get('/pomodoro', [PomodoroController::class, 'index'])->name('pomodoro.index');
+    Route::post('/pomodoro/iniciar', [PomodoroController::class, 'iniciarSesion'])->name('pomodoro.iniciar');
+    Route::post('/pomodoro/registrar', [PomodoroController::class, 'registrarTrabajo'])->name('pomodoro.registrar');
+    Route::post('/pomodoro/finalizar', [PomodoroController::class, 'finalizarSesion'])->name('pomodoro.finalizar');
+    Route::get('/pomodoro/config', [PomodoroController::class, 'configIndex'])->name('pomodoro.config.index');
+    Route::post('/pomodoro/config', [PomodoroController::class, 'configStore'])->name('pomodoro.config.store');
+    Route::put('/pomodoro/config/{id}', [PomodoroController::class, 'configUpdate'])->name('pomodoro.config.update');
+    Route::delete('/pomodoro/config/{id}', [PomodoroController::class, 'configDestroy'])->name('pomodoro.config.destroy');
+
 });
 
 

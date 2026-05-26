@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->timestamp('ultimoAcceso')->useCurrent()->useCurrentOnUpdate();
             $table->boolean('usuarioConectado')->default(0);
-            
+
             // Laravel a├▒ade estas columnas por defecto para seguridad y control de fechas
             $table->timestamp('email_verified_at')->nullable();
             $table->rememberToken();

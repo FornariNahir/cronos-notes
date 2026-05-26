@@ -12,8 +12,8 @@
       <div class="row justify-content-center g-4">
         <div class="col-auto" v-for="perfil in perfiles" :key="perfil.idPerfil">
           <div class="perfil-card">
-            <h3 class="text-center text-truncate w-100 px-2">{{ perfil.tituloPerfil }}</h3>
-            <p class="text-center text-muted small px-2" style="font-size: 0.85rem;">{{ perfil.descripcionPerfil }}</p>
+            <h3 class="text-center text-truncate w-100 px-2" style="font-weight: bold; color: white;">{{ perfil.tituloPerfil }}</h3>
+            <p class="text-center small px-2" style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.75) !important;">{{ perfil.descripcionPerfil || 'Sin descripción' }}</p>
             
             <div class="d-flex align-items-center justify-content-center gap-2 mt-2">
               <Link 

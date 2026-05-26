@@ -22,8 +22,25 @@ class PerfilController extends Controller
     {
         $request->validate([
             'tituloPerfil' => 'required|string|max:30',
-            'descripcionPerfil' => 'required|string|max:100'
+            'descripcionPerfil' => 'nullable|string|max:100'
         ]);
+
+        // Validar que el usuario no tenga otro perfil con el mismo nombre
+        $exists = Perfil::where('idUsuario', Auth::user()->idUsuario)
+                        ->where('tituloPerfil', $request->tituloPerfil)
+                        ->exists();
+        if ($exists) {
+            return redirect()->back()->withErrors([
+                'tituloPerfil' => 'Ya tienes un perfil con este nombre.'
+            ]);
+        }
+
+        $count = Perfil::where('idUsuario', Auth::user()->idUsuario)->count();
+        if ($count >= 5) {
+            return redirect()->back()->withErrors([
+                'tituloPerfil' => 'No puedes tener más de 5 perfiles.'
+            ]);
+        }
 
         Perfil::create([
             'tituloPerfil' => $request->tituloPerfil,
@@ -53,8 +70,19 @@ class PerfilController extends Controller
 
         $request->validate([
             'tituloPerfil' => 'required|string|max:30',
-            'descripcionPerfil' => 'required|string|max:100'
+            'descripcionPerfil' => 'nullable|string|max:100'
         ]);
+
+        // Validar que el usuario no tenga otro perfil con el mismo nombre
+        $exists = Perfil::where('idUsuario', Auth::user()->idUsuario)
+                        ->where('tituloPerfil', $request->tituloPerfil)
+                        ->where('idPerfil', '!=', $id)
+                        ->exists();
+        if ($exists) {
+            return redirect()->back()->withErrors([
+                'tituloPerfil' => 'Ya tienes otro perfil con este nombre.'
+            ]);
+        }
 
         $perfil->update([
             'tituloPerfil' => $request->tituloPerfil,

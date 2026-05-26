@@ -12,8 +12,11 @@
               <div class="cp-cut" :class="{ 'cp-cut-visible': form.tituloPerfil }"></div>
               <label for="edit-titulo" class="cp-placeholder" :class="{ 'cp-floating': form.tituloPerfil }">Título del perfil</label>
             </div>
+            <div v-if="form.errors.tituloPerfil" style="color: #ff6b6b; font-size: 0.8rem; margin-top: 5px; text-align: left; padding-left: 10px;">
+              {{ form.errors.tituloPerfil }}
+            </div>
             <div class="cp-input-container" style="margin-top: 30px;">
-              <input id="edit-descripcion" v-model="form.descripcionPerfil" class="cp-input" type="text" placeholder=" " required />
+              <input id="edit-descripcion" v-model="form.descripcionPerfil" class="cp-input" type="text" placeholder=" " />
               <div class="cp-cut" :class="{ 'cp-cut-visible': form.descripcionPerfil }"></div>
               <label for="edit-descripcion" class="cp-placeholder" :class="{ 'cp-floating': form.descripcionPerfil }">Descripción</label>
             </div>

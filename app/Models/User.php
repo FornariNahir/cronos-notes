@@ -14,6 +14,43 @@ class User extends Authenticatable
     // 1. Le decimos a Laravel cuál es nuestra clave primaria real
     protected $primaryKey = 'idUsuario';
 
+    public function iniciarSesionPersonalizada()
+    {
+        $token = \Illuminate\Support\Str::random(60);
+
+        $sesion = $this->sesionesUsuario()->create([
+            'tokenSesionUsuario' => $token,
+            'fechaAlta' => now(),
+            'fechaCaducidad' => now()->addDays(1),
+            'activa' => true,
+        ]);
+
+        $this->update([
+            'ultimoAcceso' => now(),
+            'usuarioConectado' => true,
+        ]);
+
+        return $sesion;
+    }
+
+    public function cerrarSesionPersonalizada($token)
+    {
+        $this->sesionesUsuario()
+            ->where('tokenSesionUsuario', $token)
+            ->update(['activa' => false]);
+
+        $tieneSesionesActivas = $this->sesionesUsuario()
+            ->where('activa', true)
+            ->where('fechaCaducidad', '>', now())
+            ->exists();
+
+        if (!$tieneSesionesActivas) {
+            $this->update([
+                'usuarioConectado' => false,
+            ]);
+        }
+    }
+
     // 2. Definimos la relación: Un Usuario tiene MUCHOS Perfiles (hasMany)
     public function perfiles()
     {

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -49,6 +49,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('Usuario');
         Schema::dropIfExists('TokenReseteoPassword');
-        Schema::dropIfExists('Sesion');
+        Schema::dropIfExists('sessions');
     }
 };

@@ -31,9 +31,17 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $user = Auth::user();
+        
+        // Iniciar la sesión personalizada en la base de datos
+        $sesion = $user->iniciarSesionPersonalizada();
+
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Crear una cookie segura con el token de sesión (caduca en 24 horas / 1440 minutos)
+        $cookie = cookie('cronos_session_token', $sesion->tokenSesionUsuario, 1440, null, null, false, true);
+
+        return redirect()->intended(route('dashboard', absolute: false))->withCookie($cookie);
     }
 
     /**
@@ -41,12 +49,19 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $token = $request->cookie('cronos_session_token');
+        $user = Auth::user();
+
+        if ($user && $token) {
+            $user->cerrarSesionPersonalizada($token);
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->withoutCookie('cronos_session_token');
     }
 }

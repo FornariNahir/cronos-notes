@@ -28,4 +28,14 @@ class SesionUsuario extends Model
     {
         return $this->belongsTo(User::class, 'idUsuario', 'idUsuario');
     }
+
+    public function isExpired()
+    {
+        return $this->fechaCaducidad->isPast();
+    }
+
+    public function isValid()
+    {
+        return $this->activa && !$this->isExpired();
+    }
 }

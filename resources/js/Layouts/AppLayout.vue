@@ -22,6 +22,7 @@
       <Link href="/pomodoro" @click="closeSidebarOnMobile">Sesión de Pomodoro</Link>
       <Link href="/pomodoro/config" @click="closeSidebarOnMobile">Configuración Pomodoro</Link>
       <Link href="/dashboard" @click="closeSidebarOnMobile">Página principal</Link>
+      <Link :href="route('logout')" method="post" as="button" class="logout-btn" @click="closeSidebarOnMobile">Cerrar sesión</Link>
     </nav>
 
     <main id="content" :class="{ 'expanded': isSidebarClosed }">
@@ -125,6 +126,24 @@ h1 {
 }
 
 #sidebar a:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.logout-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  text-align: left;
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
 

@@ -45,8 +45,14 @@ onMounted(() => {
                 </div>
                 <div class="nav-buttons">
                     <Link href="/uso" class="btn btn-outline">Uso de Cronos</Link>
-                    <Link :href="route('login')" class="btn btn-outline">Iniciar sesión</Link>
-                    <Link :href="route('register')" class="btn btn-outline">Registrarse</Link>
+                    <template v-if="$page.props.auth.user">
+                        <Link :href="route('dashboard')" class="btn btn-outline">Dashboard</Link>
+                        <Link :href="route('logout')" method="post" as="button" class="btn btn-outline">Cerrar sesión</Link>
+                    </template>
+                    <template v-else>
+                        <Link :href="route('login')" class="btn btn-outline">Iniciar sesión</Link>
+                        <Link :href="route('register')" class="btn btn-outline">Registrarse</Link>
+                    </template>
                 </div>
             </div>
         </header>

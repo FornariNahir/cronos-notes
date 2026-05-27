@@ -14,12 +14,17 @@
 
             <div class="mb-3">
               <label for="add-descripcion" class="form-label">Descripción</label>
-              <textarea id="add-descripcion" v-model="form.descripcionTarea" class="form-control" rows="3" required></textarea>
+              <textarea id="add-descripcion" v-model="form.descripcionTarea" class="form-control" rows="3"></textarea>
             </div>
 
             <div class="mb-3">
               <label for="add-fechaLimite" class="form-label">Fecha Límite</label>
               <input id="add-fechaLimite" v-model="form.fechaLimite" class="form-control" type="date" required />
+            </div>
+
+            <div class="mb-3">
+              <label for="add-estimacion" class="form-label">¿Cuántos Pomodoros crees que te llevará?</label>
+              <input id="add-estimacion" v-model="form.estimacionEsfuerzo" class="form-control" type="number" min="1" placeholder="Ej. 3" />
             </div>
 
             <div class="mb-4">
@@ -58,7 +63,8 @@ const form = useForm({
   tituloTarea: '',
   descripcionTarea: '',
   fechaLimite: '',
-  prioridadTarea: ''
+  prioridadTarea: '',
+  estimacionEsfuerzo: ''
 });
 
 const submitForm = () => {

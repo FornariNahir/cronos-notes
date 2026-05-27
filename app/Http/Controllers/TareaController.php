@@ -43,8 +43,9 @@ class TareaController extends Controller
         $request->validate([
             'tituloTarea' => 'required|string|max:45',
             'descripcionTarea' => 'nullable|string|max:200',
-            'fechaLimite' => 'required|date',
-            'prioridadTarea' => 'required|in:Baja,Media,Alta'
+            'fechaLimite' => 'required|date|after_or_equal:today',
+            'prioridadTarea' => 'required|in:Baja,Media,Alta',
+            'estimacionEsfuerzo' => 'nullable|integer|min:1'
         ]);
 
         $perfilActivoId = session('perfilActivo');
@@ -59,7 +60,8 @@ class TareaController extends Controller
             'fechaInicioTarea' => now()->format('Y-m-d'),
             'fechaLimite' => $request->fechaLimite,
             'prioridadTarea' => $request->prioridadTarea,
-            'estadoTarea' => 'Pendiente'
+            'estadoTarea' => 'Pendiente',
+            'estimacionEsfuerzo' => $request->estimacionEsfuerzo
         ]);
 
         return redirect()->back()->with('success', 'Tarea creada correctamente');
@@ -84,17 +86,23 @@ class TareaController extends Controller
         $request->validate([
             'tituloTarea' => 'required|string|max:45',
             'descripcionTarea' => 'nullable|string|max:200',
-            'fechaLimite' => 'required|date',
+            'fechaLimite' => 'required|date|after_or_equal:' . $tarea->fechaInicioTarea->format('Y-m-d'),
             'prioridadTarea' => 'required|in:Baja,Media,Alta',
-            'estadoTarea' => 'required|in:Pendiente,En Progreso,Completado'
+            'estadoTarea' => 'required|in:Pendiente,En Progreso,Completado',
+            'estimacionEsfuerzo' => 'nullable|integer|min:1'
         ]);
+
+        if ($tarea->estadoTarea === 'Completado' && $request->estadoTarea !== 'Completado') {
+            return redirect()->back()->with('error', 'No se puede cambiar el estado de una tarea ya completada');
+        }
 
         $data = [
             'tituloTarea' => $request->tituloTarea,
             'descripcionTarea' => $request->descripcionTarea,
             'fechaLimite' => $request->fechaLimite,
             'prioridadTarea' => $request->prioridadTarea,
-            'estadoTarea' => $request->estadoTarea
+            'estadoTarea' => $request->estadoTarea,
+            'estimacionEsfuerzo' => $request->estimacionEsfuerzo
         ];
 
         if ($request->estadoTarea === 'Completado') {

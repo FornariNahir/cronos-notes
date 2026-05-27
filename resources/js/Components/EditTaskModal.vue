@@ -14,7 +14,7 @@
 
             <div class="mb-3">
               <label for="edit-descripcion" class="form-label">Nueva descripción</label>
-              <textarea id="edit-descripcion" v-model="form.descripcionTarea" class="form-control" rows="3" required></textarea>
+              <textarea id="edit-descripcion" v-model="form.descripcionTarea" class="form-control" rows="3"></textarea>
             </div>
 
             <div class="mb-3">
@@ -23,8 +23,13 @@
             </div>
 
             <div class="mb-3">
+              <label for="edit-estimacion" class="form-label">Estimación de Esfuerzo (Pomodoros)</label>
+              <input id="edit-estimacion" v-model="form.estimacionEsfuerzo" class="form-control" type="number" min="1" placeholder="Ej. 3" />
+            </div>
+
+            <div class="mb-3">
               <label for="edit-estado" class="form-label">Actualizar Estado</label>
-              <select id="edit-estado" v-model="form.estadoTarea" class="form-select" required>
+              <select id="edit-estado" v-model="form.estadoTarea" class="form-select" :disabled="tarea && tarea.estadoTarea === 'Completado'" required>
                 <option value="Pendiente">Pendiente</option>
                 <option value="En Progreso">En Progreso</option>
                 <option value="Completado">Completado</option>
@@ -69,16 +74,18 @@ const form = useForm({
   descripcionTarea: '',
   fechaLimite: '',
   estadoTarea: 'Pendiente',
-  prioridadTarea: 'Baja'
+  prioridadTarea: 'Baja',
+  estimacionEsfuerzo: ''
 });
 
 watch(() => props.tarea, (newTarea) => {
   if (newTarea) {
     form.tituloTarea = newTarea.tituloTarea;
     form.descripcionTarea = newTarea.descripcionTarea;
-    form.fechaLimite = newTarea.fechaLimite;
+    form.fechaLimite = newTarea.fechaLimite ? newTarea.fechaLimite.split('T')[0] : '';
     form.estadoTarea = newTarea.estadoTarea;
     form.prioridadTarea = newTarea.prioridadTarea;
+    form.estimacionEsfuerzo = newTarea.estimacionEsfuerzo;
   }
 }, { immediate: true });
 

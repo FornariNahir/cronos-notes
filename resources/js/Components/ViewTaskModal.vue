@@ -36,6 +36,11 @@
             <div class="form-texto">{{ tarea.prioridadTarea }}</div>
           </div>
 
+          <div v-if="tarea.estimacionEsfuerzo" class="form-group">
+            <label class="form-label">Estimación de Esfuerzo:</label>
+            <div class="form-texto">{{ tarea.estimacionEsfuerzo }} Pomodoro(s)</div>
+          </div>
+
           <div class="d-flex justify-content-between mt-4">
             <button type="button" class="btn btn-secundario" @click="$emit('close')">Volver</button>
             <button v-if="tarea.estadoTarea !== 'Completado'" type="button" class="btn btn-success" @click="marcarCompletada">

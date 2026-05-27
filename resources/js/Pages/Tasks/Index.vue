@@ -26,11 +26,22 @@
 
         <div v-for="tarea in tareas" :key="tarea.idTarea" class="col">
           <div class="task-card position-relative">
+            <!-- Botón para completar directamente en la esquina superior izquierda -->
+            <button 
+              v-if="tarea.estadoTarea !== 'Completado'" 
+              class="btn-completar-rapido" 
+              @click.stop="completarTarea(tarea.idTarea)" 
+              title="Marcar como completada"
+            >
+              <i class="fas fa-check"></i>
+            </button>
+
             <div class="dropdown-wrapper" style="position: absolute; top: 10px; right: 10px;">
               <button class="btn btn-sm dropdown-toggle-custom" type="button" @click.stop="toggleDropdown(tarea.idTarea)">
                 &#x22EE;
               </button>
               <div v-if="openDropdownId === tarea.idTarea" class="custom-dropdown-menu" @click.stop>
+                <button v-if="tarea.estadoTarea !== 'Completado'" class="custom-dropdown-item text-success" @click="completarTarea(tarea.idTarea); openDropdownId = null">Completar</button>
                 <button class="custom-dropdown-item" @click="openEdit(tarea); openDropdownId = null">Editar</button>
                 <button class="custom-dropdown-item" @click="openView(tarea); openDropdownId = null">Ver tarea</button>
                 <button class="custom-dropdown-item text-danger" @click="openDelete(tarea); openDropdownId = null">Eliminar</button>
@@ -47,6 +58,9 @@
                 <i class="fas fa-circle"></i> {{ tarea.estadoTarea }}
               </small>
               <small class="text-muted"><i class="fas fa-flag"></i> Prioridad: {{ tarea.prioridadTarea }}</small>
+              <small v-if="tarea.estimacionEsfuerzo" class="text-muted">
+                <i class="fas fa-hourglass-half"></i> Esfuerzo: {{ tarea.estimacionEsfuerzo }} Pomodoros
+              </small>
             </div>
           </div>
         </div>
@@ -118,6 +132,12 @@ const toggleFilter = () => {
   router.get('/tareas', { completadas: props.mostrarCompletadas ? null : '1' }, { preserveState: true });
 };
 
+const completarTarea = (id) => {
+  router.patch(route('tareas.completar', id), {}, {
+    preserveScroll: true
+  });
+};
+
 const openEdit = (tarea) => {
   selectedTarea.value = tarea;
   showEditModal.value = true;
@@ -135,7 +155,9 @@ const openDelete = (tarea) => {
 
 const formatDate = (date) => {
   if (!date) return '';
-  const d = new Date(date);
+  const dateStr = date.split(/[ T]/)[0];
+  const [year, month, day] = dateStr.split('-');
+  const d = new Date(year, month - 1, day);
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
@@ -143,7 +165,12 @@ const estadoColor = (tarea) => {
   if (tarea.estadoTarea === 'Completado') return 'text-success';
   if (tarea.estadoTarea === 'En Progreso') return 'text-info';
   const hoy = new Date();
-  const limite = new Date(tarea.fechaLimite);
+  hoy.setHours(0, 0, 0, 0);
+  
+  const dateStr = tarea.fechaLimite.split(/[ T]/)[0];
+  const [year, month, day] = dateStr.split('-');
+  const limite = new Date(year, month - 1, day);
+  
   if (limite < hoy) return 'text-danger';
   return 'text-warning';
 };
@@ -276,5 +303,31 @@ const estadoColor = (tarea) => {
 .btn-outline-light:hover {
   background-color: #f8f9fa;
   color: #141421;
+}
+
+.btn-completar-rapido {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.4);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+  padding: 0;
+}
+
+.btn-completar-rapido:hover {
+  background-color: #28a745;
+  color: white;
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.8);
 }
 </style>

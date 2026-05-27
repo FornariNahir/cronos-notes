@@ -47,14 +47,6 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        // Iniciar sesión personalizada en base de datos
-        $sesion = $user->iniciarSesionPersonalizada();
-
-        Auth::login($user);
-
-        // Crear una cookie segura con el token de sesión (caduca en 24 horas / 1440 minutos)
-        $cookie = cookie('cronos_session_token', $sesion->tokenSesionUsuario, 1440, null, null, false, true);
-
-        return redirect('/')->withCookie($cookie);
+        return redirect()->route('login')->with('success', 'Registro completado. Ahora puedes iniciar sesión.');
     }
 }

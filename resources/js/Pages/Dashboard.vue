@@ -6,9 +6,6 @@
         <h2 class="text-white m-0">
           Perfil Activo: <span style="color: #b136d9;">{{ perfilActivo.tituloPerfil }}</span>
         </h2>
-        <p v-if="perfilActivo.descripcionPerfil" class="text-muted mt-2 mb-0" style="color: rgba(255, 255, 255, 0.7) !important;">
-          {{ perfilActivo.descripcionPerfil }}
-        </p>
       </div>
 
       <div v-if="perfilActivo">

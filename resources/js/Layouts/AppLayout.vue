@@ -22,6 +22,7 @@
       <Link href="/pomodoro" @click="closeSidebarOnMobile">Sesión de Pomodoro</Link>
       <Link href="/pomodoro/config" @click="closeSidebarOnMobile">Configuración Pomodoro</Link>
       <Link href="/dashboard" @click="closeSidebarOnMobile">Página principal</Link>
+      <Link href="/profile" @click="closeSidebarOnMobile">Mi Cuenta</Link>
       <Link :href="route('logout')" method="post" as="button" class="logout-btn" @click="closeSidebarOnMobile">Cerrar sesión</Link>
     </nav>
 

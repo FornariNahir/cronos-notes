@@ -17,8 +17,10 @@ defineProps({
 const user = usePage().props.auth.user;
 
 const form = useForm({
-    name: user.name,
+    nombre: user.nombre,
+    apellido: user.apellido,
     email: user.email,
+    password: '',
 });
 </script>
 
@@ -26,32 +28,47 @@ const form = useForm({
     <section>
         <header>
             <h2 class="text-lg font-medium text-gray-900">
-                Profile Information
+                Información de Perfil
             </h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
+                Actualiza el nombre, apellido, dirección de correo electrónico de tu cuenta.
             </p>
         </header>
 
         <form
-            @submit.prevent="form.patch(route('profile.update'))"
+            @submit.prevent="form.patch(route('profile.update'), { onSuccess: () => form.reset('password') })"
             class="mt-6 space-y-6"
         >
             <div>
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="nombre" value="Nombre" />
 
                 <TextInput
-                    id="name"
+                    id="nombre"
                     type="text"
                     class="mt-1 block w-full"
-                    v-model="form.name"
+                    v-model="form.nombre"
                     required
                     autofocus
-                    autocomplete="name"
+                    autocomplete="given-name"
                 />
 
-                <InputError class="mt-2" :message="form.errors.name" />
+                <InputError class="mt-2" :message="form.errors.nombre" />
+            </div>
+
+            <div>
+                <InputLabel for="apellido" value="Apellido" />
+
+                <TextInput
+                    id="apellido"
+                    type="text"
+                    class="mt-1 block w-full"
+                    v-model="form.apellido"
+                    required
+                    autocomplete="family-name"
+                />
+
+                <InputError class="mt-2" :message="form.errors.apellido" />
             </div>
 
             <div>
@@ -67,6 +84,21 @@ const form = useForm({
                 />
 
                 <InputError class="mt-2" :message="form.errors.email" />
+            </div>
+
+            <div>
+                <InputLabel for="password" value="Contraseña Actual para Guardar Cambios" />
+
+                <TextInput
+                    id="password"
+                    type="password"
+                    class="mt-1 block w-full"
+                    v-model="form.password"
+                    required
+                    autocomplete="current-password"
+                />
+
+                <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">

@@ -50,6 +50,7 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/pomodoro', [PomodoroController::class, 'index'])->name('pomodoro.index');
     Route::post('/pomodoro/iniciar', [PomodoroController::class, 'iniciarSesion'])->name('pomodoro.iniciar');
     Route::post('/pomodoro/registrar', [PomodoroController::class, 'registrarTrabajo'])->name('pomodoro.registrar');
+    Route::patch('/pomodoro/estado', [PomodoroController::class, 'actualizarEstado'])->name('pomodoro.estado');
     Route::post('/pomodoro/finalizar', [PomodoroController::class, 'finalizarSesion'])->name('pomodoro.finalizar');
     Route::get('/pomodoro/config', [PomodoroController::class, 'configIndex'])->name('pomodoro.config.index');
     Route::post('/pomodoro/config', [PomodoroController::class, 'configStore'])->name('pomodoro.config.store');

@@ -1,59 +1,8 @@
 <template>
   <AppLayout>
     <div class="pomodoro-page">
-      <!-- SETUP: seleccionar config, tarea, sonido -->
-      <div v-if="!sesionActiva" class="setup-container">
-        <h2>Iniciar Sesión Pomodoro</h2>
-        <p class="text-muted" style="color: #b8b8b8;">Perfil activo: <strong style="color: #d34cf5;">{{ perfilActivo?.tituloPerfil }}</strong></p>
-
-        <form @submit.prevent="iniciarSesion">
-          <div class="mb-3">
-            <label class="form-label">Configuración</label>
-            <select v-model="form.idConfiguracionPomodoro" class="form-select" required>
-              <option value="">Seleccionar configuración</option>
-              <option v-for="c in configs" :key="c.idConfiguracionPomodoro" :value="c.idConfiguracionPomodoro">
-                {{ c.duracionSesion }}min trabajo · {{ c.duracionDescansoCorto }}min descanso · {{ c.sesionesPrevioDescansoLargo }} ciclos
-              </option>
-            </select>
-            <small class="text-muted d-block mt-1">
-              ¿Sin configuraciones? <Link href="/pomodoro/config" style="color: #d34cf5;">Crea una aquí</Link>
-            </small>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Tarea</label>
-            <select v-model="form.idTarea" class="form-select">
-              <option value="">Sin tarea específica</option>
-              <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea">
-                {{ t.tituloTarea }}
-              </option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Sonido ambiental</label>
-            <select v-model="form.sonidoSeleccionado" class="form-select">
-              <option value="">Sin sonido</option>
-              <option v-for="(nombre, key) in sonidos" :key="key" :value="key">{{ nombre }}</option>
-            </select>
-            <small class="text-muted d-block mt-1" v-if="form.sonidoSeleccionado">
-              <button type="button" class="btn btn-sm btn-outline-light mt-1" @click="previewSonido">▶ Vista previa</button>
-            </small>
-          </div>
-
-          <div class="mb-4" v-if="form.sonidoSeleccionado">
-            <label class="form-label">Volumen: {{ form.volumenSonido }}%</label>
-            <input type="range" v-model.number="form.volumenSonido" min="0" max="100" class="volume-slider" />
-          </div>
-
-          <button type="submit" class="btn btn-start" :disabled="!form.idConfiguracionPomodoro">
-            Iniciar Pomodoro
-          </button>
-        </form>
-      </div>
-
       <!-- TIMER: sesión activa -->
-      <div v-else class="main-container">
+      <div v-if="sesionActiva" class="main-container">
         <div class="timer-container glass">
           <div class="timer-display">{{ displayTime }}</div>
           <button class="pause-btn" @click="toggleTimer">
@@ -90,6 +39,154 @@
         </div>
       </div>
 
+      <!-- SETUP: sin sesión activa -->
+      <div v-else>
+        <!-- MODAL DE SELECCIÓN INICIAL -->
+        <div v-if="showOptionModal" class="modal fade show d-block" style="background: rgba(10, 10, 20, 0.85); backdrop-filter: blur(8px); z-index: 1100;">
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="background: #141426; border: 1px solid #d34cf5; border-radius: 24px; box-shadow: 0 10px 30px rgba(211, 76, 245, 0.2); color: white;">
+              <div class="modal-body p-5">
+                <h2 class="text-center fw-bold mb-2" style="color: #fff; font-size: 2.2rem;">Nueva Sesión Pomodoro</h2>
+                <p class="text-center mb-5" style="font-size: 1.1rem; color: #b8b8b8;">Selecciona el modo en el que deseas trabajar hoy.</p>
+                
+                <div class="row g-4">
+                  <!-- Tarjeta de Inicio Rápido -->
+                  <div class="col-md-6">
+                    <div class="selection-card h-100 p-4 d-flex flex-column justify-content-between align-items-center">
+                      <div class="text-center mb-4">
+                        <div class="icon-circle mb-3" style="background: rgba(211, 76, 245, 0.15); color: #d34cf5;">
+                          <i class="fas fa-bolt" style="font-size: 2rem;"></i>
+                        </div>
+                        <h4 class="fw-bold" style="color: #fff;">Inicio Rápido</h4>
+                        <p class="text-sm mt-2" style="color: #b8b8b8;">Un único ciclo clásico de 25 min de concentración seguido de 5 min de descanso. ¡Ideal para empezar ya!</p>
+                      </div>
+                      
+                      <div class="w-100 mb-4">
+                        <label class="form-label text-sm text-start d-block" style="color: #e0e0e0;">Tarea (Opcional)</label>
+                        <select v-model="quickStartTaskId" class="form-select" style="background: #1f1f35; border: 1px solid #333; color: white;">
+                          <option value="" style="background: #1f1f35; color: white;">Sin tarea específica</option>
+                          <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea" style="background: #1f1f35; color: white;">
+                            {{ t.tituloTarea }}
+                          </option>
+                        </select>
+                      </div>
+                      
+                      <button class="btn btn-primario w-100" @click="iniciarInicioRapido" style="padding: 12px; font-weight: bold; border-radius: 12px;">
+                        Iniciar 25 min
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Tarjeta de Sesión Completa -->
+                  <div class="col-md-6">
+                    <div class="selection-card h-100 p-4 d-flex flex-column justify-content-between align-items-center">
+                      <div class="text-center mb-4">
+                        <div class="icon-circle mb-3" style="background: rgba(0, 180, 216, 0.15); color: #00b4d8;">
+                          <i class="fas fa-sliders-h" style="font-size: 2rem;"></i>
+                        </div>
+                        <h4 class="fw-bold" style="color: #fff;">Sesión Personalizada</h4>
+                        <p class="text-sm mt-2" style="color: #b8b8b8;">Elige entre tus diferentes configuraciones de tiempo guardadas, asocia tareas específicas y añade sonidos ambientales.</p>
+                      </div>
+                      
+                      <button class="btn btn-secundario w-100 mt-auto" @click="showOptionModal = false" style="padding: 12px; font-weight: bold; border-radius: 12px;">
+                        Personalizar Sesión
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETUP: seleccionar config, tarea, sonido -->
+        <div v-else class="setup-container">
+          <button type="button" class="btn btn-sm btn-outline-light mb-3" @click="showOptionModal = true">
+            ← Volver a opciones
+          </button>
+          <h2>Iniciar Sesión Pomodoro</h2>
+          <p class="text-muted" style="color: #b8b8b8;">Perfil activo: <strong style="color: #d34cf5;">{{ perfilActivo?.tituloPerfil }}</strong></p>
+
+          <form @submit.prevent="iniciarSesion">
+            <!-- Plantilla guardada -->
+            <div class="mb-4 text-start">
+              <label class="form-label">Plantillas Guardadas</label>
+              <div class="d-flex gap-2">
+                <select v-model="selectedConfigId" class="form-select">
+                  <option value="">-- Personalizada / Nueva --</option>
+                  <option v-for="c in configs" :key="c.idConfiguracionPomodoro" :value="c.idConfiguracionPomodoro">
+                    Trabajo: {{ c.duracionSesion }}m · Descansos: {{ c.duracionDescansoCorto }}m/{{ c.duracionDescansoLargo }}m ({{ c.sesionesPrevioDescansoLargo }} ciclos)
+                  </option>
+                </select>
+                <button 
+                  v-if="selectedConfigId" 
+                  type="button" 
+                  class="btn btn-outline-danger" 
+                  @click="eliminarConfig" 
+                  title="Eliminar plantilla seleccionada"
+                  style="border-color: #dc3545; color: #dc3545; background: transparent; border-radius: 8px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border: 1px solid #dc3545; cursor: pointer;"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tiempos y ciclos en grid -->
+            <div class="row g-3 mb-4 text-start">
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label text-sm">Concentración (min)</label>
+                <input v-model.number="form.duracionSesion" type="number" min="1" max="120" class="form-control" required />
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label text-sm">Descanso Corto (min)</label>
+                <input v-model.number="form.duracionDescansoCorto" type="number" min="1" max="30" class="form-control" required />
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label text-sm">Descanso Largo (min)</label>
+                <input v-model.number="form.duracionDescansoLargo" type="number" min="5" max="60" class="form-control" required />
+              </div>
+              <div class="col-md-6 col-lg-3">
+                <label class="form-label text-sm">Ciclos Objetivo</label>
+                <input v-model.number="form.ciclosObjetivo" type="number" min="1" max="10" class="form-control" required />
+              </div>
+            </div>
+
+            <!-- Tarea -->
+            <div class="mb-4 text-start">
+              <label class="form-label">Tarea</label>
+              <select v-model="form.idTarea" class="form-select">
+                <option value="">Sin tarea específica</option>
+                <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea">
+                  {{ t.tituloTarea }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Sonido ambiental -->
+            <div class="mb-4 text-start">
+              <label class="form-label">Sonido ambiental</label>
+              <select v-model="form.sonidoSeleccionado" class="form-select">
+                <option value="">Sin sonido</option>
+                <option v-for="(nombre, key) in sonidos" :key="key" :value="key">{{ nombre }}</option>
+              </select>
+              <small class="text-muted d-block mt-1" v-if="form.sonidoSeleccionado">
+                <button type="button" class="btn btn-sm btn-outline-light mt-1" @click="previewSonido">▶ Vista previa</button>
+              </small>
+            </div>
+
+            <!-- Volumen -->
+            <div class="mb-4 text-start" v-if="form.sonidoSeleccionado">
+              <label class="form-label">Volumen: {{ form.volumenSonido }}%</label>
+              <input type="range" v-model.number="form.volumenSonido" min="0" max="100" class="volume-slider" />
+            </div>
+
+            <button type="submit" class="btn btn-start">
+              Iniciar Pomodoro
+            </button>
+          </form>
+        </div>
+      </div>
+
       <audio ref="ambientAudio" loop preload="auto" v-if="audioSrc">
         <source :src="audioSrc" type="audio/mpeg" />
       </audio>
@@ -109,6 +206,9 @@ const props = defineProps({
   sesionActiva: Object
 });
 
+const showOptionModal = ref(true);
+const quickStartTaskId = ref('');
+
 const sonidos = {
   lluvia: '🌧️ Lluvia',
   cascada: '💧 Cascada',
@@ -121,11 +221,39 @@ const sonidos = {
 };
 
 const form = useForm({
-  idConfiguracionPomodoro: '',
+  duracionSesion: 25,
+  duracionDescansoCorto: 5,
+  duracionDescansoLargo: 15,
+  ciclosObjetivo: 4,
   idTarea: '',
   sonidoSeleccionado: '',
   volumenSonido: 50
 });
+
+const selectedConfigId = ref('');
+
+watch(selectedConfigId, (newId) => {
+  if (newId) {
+    const config = props.configs.find(c => c.idConfiguracionPomodoro == newId);
+    if (config) {
+      form.duracionSesion = config.duracionSesion;
+      form.duracionDescansoCorto = config.duracionDescansoCorto;
+      form.duracionDescansoLargo = config.duracionDescansoLargo;
+      form.ciclosObjetivo = config.sesionesPrevioDescansoLargo;
+    }
+  }
+});
+
+const eliminarConfig = () => {
+  if (!selectedConfigId.value) return;
+  if (confirm('¿Estás seguro de que deseas eliminar esta configuración de forma permanente?')) {
+    router.delete(route('pomodoro.config.destroy', selectedConfigId.value), {
+      onSuccess: () => {
+        selectedConfigId.value = '';
+      }
+    });
+  }
+};
 
 const ambientAudio = ref(null);
 const currentPhase = ref('work');
@@ -183,6 +311,55 @@ const iniciarSesion = () => {
   form.post(route('pomodoro.iniciar'));
 };
 
+const iniciarInicioRapido = () => {
+  router.post(route('pomodoro.iniciar'), {
+    esInicioRapido: true,
+    idTarea: quickStartTaskId.value
+  });
+};
+
+const getStorageKey = () => {
+  return props.sesionActiva ? `pomodoro_session_${props.sesionActiva.idSesion}` : null;
+};
+
+const saveStateToStorage = () => {
+  const key = getStorageKey();
+  if (!key) return;
+  const state = {
+    currentPhase: currentPhase.value,
+    currentCycle: currentCycle.value,
+    totalSeconds: totalSeconds.value,
+    currentSeconds: currentSeconds.value,
+    isRunning: isRunning.value,
+    timerStarted: timerStarted.value
+  };
+  localStorage.setItem(key, JSON.stringify(state));
+};
+
+const loadStateFromStorage = () => {
+  const key = getStorageKey();
+  if (!key) return false;
+  const stored = localStorage.getItem(key);
+  if (!stored) return false;
+  try {
+    const state = JSON.parse(stored);
+    currentPhase.value = state.currentPhase;
+    currentCycle.value = state.currentCycle;
+    totalSeconds.value = state.totalSeconds;
+    currentSeconds.value = state.currentSeconds;
+    isRunning.value = state.isRunning;
+    timerStarted.value = state.timerStarted;
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+const clearStorage = () => {
+  const key = getStorageKey();
+  if (key) localStorage.removeItem(key);
+};
+
 const toggleTimer = () => {
   if (isRunning.value) pauseTimer();
   else startTimer();
@@ -191,14 +368,22 @@ const toggleTimer = () => {
 const startTimer = () => {
   timerStarted.value = true;
   isRunning.value = true;
+  saveStateToStorage();
+
+  router.patch(route('pomodoro.estado'), { estado: 'En Progreso' }, {
+    preserveState: true,
+    preserveScroll: true
+  });
 
   if (ambientAudio.value && props.sesionActiva?.sonidoSeleccionado) {
     ambientAudio.value.play().catch(() => {});
   }
 
+  clearInterval(interval);
   interval = setInterval(() => {
     if (currentSeconds.value > 0) {
       currentSeconds.value--;
+      saveStateToStorage();
     } else {
       phaseComplete();
     }
@@ -208,13 +393,21 @@ const startTimer = () => {
 const pauseTimer = () => {
   isRunning.value = false;
   clearInterval(interval);
+  saveStateToStorage();
+  
   if (ambientAudio.value) ambientAudio.value.pause();
+
+  router.patch(route('pomodoro.estado'), { estado: 'Pausada' }, {
+    preserveState: true,
+    preserveScroll: true
+  });
 };
 
 const resetTimer = () => {
   pauseTimer();
   timerStarted.value = false;
   currentSeconds.value = totalSeconds.value;
+  saveStateToStorage();
 };
 
 const phaseComplete = () => {
@@ -244,26 +437,37 @@ const phaseComplete = () => {
   }
 
   currentSeconds.value = totalSeconds.value;
+  saveStateToStorage();
 };
 
 const skipPhase = () => {
   currentSeconds.value = 0;
+  saveStateToStorage();
   if (!isRunning.value) phaseComplete();
 };
 
 const endSession = () => {
-  if (currentPhase.value === 'work' && isRunning.value) {
-    const completedMin = Math.floor((totalSeconds.value - currentSeconds.value) / 60);
-    if (completedMin > 0) {
-      router.post(route('pomodoro.registrar'), { minutosTrabajados: completedMin }, {
-        preserveState: true,
-        preserveScroll: true
-      });
-    }
+  let finalEstado = 'Cancelada';
+  let minutosIncompletos = 0;
+
+  if (currentPhase.value === 'work') {
+    minutosIncompletos = Math.floor((totalSeconds.value - currentSeconds.value) / 60);
+  }
+
+  const ciclosCompletados = currentCycle.value - 1 + (currentPhase.value !== 'work' ? 1 : 0);
+  const ciclosObjetivo = props.sesionActiva?.sesionesPrevioDescansoLargo || 4;
+
+  if (ciclosCompletados >= ciclosObjetivo) {
+    finalEstado = 'Completada';
   }
 
   pauseTimer();
-  router.post(route('pomodoro.finalizar'));
+  clearStorage();
+
+  router.post(route('pomodoro.finalizar'), {
+    estado: finalEstado,
+    minutosTrabajados: minutosIncompletos
+  });
 };
 
 const adjustVolume = () => {
@@ -274,16 +478,34 @@ const adjustVolume = () => {
 
 const initTimer = () => {
   if (props.sesionActiva) {
-    totalSeconds.value = props.sesionActiva.duracionSesion * 60;
-    currentSeconds.value = totalSeconds.value;
-    currentCycle.value = 1;
-    currentPhase.value = 'work';
     volumen.value = props.sesionActiva.volumenSonido || 50;
+
+    const restored = loadStateFromStorage();
+    if (!restored) {
+      totalSeconds.value = props.sesionActiva.duracionSesion * 60;
+      currentSeconds.value = totalSeconds.value;
+      currentCycle.value = 1;
+      currentPhase.value = 'work';
+      timerStarted.value = false;
+      isRunning.value = false;
+    } else {
+      if (isRunning.value) {
+        startTimer();
+      }
+    }
   }
 };
 
 watch(() => props.sesionActiva, (val) => {
-  if (val) initTimer();
+  if (val) {
+    initTimer();
+  } else {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('pomodoro_session_')) {
+        localStorage.removeItem(key);
+      }
+    });
+  }
 }, { immediate: true });
 
 onMounted(() => {
@@ -583,5 +805,37 @@ window.addEventListener('beforeunload', (e) => {
   .sound-container {
     width: 100%;
   }
+}
+
+.selection-card {
+  background: rgba(31, 31, 53, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+  color: white;
+}
+
+.selection-card select,
+.selection-card select option {
+  color: white !important;
+  background-color: #1f1f35 !important;
+}
+
+.selection-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(211, 76, 245, 0.4);
+  box-shadow: 0 8px 24px rgba(211, 76, 245, 0.15);
+}
+
+.icon-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 </style>

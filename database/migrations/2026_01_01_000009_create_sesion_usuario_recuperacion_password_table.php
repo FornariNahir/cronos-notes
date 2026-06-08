@@ -27,7 +27,6 @@ return new class extends Migration
         });
 
         Schema::create('RecuperacionPassword', function (Blueprint $table) {
-            $table->primary(['idRecuperacionPassword', 'idUsuario']);
             $table->id('idRecuperacionPassword');
             $table->unsignedBigInteger('idUsuario');
             $table->string('tokenRecuperacion', 255);

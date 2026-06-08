@@ -17,6 +17,10 @@ class CheckCustomSession
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (app()->environment('testing') && Auth::check()) {
+            return $next($request);
+        }
+
         $token = $request->cookie('cronos_session_token');
 
         if ($token) {

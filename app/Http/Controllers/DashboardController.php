@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\SesionPomodoro;
 use App\Services\EstadisticaService;
 
 class DashboardController extends Controller
@@ -40,14 +41,16 @@ class DashboardController extends Controller
                                   ->first();
 
             if ($perfilActivo) {
-                // Obtenemos solo las tareas pendientes de ese perfil
+                // Obtenemos solo las tareas pendientes de ese perfil sumando ciclos Pomodoro
                 $tareas = Tarea::where('idPerfil', $perfilActivo->idPerfil)
                                ->where('estadoTarea', 'Pendiente')
+                               ->withSum(['sesionesPomodoro' => function($query) {
+                                   $query->where('estadoSesion', 'Completada');
+                               }], 'ciclosCompletados')
                                ->get();
             }
         }
 
-<<<<<<< HEAD
         // Obtenemos las estadísticas del usuario o creamos valores por defecto
         $estadisticas = Estadistica::where('idUsuario', $user->idUsuario)->first();
         if (!$estadisticas) {
@@ -60,47 +63,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // Enviamos los datos a Dashboard.vue
-=======
-        // Verificamos si la racha se perdió
-        $estadisticaService = new EstadisticaService();
-        $estadisticaService->verificarRachaPerdida($user->idUsuario);
-
-        // 1. Estadísticas Generales del Usuario
-        $estadistica = Estadistica::where('idUsuario', $user->idUsuario)->first() ?: (object)[
-            'tareasTotales' => 0, 'tiempoTotalPomodoro' => 0, 'rachaMasLarga' => 0,
-            'rachaActual' => 0, 'sesionesCanceladas' => 0, 'horasConcentracionDiaria' => 0
-        ];
-
-        // Lógica antigua: tareas completadas, retrasadas, eficiencia
-        $todasLasTareas = Tarea::whereHas('perfil', function($q) use ($user) {
-            $q->where('idUsuario', $user->idUsuario);
-        })->get();
-
-        $totalTareas = $todasLasTareas->count();
-        $tareasCompletadas = $todasLasTareas->where('estadoTarea', 'Completado')->count();
-        
-        // Tareas completadas con retraso (fechaFinTarea > fechaLimite)
-        $tareasRetrasadas = $todasLasTareas->filter(function($t) {
-            return $t->estadoTarea === 'Completado' && $t->fechaFinTarea && $t->fechaFinTarea > $t->fechaLimite;
-        })->count();
-
-        $eficiencia = 0;
-        if ($totalTareas > 0) {
-            $eficiencia = round(($tareasCompletadas / $totalTareas) * 100);
-        }
-
-        $estadisticaView = [
-            'tareasTotales' => $totalTareas,
-            'tareasCompletadas' => $tareasCompletadas,
-            'tareasRetrasadas' => $tareasRetrasadas,
-            'eficiencia' => $eficiencia,
-            'rachaMasLarga' => $estadistica->rachaMasLarga,
-            'rachaActual' => $estadistica->rachaActual,
-            'tiempoTotalPomodoro' => $estadistica->tiempoTotalPomodoro
-        ];
-
-        // 2. Datos para el Gráfico de Barras (Horas por día - Semana)
+        // Datos para el Gráfico de Barras (Semana)
         $chartDataSemana = [];
         for ($i = 6; $i >= 0; $i--) {
             $fecha = Carbon::today()->subDays($i);
@@ -117,27 +80,10 @@ class DashboardController extends Controller
             ];
         }
 
-        // 3. Datos para el Gráfico de Barras (Horas por día - Mes)
-        $chartDataMes = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $fecha = Carbon::today()->subDays($i);
-            $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                    $q->where('idUsuario', $user->idUsuario);
-                })
-                ->where('estadoSesion', 'Completada')
-                ->whereDate('updated_at', $fecha->toDateString())
-                ->sum('tiempoTrabajoTotalMinutos');
-                
-            $chartDataMes[] = [
-                'fecha' => $fecha->format('d/m'),
-                'horas' => round($minutos / 60, 2)
-            ];
-        }
-
-        // 4. Datos para el Gráfico de Dona (Horas por Perfil)
-        $perfiles = Perfil::where('idUsuario', $user->idUsuario)->get();
+        // Datos para el Gráfico de Dona (Perfil)
         $chartDataPerfil = [];
-        foreach ($perfiles as $p) {
+        $coloresDisponibles = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
+        foreach ($perfiles as $index => $p) {
             $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
                     $q->where('idUsuario', $user->idUsuario);
                 })
@@ -149,27 +95,21 @@ class DashboardController extends Controller
                 
             if ($minutos > 0) {
                 $chartDataPerfil[] = [
-                    'perfil' => $p->nombrePerfil,
-                    'color' => $p->colorPerfil ?? '#9c27b0', // Fallback color
+                    'perfil' => $p->tituloPerfil,
+                    'color' => $p->colorPerfil ?? $coloresDisponibles[$index % count($coloresDisponibles)],
                     'horas' => round($minutos / 60, 2)
                 ];
             }
         }
 
-        // Enviamos los datos a principalGestion.html (ahora Dashboard.vue)
->>>>>>> 04201550dfaf17f333f7d08f8a8a1072bd561dda
+        // Enviamos los datos a Dashboard.vue
         return Inertia::render('Dashboard', [
             'perfiles' => $perfiles,
             'perfilActivo' => $perfilActivo,
             'tareas' => $tareas,
-<<<<<<< HEAD
-            'estadisticas' => $estadisticas
-=======
-            'estadistica' => $estadisticaView,
+            'estadisticas' => $estadisticas,
             'chartDataSemana' => $chartDataSemana,
-            'chartDataMes' => $chartDataMes,
             'chartDataPerfil' => $chartDataPerfil
->>>>>>> 04201550dfaf17f333f7d08f8a8a1072bd561dda
         ]);
     }
 }

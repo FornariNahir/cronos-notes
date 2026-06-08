@@ -9,6 +9,7 @@ use App\Models\Tarea;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Services\EstadisticaService;
 
 class PomodoroController extends Controller
 {
@@ -19,6 +20,9 @@ class PomodoroController extends Controller
             return redirect()->route('perfiles.index')
                 ->with('error', 'Selecciona un perfil primero');
         }
+
+        $estadisticaService = new EstadisticaService();
+        $estadisticaService->verificarRachaPerdida(Auth::user()->idUsuario);
 
         $configs = ConfiguracionPomodoro::where('idUsuario', Auth::user()->idUsuario)->get();
         $tareas = Tarea::where('idPerfil', $perfilActivoId)
@@ -129,7 +133,8 @@ class PomodoroController extends Controller
             $sesion->increment('tiempoTrabajoTotalMinutos', $minutos);
             $sesion->increment('ciclosCompletados');
 
-            $this->actualizarEstadisticasTrabajo($minutos);
+            $estadisticaService = new EstadisticaService();
+            $estadisticaService->registrarTiempoTrabajo(Auth::user()->idUsuario, $minutos);
         }
 
         return response()->json(['success' => true]);
@@ -169,14 +174,20 @@ class PomodoroController extends Controller
             if ($sesion) {
                 if ($request->minutosTrabajados && $request->minutosTrabajados > 0) {
                     $sesion->increment('tiempoTrabajoTotalMinutos', $request->minutosTrabajados);
-                    $this->actualizarEstadisticasTrabajo($request->minutosTrabajados);
+                    $estadisticaService = new EstadisticaService();
+                    $estadisticaService->registrarTiempoTrabajo(Auth::user()->idUsuario, $request->minutosTrabajados);
                 }
 
                 $sesion->update([
                     'estadoSesion' => $request->estado
                 ]);
 
-                $this->actualizarEstadisticasFinal($request->estado);
+                $estadisticaService = new EstadisticaService();
+                if ($request->estado === 'Cancelada') {
+                    $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
+                } elseif ($request->estado === 'Completada') {
+                    $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                }
             }
         }
 
@@ -186,84 +197,7 @@ class PomodoroController extends Controller
             ->with('success', $request->estado === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión Pomodoro cancelada');
     }
 
-    private function actualizarEstadisticasTrabajo($minutos)
-    {
-        $user = Auth::user();
-        if (!$user) return;
 
-        $estadistica = \App\Models\Estadistica::firstOrCreate(
-            ['idUsuario' => $user->idUsuario],
-            [
-                'tareasTotales' => 0,
-                'tiempoTotalPomodoro' => 0,
-                'rachaMasLarga' => 0,
-                'rachaActual' => 0,
-                'sesionesCanceladas' => 0,
-                'horasConcentracionDiaria' => 0
-            ]
-        );
-
-        $estadistica->increment('tiempoTotalPomodoro', $minutos);
-        
-        $nuevasHoras = $estadistica->horasConcentracionDiaria + ($minutos / 60);
-        $estadistica->update([
-            'horasConcentracionDiaria' => round($nuevasHoras, 2)
-        ]);
-    }
-
-    private function actualizarEstadisticasFinal($estado)
-    {
-        $user = Auth::user();
-        if (!$user) return;
-
-        $estadistica = \App\Models\Estadistica::firstOrCreate(
-            ['idUsuario' => $user->idUsuario],
-            [
-                'tareasTotales' => 0,
-                'tiempoTotalPomodoro' => 0,
-                'rachaMasLarga' => 0,
-                'rachaActual' => 0,
-                'sesionesCanceladas' => 0,
-                'horasConcentracionDiaria' => 0
-            ]
-        );
-
-        if ($estado === 'Cancelada') {
-            $estadistica->increment('sesionesCanceladas');
-        } elseif ($estado === 'Completada') {
-            $hoy = now()->toDateString();
-            $ayer = now()->subDay()->toDateString();
-
-            $tieneSesionHoy = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                    $q->where('idUsuario', $user->idUsuario);
-                })
-                ->where('estadoSesion', 'Completada')
-                ->whereDate('updated_at', $hoy)
-                ->exists();
-
-            if (!$tieneSesionHoy) {
-                $tieneSesionAyer = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                        $q->where('idUsuario', $user->idUsuario);
-                    })
-                    ->where('estadoSesion', 'Completada')
-                    ->whereDate('updated_at', $ayer)
-                    ->exists();
-
-                if ($tieneSesionAyer) {
-                    $nuevaRacha = $estadistica->rachaActual + 1;
-                } else {
-                    $nuevaRacha = 1;
-                }
-
-                $rachaMasLarga = max($estadistica->rachaMasLarga, $nuevaRacha);
-
-                $estadistica->update([
-                    'rachaActual' => $nuevaRacha,
-                    'rachaMasLarga' => $rachaMasLarga
-                ]);
-            }
-        }
-    }
 
     public function configIndex()
     {

@@ -85,24 +85,53 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
    DB_USERNAME=root
    DB_PASSWORD=      # Coloca tu contraseña si usas XAMPP; déjalo vacío si usas Laragon
    ```
-3. Si deseas probar el **inicio de sesión con Google**, debes configurar tus credenciales obtenidas desde Google Cloud Console en el archivo `.env`:
-    ```env
-    GOOGLE_CLIENT_ID=tu_client_id_aqui
-    GOOGLE_CLIENT_SECRET=tu_client_secret_aqui
-    GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
-    ```
-    *Nota: Asegúrate de que `APP_URL` contenga el puerto exacto (por ejemplo, `http://localhost:8000` o `http://127.0.0.1:8000`) y que esta misma URL de callback esté registrada en la consola de Google Cloud.*
+3. Si deseas probar el **inicio de sesión con Google**, debes configurar tus credenciales en el archivo `.env`. Sigue estos pasos para obtenerlas en **Google Cloud Console**:
+    - **Paso A. Crear/Seleccionar Proyecto:**
+      1. Ingresa a [Google Cloud Console](https://console.cloud.google.com/).
+      2. Inicia sesión con tu cuenta de Google.
+      3. En la barra superior, haz clic en el selector de proyectos y luego en **"Proyecto nuevo"** (New Project). Dale un nombre al proyecto (ej. `Cronos Notes`) y haz clic en **"Crear"** (Create).
+    - **Paso B. Configurar Pantalla de Consentimiento OAuth:**
+      1. Abre el menú de navegación izquierdo (icono de tres líneas) y ve a **APIs y servicios** (APIs & Services) > **Pantalla de consentimiento de OAuth** (OAuth consent screen).
+      2. Selecciona **"Externo"** (External) como tipo de usuario y haz clic en **"Crear"** (Create).
+      3. Completa los campos obligatorios: **Nombre de la aplicación** (ej. `Cronos Notes`), **Correo electrónico de asistencia al usuario**, e **Información de contacto del desarrollador**. Haz clic en **"Guardar y continuar"**.
+      4. En la pestaña **Permisos** (Scopes), haz clic en **"Agregar o quitar permisos"**, marca los alcances `/auth/userinfo.email` y `/auth/userinfo.profile`, haz clic en **"Actualizar"** y luego en **"Guardar y continuar"**.
+      5. En la pestaña **Usuarios de prueba** (Test users), haz clic en **"Agregar usuarios"** e ingresa los correos de Google con los que vas a realizar las pruebas de desarrollo. Guarda y continúa hasta volver al tablero.
+    - **Paso C. Crear Credenciales de Acceso:**
+      1. En el menú izquierdo, ve a **APIs y servicios** (APIs & Services) > **Credenciales** (Credentials).
+      2. Haz clic en el botón superior **"Crear credenciales"** (Create Credentials) y selecciona **"ID de cliente de OAuth"** (OAuth client ID).
+      3. En **Tipo de aplicación**, elige **"Aplicación web"** (Web application).
+      4. En **Orígenes de JavaScript autorizados**, haz clic en **"Agregar URI"** e ingresa la URL local de tu servidor (ej. `http://localhost:8000` o `http://127.0.0.1:8000`).
+      5. En **URIs de redireccionamiento autorizados**, haz clic en **"Agregar URI"** e ingresa exactamente la ruta de callback: `http://localhost:8000/auth/google/callback` (o `http://127.0.0.1:8000/auth/google/callback` según corresponda).
+      6. Haz clic en **"Crear"** (Create).
+      7. Copia el **ID de cliente** (Client ID) y el **Secreto de cliente** (Client Secret) del cuadro de diálogo emergente y pégalos en tu archivo `.env`:
+         ```env
+         GOOGLE_CLIENT_ID=copia_el_id_de_cliente_aqui
+         GOOGLE_CLIENT_SECRET=copia_el_secreto_de_cliente_aqui
+         GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+         ```
 
-4. Si deseas probar el **flujo de recuperación de contraseñas**, debes configurar tus credenciales de Mailtrap (servidor SMTP de pruebas) en el archivo `.env`:
-    ```env
-    MAIL_MAILER=smtp
-    MAIL_HOST=sandbox.smtp.mailtrap.io
-    MAIL_PORT=2525
-    MAIL_USERNAME=tu_usuario_de_mailtrap
-    MAIL_PASSWORD=tu_contraseña_de_mailtrap
-    MAIL_FROM_ADDRESS="no-reply@cronosnotes.com"
-    MAIL_FROM_NAME="${APP_NAME}"
-    ```
+4. Si deseas probar el **flujo de recuperación de contraseñas**, debes configurar tus credenciales de **Mailtrap** (un servidor SMTP simulado para desarrollo). Sigue estos pasos para obtenerlas en su plataforma:
+    - **Paso A. Acceder a Mailtrap:**
+      1. Entra a [Mailtrap](https://mailtrap.io/) y regístrate o inicia sesión.
+    - **Paso B. Obtener Credenciales SMTP del Inbox:**
+      1. En el menú lateral izquierdo, ve a **Email Testing** o **Sandboxes** (según la interfaz actual de Mailtrap) y haz clic en **Inboxes** (Bandejas de entrada).
+      2. Haz clic en tu bandeja predeterminada (usualmente llamada **"My Inbox"**) o crea una nueva.
+      3. Una vez dentro de la bandeja de entrada (inbox), asegúrate de estar en la pestaña **"SMTP Settings"** (Configuración de SMTP).
+      4. En la sección **"Integrations"**, selecciona **"Laravel 9+"** en el menú desplegable para ver la configuración directa, o copia manualmente los valores individuales de la pestaña **"Show Credentials"**:
+         - **Host:** `sandbox.smtp.mailtrap.io`
+         - **Port:** `2525` (o `587` / `465`)
+         - **Username:** *(código alfanumérico provisto)*
+         - **Password:** *(código alfanumérico provisto)*
+      5. Copia esos valores y pégalos en tu archivo `.env`:
+         ```env
+         MAIL_MAILER=smtp
+         MAIL_HOST=sandbox.smtp.mailtrap.io
+         MAIL_PORT=2525
+         MAIL_USERNAME=tu_usuario_de_mailtrap
+         MAIL_PASSWORD=tu_contraseña_de_mailtrap
+         MAIL_FROM_ADDRESS="no-reply@cronosnotes.com"
+         MAIL_FROM_NAME="${APP_NAME}"
+         ```
 
 
 
@@ -135,6 +164,55 @@ Para ver el sitio web en funcionamiento, debes mantener corriendo dos procesos e
    ```
 
 ¡Listo! Abre tu navegador e ingresa a la dirección que te proporcione el comando anterior (normalmente [http://127.0.0.1:8000](http://127.0.0.1:8000)).
+
+---
+
+## Guía de Pruebas de Flujos de Autenticación
+
+Para verificar el correcto funcionamiento de la recuperación de contraseñas y la autenticación con Google, sigue los pasos detallados a continuación:
+
+### 1. Prueba de Recuperación de Contraseña
+
+Este flujo simula el caso en que un usuario olvida sus credenciales y solicita un enlace para restablecer su contraseña mediante correo electrónico.
+
+#### Requisitos Previos:
+- Tener configuradas las credenciales de **Mailtrap** en el archivo `.env` (Paso 4 de la instalación).
+- Tener un usuario registrado previamente en la base de datos (puedes registrarte desde la pestaña `/register`).
+- Tener abierta una pestaña en tu navegador con tu panel de **Mailtrap** para visualizar los correos entrantes en el Inbox de pruebas.
+
+#### Paso a Paso:
+1. **Acceder a la pantalla de login:** Abre tu navegador e ingresa a la URL local del proyecto: [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login).
+2. **Iniciar la solicitud:** En la tarjeta de login, haz clic en el enlace **"¿Olvidaste tu contraseña?"** (ubicado debajo del campo de password).
+3. **Ingresar el correo:** Serás redirigido a la pestaña de solicitud (`/forgot-password`). Introduce el email del usuario registrado que deseas recuperar y haz clic en el botón **"Email Password Reset Link"**.
+4. **Verificar el envío:** Verás un mensaje en pantalla indicando que se ha enviado el enlace de restablecimiento (si el correo existe en la base de datos).
+5. **Revisar Mailtrap:** Ve a la pestaña del navegador donde tienes abierto **Mailtrap**, selecciona tu bandeja de entrada de pruebas (Inbox) y busca el correo nuevo con el asunto *"Reset Password Notification"* enviado por Cronos Notes.
+6. **Restablecer contraseña:** Abre el correo en Mailtrap y haz clic en el botón **"Reset Password"**. Esto abrirá una nueva pestaña en tu navegador apuntando al formulario de tu aplicación (`/reset-password/{token}`).
+7. **Ingresar las nuevas credenciales:**
+   - El campo **Email** estará precargado con tu dirección y deshabilitado para evitar modificaciones.
+   - En el campo **Password**, escribe la nueva contraseña.
+   - En el campo **Confirm Password**, repite la nueva contraseña.
+   - Haz clic en el botón **"Reset Password"** (o en el botón de confirmación).
+8. **Validar el cambio:** Tras procesar el cambio, el sistema te redirigirá automáticamente a la pantalla de **Iniciar Sesión** (`/login`) con un mensaje verde confirmando que la contraseña ha sido restablecida. Introduce tu correo y tu nueva contraseña para comprobar que inicias sesión correctamente.
+
+---
+
+### 2. Prueba de Autenticación con Google (Google Sign-In / Register)
+
+Este flujo permite tanto a usuarios nuevos registrarse al instante como a usuarios existentes iniciar sesión utilizando su cuenta de Google de forma segura.
+
+#### Requisitos Previos:
+- Tener configuradas las credenciales de **Google Client ID & Secret** en el archivo `.env` (Paso 4 de la instalación).
+- Asegurarte de tener una cuenta de Google activa e iniciada en tu navegador (o recordar tus credenciales de Google).
+
+#### Paso a Paso:
+1. **Acceder al inicio de sesión o registro:** Abre tu navegador y dirígete a [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login) o [http://127.0.0.1:8000/register](http://127.0.0.1:8000/register).
+2. **Iniciar flujo con Google:** Haz clic en el botón **"Continuar con Google"** (identificado con el icono oficial de Google en la parte inferior de la tarjeta).
+3. **Seleccionar cuenta en Google:** Serás redirigido automáticamente a la pestaña oficial de autenticación de Google (`accounts.google.com`).
+   - El sistema está configurado para forzar la selección de cuenta (`select_account`), por lo que verás la lista de tus cuentas de Google disponibles en el navegador. Haz clic sobre la cuenta con la que deseas probar.
+4. **Procesamiento de datos en el retorno (Callback):**
+   - **Caso 1 (Usuario Nuevo):** Si es la primera vez que ingresas a la plataforma con ese correo de Google, el sistema creará un registro de usuario automáticamente en la base de datos de MySQL utilizando el nombre, apellido e email provistos por Google. Además, registrará la integración en la tabla de integraciones externas (`IntegracionExterna`) asociando tu cuenta con `GoogleAuth`.
+   - **Caso 2 (Usuario Existente):** Si ya tenías una cuenta con el mismo correo, el sistema vinculará la integración externa y procederá al logueo de forma directa.
+5. **Redirección al Dashboard:** Una vez que Google verifique la cuenta y retorne al callback, serás redirigido automáticamente a la pestaña del **Dashboard** (`http://127.0.0.1:8000/dashboard`), habiendo iniciado sesión de forma exitosa y segura.
 
 ---
 

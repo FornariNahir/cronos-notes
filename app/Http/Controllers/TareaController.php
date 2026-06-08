@@ -6,6 +6,8 @@ use App\Models\Tarea;
 use App\Models\Perfil;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use App\Services\EstadisticaService;
 
 class TareaController extends Controller
 {
@@ -107,6 +109,9 @@ class TareaController extends Controller
 
         if ($request->estadoTarea === 'Completado') {
             $data['fechaFinTarea'] = now()->format('Y-m-d');
+            
+            $estadisticaService = new EstadisticaService();
+            $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
         }
 
         $tarea->update($data);
@@ -124,6 +129,9 @@ class TareaController extends Controller
             'estadoTarea' => 'Completado',
             'fechaFinTarea' => now()->format('Y-m-d')
         ]);
+
+        $estadisticaService = new EstadisticaService();
+        $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
 
         return redirect()->back()->with('success', '¡Tarea completada!');
     }

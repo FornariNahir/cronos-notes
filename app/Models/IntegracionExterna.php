@@ -13,6 +13,7 @@ class IntegracionExterna extends Model
     protected $fillable = [
         'idUsuario',
         'plataforma',
+        'identificadorExterno',
         'tokenAcceso',
         'tokenNuevo'
     ];

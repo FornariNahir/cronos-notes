@@ -40,30 +40,40 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        $user = \App\Models\User::where('email', $request->email)->first();
 
-                event(new PasswordReset($user));
-            }
-        );
-
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => [trans(\Illuminate\Support\Facades\Password::INVALID_USER)],
+            ]);
         }
 
-        throw ValidationException::withMessages([
-            'email' => [trans($status)],
-        ]);
+        // Buscamos un token válido y no utilizado que no haya expirado (60 minutos)
+        $recuperacion = $user->recuperacionesPassword()
+            ->where('utilizado', false)
+            ->where('fechaGeneracion', '>', now()->subMinutes(60))
+            ->get()
+            ->first(function ($rec) use ($request) {
+                return Hash::check($request->token, $rec->tokenRecuperacion);
+            });
+
+        if (! $recuperacion) {
+            throw ValidationException::withMessages([
+                'email' => [trans(\Illuminate\Support\Facades\Password::INVALID_TOKEN)],
+            ]);
+        }
+
+        // Actualizamos la contraseña y generamos nuevo remember_token
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+            'remember_token' => Str::random(60),
+        ])->save();
+
+        // Marcamos el token como utilizado
+        $recuperacion->update(['utilizado' => true]);
+
+        event(new PasswordReset($user));
+
+        return redirect()->route('login')->with('status', trans(\Illuminate\Support\Facades\Password::PASSWORD_RESET));
     }
 }

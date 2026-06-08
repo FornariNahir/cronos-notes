@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id('idIntegracionExterna');
             $table->unsignedBigInteger('idUsuario');
             $table->enum('plataforma', ['GoogleCalendar', 'Spotify', 'GoogleAuth']);
-            $table->string('tokenAcceso', 255);
-            $table->string('tokenNuevo', 255);
+            $table->string('identificadorExterno')->nullable()->comment('ID único devuelto por el proveedor (ej. Google ID)');
+            $table->text('tokenAcceso')->nullable();
+            $table->text('tokenNuevo')->nullable()->comment('Refresh Token u otro token secundario');
             $table->unique(['idUsuario', 'plataforma'], 'uq_usuario_plataforma');
 
             $table->foreign('idUsuario')

@@ -85,6 +85,26 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
    DB_USERNAME=root
    DB_PASSWORD=      # Coloca tu contraseña si usas XAMPP; déjalo vacío si usas Laragon
    ```
+3. Si deseas probar el **inicio de sesión con Google**, debes configurar tus credenciales obtenidas desde Google Cloud Console en el archivo `.env`:
+    ```env
+    GOOGLE_CLIENT_ID=tu_client_id_aqui
+    GOOGLE_CLIENT_SECRET=tu_client_secret_aqui
+    GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+    ```
+    *Nota: Asegúrate de que `APP_URL` contenga el puerto exacto (por ejemplo, `http://localhost:8000` o `http://127.0.0.1:8000`) y que esta misma URL de callback esté registrada en la consola de Google Cloud.*
+
+4. Si deseas probar el **flujo de recuperación de contraseñas**, debes configurar tus credenciales de Mailtrap (servidor SMTP de pruebas) en el archivo `.env`:
+    ```env
+    MAIL_MAILER=smtp
+    MAIL_HOST=sandbox.smtp.mailtrap.io
+    MAIL_PORT=2525
+    MAIL_USERNAME=tu_usuario_de_mailtrap
+    MAIL_PASSWORD=tu_contraseña_de_mailtrap
+    MAIL_FROM_ADDRESS="no-reply@cronosnotes.com"
+    MAIL_FROM_NAME="${APP_NAME}"
+    ```
+
+
 
 ### 5. Crear la Base de Datos en MySQL
 Antes de migrar, debes crear una base de datos vacía. Puedes hacerlo a través de phpMyAdmin, la consola de MySQL o el administrador de base de datos de tu servidor local (como HeidiSQL en Laragon):

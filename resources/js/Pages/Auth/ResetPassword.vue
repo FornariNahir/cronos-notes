@@ -42,10 +42,10 @@ const submit = () => {
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1 block w-full opacity-50 cursor-not-allowed"
                     v-model="form.email"
                     required
-                    autofocus
+                    readonly
                     autocomplete="username"
                 />
 
@@ -61,6 +61,7 @@ const submit = () => {
                     class="mt-1 block w-full"
                     v-model="form.password"
                     required
+                    autofocus
                     autocomplete="new-password"
                 />
 

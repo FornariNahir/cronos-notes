@@ -5,11 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Perfil;
 use App\Models\Tarea;
 use App\Models\Estadistica;
-<<<<<<< HEAD
-=======
-use App\Models\Racha;
-use App\Models\SesionPomodoro;
->>>>>>> 04201550dfaf17f333f7d08f8a8a1072bd561dda
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;

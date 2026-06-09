@@ -11,6 +11,8 @@ use App\Http\Controllers\PomodoroController;
 use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
 
+use App\Http\Controllers\PerfilCompartidoController;
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
@@ -125,8 +127,21 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/apuntes/{id}/editar', [ApunteController::class, 'edit'])->name('apuntes.edit');
     Route::put('/apuntes/{id}', [ApunteController::class, 'update'])->name('apuntes.update');
     Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
+
+    // PERFIL COMPARTIDO — Gestión del propietario
+    Route::get('/perfiles/{idPerfil}/compartido', [PerfilCompartidoController::class, 'index'])->name('perfil-compartido.index');
+    Route::post('/perfiles/{idPerfil}/compartir', [PerfilCompartidoController::class, 'compartir'])->name('perfil-compartido.compartir');
+    Route::put('/perfiles/{idPerfil}/compartido/{idUsuario}', [PerfilCompartidoController::class, 'actualizarPermiso'])->name('perfil-compartido.actualizar');
+    Route::delete('/perfiles/{idPerfil}/compartido/{idUsuario}', [PerfilCompartidoController::class, 'revocar'])->name('perfil-compartido.revocar');
+    Route::delete('/invitaciones/{idInvitacion}', [PerfilCompartidoController::class, 'cancelarInvitacion'])->name('perfil-compartido.cancelar-invitacion');
+
+    // PERFIL COMPARTIDO — Flujo del invitado (requiere auth)
+    Route::post('/invitacion/{token}/aceptar', [PerfilCompartidoController::class, 'aceptarInvitacion'])->name('invitacion.aceptar');
+    Route::post('/invitacion/{token}/rechazar', [PerfilCompartidoController::class, 'rechazarInvitacion'])->name('invitacion.rechazar');
 });
 
+// Invitación pública — ver invitación sin auth (para que el link del email funcione)
+Route::get('/invitacion/{token}', [PerfilCompartidoController::class, 'verInvitacion'])->name('invitacion.ver');
 
 Route::get('/uso', function () {
     return Inertia::render('Uso');

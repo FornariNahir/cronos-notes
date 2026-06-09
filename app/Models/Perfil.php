@@ -38,6 +38,11 @@ class Perfil extends Model
     public function usuariosCompartidos()
     {
         return $this->belongsToMany(User::class, 'PerfilCompartido', 'idPerfil', 'idUsuario')
-            ->withPivot('permiso');
+            ->withPivot('permiso', 'compartidoPor', 'fechaCompartido');
+    }
+
+    public function invitaciones()
+    {
+        return $this->hasMany(InvitacionPerfil::class, 'idPerfil', 'idPerfil');
     }
 }

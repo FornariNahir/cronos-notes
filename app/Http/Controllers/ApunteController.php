@@ -7,52 +7,54 @@ use App\Models\Perfil;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ApunteController extends Controller
 {
-    public function index()
+    use AuthorizesRequests;
+
+    /**
+     * Verifica que el usuario actual tenga acceso al perfil activo.
+     */
+    private function verificarAccesoPerfil(string $permiso = 'ver'): Perfil
     {
         $perfilActivoId = session('perfilActivo');
         if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
+            abort(403, 'Selecciona un perfil primero');
         }
 
-        $apuntes = Apunte::where('idPerfil', $perfilActivoId)
+        $perfil = Perfil::findOrFail($perfilActivoId);
+        $this->authorize($permiso, $perfil);
+        return $perfil;
+    }
+
+    public function index()
+    {
+        $perfil = $this->verificarAccesoPerfil('ver');
+
+        $apuntes = Apunte::where('idPerfil', $perfil->idPerfil)
             ->orderBy('fechaCreacion', 'desc')
             ->get();
 
-        $perfilActivo = Perfil::find($perfilActivoId);
-
         return Inertia::render('Apuntes/Index', [
             'apuntes' => $apuntes,
-            'perfilActivo' => $perfilActivo
+            'perfilActivo' => $perfil
         ]);
     }
 
     public function create()
     {
-        $perfilActivoId = session('perfilActivo');
-        if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
-        }
-
-        $perfilActivo = Perfil::find($perfilActivoId);
+        $perfil = $this->verificarAccesoPerfil('crear');
 
         return Inertia::render('Apuntes/Editor', [
-            'perfilActivo' => $perfilActivo,
+            'perfilActivo' => $perfil,
             'apunte' => null
         ]);
     }
 
     public function store(Request $request)
     {
-        $perfilActivoId = session('perfilActivo');
-        if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
-        }
+        $perfil = $this->verificarAccesoPerfil('crear');
 
         $request->validate([
             'tituloApunte' => 'required|string|max:100',
@@ -60,7 +62,7 @@ class ApunteController extends Controller
         ]);
 
         Apunte::create([
-            'idPerfil' => $perfilActivoId,
+            'idPerfil' => $perfil->idPerfil,
             'tituloApunte' => $request->tituloApunte,
             'contenidoApunte' => $request->contenidoApunte,
             'fechaCreacion' => now()
@@ -71,34 +73,24 @@ class ApunteController extends Controller
 
     public function edit($id)
     {
-        $perfilActivoId = session('perfilActivo');
-        if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
-        }
+        $perfil = $this->verificarAccesoPerfil('modificar');
 
         $apunte = Apunte::where('idApunte', $id)
-            ->where('idPerfil', $perfilActivoId)
+            ->where('idPerfil', $perfil->idPerfil)
             ->firstOrFail();
 
-        $perfilActivo = Perfil::find($perfilActivoId);
-
         return Inertia::render('Apuntes/Editor', [
-            'perfilActivo' => $perfilActivo,
+            'perfilActivo' => $perfil,
             'apunte' => $apunte
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        $perfilActivoId = session('perfilActivo');
-        if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
-        }
+        $perfil = $this->verificarAccesoPerfil('modificar');
 
         $apunte = Apunte::where('idApunte', $id)
-            ->where('idPerfil', $perfilActivoId)
+            ->where('idPerfil', $perfil->idPerfil)
             ->firstOrFail();
 
         $request->validate([
@@ -116,14 +108,10 @@ class ApunteController extends Controller
 
     public function destroy($id)
     {
-        $perfilActivoId = session('perfilActivo');
-        if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
-        }
+        $perfil = $this->verificarAccesoPerfil('borrar');
 
         $apunte = Apunte::where('idApunte', $id)
-            ->where('idPerfil', $perfilActivoId)
+            ->where('idPerfil', $perfil->idPerfil)
             ->firstOrFail();
 
         $apunte->delete();

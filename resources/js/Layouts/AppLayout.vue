@@ -96,11 +96,11 @@
       <ul class="nav-menu">
         <li>
           <Link :href="route('pomodoro.index')" class="nav-item" :class="{ active: route().current('pomodoro.index') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c-4-4-8-9-8-14 0-5 6-6 8-6s8 1 8 6c0 5-4 10-8 14z"/>
+              <path d="M12 22V12"/>
             </svg>
-            Iniciar una sesión rápida
+            Espacio de Concentración
           </Link>
         </li>
         <li>

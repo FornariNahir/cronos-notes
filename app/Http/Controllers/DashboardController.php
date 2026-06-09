@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Perfil;
 use App\Models\Tarea;
 use App\Models\Estadistica;
+use App\Models\PerfilCompartido;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -28,16 +29,38 @@ class DashboardController extends Controller
             ])
             ->get();
 
+        // Perfiles compartidos con este usuario
+        $perfilesCompartidos = Perfil::whereHas('usuariosCompartidos', function ($query) use ($user) {
+                $query->where('PerfilCompartido.idUsuario', $user->idUsuario);
+            })
+            ->withCount([
+                'tareas',
+                'tareas as tareas_completadas_count' => function ($query) {
+                    $query->where('estadoTarea', 'Completado');
+                }
+            ])
+            ->get()
+            ->map(function ($perfil) use ($user) {
+                $perfil->esCompartido = true;
+                $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
+                    ->where('idPerfil', $perfil->idPerfil)
+                    ->value('permiso');
+                return $perfil;
+            });
+
         $perfilActivoId = session('perfilActivo');
         $perfilActivo = null;
         $tareas = [];
 
-        $user = Auth::user();
-
         if ($perfilActivoId) {
-            // Obtenemos los datos del perfil activo
+            // Obtenemos los datos del perfil activo (propietario o compartido)
             $perfilActivo = Perfil::where('idPerfil', $perfilActivoId)
-                                  ->where('idUsuario', $user->idUsuario)
+                                  ->where(function ($query) use ($user) {
+                                      $query->where('idUsuario', $user->idUsuario)
+                                            ->orWhereHas('usuariosCompartidos', function ($q) use ($user) {
+                                                $q->where('PerfilCompartido.idUsuario', $user->idUsuario);
+                                            });
+                                  })
                                   ->first();
 
             if ($perfilActivo) {
@@ -105,6 +128,7 @@ class DashboardController extends Controller
         // Enviamos los datos a Dashboard.vue
         return Inertia::render('Dashboard', [
             'perfiles' => $perfiles,
+            'perfilesCompartidos' => $perfilesCompartidos,
             'perfilActivo' => $perfilActivo,
             'tareas' => $tareas,
             'estadisticas' => $estadisticas,

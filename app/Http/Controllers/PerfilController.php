@@ -3,18 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\Perfil;
+use App\Models\PerfilCompartido;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Inertia\Inertia;
 
 class PerfilController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index()
     {
         $perfiles = Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
 
+        // Perfiles compartidos con este usuario
+        $perfilesCompartidos = Auth::user()->perfilesCompartidos()
+            ->with('usuario:idUsuario,nombre,apellido')
+            ->get()
+            ->map(function ($perfil) {
+                $perfil->esCompartido = true;
+                $perfil->permisoCompartido = $perfil->pivot->permiso;
+                $perfil->propietario = $perfil->usuario->nombre . ' ' . $perfil->usuario->apellido;
+                return $perfil;
+            });
+
         return Inertia::render('GestionPerfil', [
-            'perfiles' => $perfiles
+            'perfiles' => $perfiles,
+            'perfilesCompartidos' => $perfilesCompartidos
         ]);
     }
 
@@ -53,9 +69,8 @@ class PerfilController extends Controller
 
     public function show($id)
     {
-        $perfil = Perfil::where('idPerfil', $id)
-                        ->where('idUsuario', Auth::user()->idUsuario)
-                        ->firstOrFail();
+        $perfil = Perfil::findOrFail($id);
+        $this->authorize('ver', $perfil);
 
         return Inertia::render('Profiles/Show', [
             'perfil' => $perfil
@@ -64,9 +79,8 @@ class PerfilController extends Controller
 
     public function update(Request $request, $id)
     {
-        $perfil = Perfil::where('idPerfil', $id)
-                        ->where('idUsuario', Auth::user()->idUsuario)
-                        ->firstOrFail();
+        $perfil = Perfil::findOrFail($id);
+        $this->authorize('modificar', $perfil);
 
         $request->validate([
             'tituloPerfil' => 'required|string|max:30',
@@ -74,7 +88,7 @@ class PerfilController extends Controller
         ]);
 
         // Validar que el usuario no tenga otro perfil con el mismo nombre
-        $exists = Perfil::where('idUsuario', Auth::user()->idUsuario)
+        $exists = Perfil::where('idUsuario', $perfil->idUsuario)
                         ->where('tituloPerfil', $request->tituloPerfil)
                         ->where('idPerfil', '!=', $id)
                         ->exists();
@@ -94,9 +108,8 @@ class PerfilController extends Controller
 
     public function destroy($id)
     {
-        $perfil = Perfil::where('idPerfil', $id)
-                        ->where('idUsuario', Auth::user()->idUsuario)
-                        ->firstOrFail();
+        $perfil = Perfil::findOrFail($id);
+        $this->authorize('borrar', $perfil);
 
         $perfil->delete();
 
@@ -109,6 +122,11 @@ class PerfilController extends Controller
             'idPerfil' => 'required|exists:Perfil,idPerfil',
             'redirect' => 'nullable|string'
         ]);
+
+        // Verificar que el usuario tenga acceso al perfil (propietario o compartido)
+        $perfil = Perfil::findOrFail($request->idPerfil);
+        $this->authorize('ver', $perfil);
+
         session(['perfilActivo' => $request->idPerfil]);
         if ($request->filled('redirect')) {
             return redirect($request->redirect);

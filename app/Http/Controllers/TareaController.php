@@ -9,9 +9,22 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Services\EstadisticaService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TareaController extends Controller
 {
+    use AuthorizesRequests;
+
+    /**
+     * Verifica que el usuario actual tenga acceso al perfil (propietario o compartido).
+     */
+    private function verificarAccesoPerfil($idPerfil, string $permiso = 'ver'): Perfil
+    {
+        $perfil = Perfil::findOrFail($idPerfil);
+        $this->authorize($permiso, $perfil);
+        return $perfil;
+    }
+
     public function index(Request $request)
     {
         $perfilActivoId = session('perfilActivo');
@@ -19,6 +32,9 @@ class TareaController extends Controller
             return redirect()->route('gestion-perfil')
                 ->with('error', 'Selecciona un perfil primero');
         }
+
+        // Verificar que el usuario tenga acceso al perfil activo
+        $this->verificarAccesoPerfil($perfilActivoId, 'ver');
 
         // Retornamos todas las tareas del perfil para que la vista las filtre dinámicamente
         $tareas = Tarea::where('idPerfil', $perfilActivoId)
@@ -49,6 +65,9 @@ class TareaController extends Controller
             return redirect()->back()->with('error', 'No hay perfil activo');
         }
 
+        // Verificar permiso de creación
+        $this->verificarAccesoPerfil($perfilActivoId, 'crear');
+
         Tarea::create([
             'idPerfil' => $perfilActivoId,
             'tituloTarea' => $request->tituloTarea,
@@ -65,21 +84,20 @@ class TareaController extends Controller
 
     public function show($id)
     {
-        $perfilActivoId = session('perfilActivo');
-        $tarea = Tarea::where('idTarea', $id)
-            ->where('idPerfil', $perfilActivoId)
-            ->firstOrFail();
+        $tarea = Tarea::findOrFail($id);
+
+        // Verificar acceso de lectura al perfil de la tarea
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'ver');
 
         return response()->json($tarea);
     }
 
     public function update(Request $request, $id)
     {
-        $tarea = Tarea::where('idTarea', $id)
-            ->whereHas('perfil', function ($query) {
-                $query->where('idUsuario', Auth::user()->idUsuario);
-            })
-            ->firstOrFail();
+        $tarea = Tarea::findOrFail($id);
+
+        // Verificar permiso de modificación sobre el perfil
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'modificar');
 
         $request->validate([
             'tituloTarea' => 'required|string|max:45',
@@ -117,11 +135,10 @@ class TareaController extends Controller
 
     public function completar($id)
     {
-        $tarea = Tarea::where('idTarea', $id)
-            ->whereHas('perfil', function ($query) {
-                $query->where('idUsuario', Auth::user()->idUsuario);
-            })
-            ->firstOrFail();
+        $tarea = Tarea::findOrFail($id);
+
+        // Verificar permiso de modificación
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'modificar');
 
         $tarea->update([
             'estadoTarea' => 'Completado',
@@ -136,11 +153,10 @@ class TareaController extends Controller
 
     public function destroy($id)
     {
-        $tarea = Tarea::where('idTarea', $id)
-            ->whereHas('perfil', function ($query) {
-                $query->where('idUsuario', Auth::user()->idUsuario);
-            })
-            ->firstOrFail();
+        $tarea = Tarea::findOrFail($id);
+
+        // Verificar permiso de borrado (solo Administrador o propietario)
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'borrar');
 
         $tarea->delete();
 
@@ -153,6 +169,9 @@ class TareaController extends Controller
         if (!$perfilActivoId) {
             return response()->json(['error' => 'Selecciona un perfil primero'], 400);
         }
+
+        // Verificar acceso de lectura al perfil
+        $this->verificarAccesoPerfil($perfilActivoId, 'ver');
 
         // Obtener las tareas pendientes de este perfil
         $tareas = Tarea::where('idPerfil', $perfilActivoId)
@@ -285,4 +304,3 @@ class TareaController extends Controller
         }
     }
 }
-

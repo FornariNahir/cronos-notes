@@ -147,8 +147,7 @@ const eliminarCuenta = () => {
                         <i class="bi bi-person-circle" style="font-size: 5rem; color: #dee2e6; line-height: 1;"></i>
                     </div>
                     <h5 class="fw-bold m-0 text-dark">{{ displayName }}</h5>
-                    <p class="text-secondary small mb-3">{{ email }}</p>
-                    <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill small fw-medium">Estudiante de Sistemas</span>
+                    <p class="text-secondary small mb-0">{{ email }}</p>
                 </div>
 
                 <div class="card card-ajustes p-4 text-center bg-racha-streak mb-4">

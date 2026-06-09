@@ -40,7 +40,6 @@
             @click="seleccionarPerfil(perfil.idPerfil)"
           >
             <div class="profile-icon">
-              <!-- Icono dinámico según el índice o nombre, o uno por defecto -->
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"/>
                 <polyline points="2 17 12 22 22 17"/>
@@ -69,6 +68,55 @@
           </div>
         </div>
 
+        <!-- Tareas Section -->
+        <div class="tasks-section" style="margin-bottom: 40px;">
+          <div class="section-header" style="margin-bottom: 20px;">
+            <div>
+              <h2 class="section-title">Tareas pendientes</h2>
+              <p v-if="perfilActivo" class="section-subtitle">Tareas asignadas a tu perfil activo actual: <strong>{{ perfilActivo.tituloPerfil }}</strong></p>
+            </div>
+          </div>
+          
+          <div v-if="perfilActivo">
+            <div v-if="tareas.length > 0" class="tasks-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+              <div v-for="tarea in tareas" :key="tarea.idTarea" class="task-card-light">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                  <h3 style="font-size: 15px; font-weight: 600; color: #333; margin: 0;">{{ tarea.tituloTarea }}</h3>
+                  <span :style="{
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    backgroundColor: tarea.prioridadTarea === 'Alta' ? '#ffebeb' : (tarea.prioridadTarea === 'Media' ? '#fff4eb' : '#ebefff'),
+                    color: tarea.prioridadTarea === 'Alta' ? '#d32f2f' : (tarea.prioridadTarea === 'Media' ? '#f57c00' : '#1976d2'),
+                    whiteSpace: 'nowrap'
+                  }">
+                    {{ tarea.prioridadTarea || 'Baja' }}
+                  </span>
+                </div>
+                <p style="font-size: 13px; color: #666; margin: 8px 0 0 0; line-height: 1.4; flex-grow: 1;">{{ tarea.descripcionTarea }}</p>
+                <div style="margin-top: 12px; font-size: 11px; color: #999; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px;">
+                  <span style="display: flex; align-items: center; gap: 4px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Vence: {{ formatDate(tarea.fechaLimite) || 'Sin fecha' }}</span>
+                  </span>
+                  <span v-if="tarea.estimacionEsfuerzo" style="font-weight: 600; color: #612c2d; display: flex; align-items: center; gap: 4px;">
+                    🍅 {{ tarea.sesiones_pomodoro_sum_ciclos_completados || 0 }}/{{ tarea.estimacionEsfuerzo }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div v-else style="background-color: #fff; border-radius: 12px; padding: 32px; border: 1px dashed #e5e5e5; text-align: center; color: #666;">
+              No hay tareas pendientes en este perfil. ¡Buen trabajo!
+            </div>
+          </div>
+          <div v-else style="background-color: #fff; border-radius: 12px; padding: 32px; border: 1px dashed #e5e5e5; text-align: center; color: #666;">
+            Selecciona un perfil de la lista superior para activar tu espacio de trabajo y ver tus tareas pendientes.
+          </div>
+        </div>
+
         <!-- Statistics Section -->
         <div class="stats-section">
           <div class="section-header">
@@ -83,7 +131,7 @@
               <!-- Streak Card -->
               <div class="streak-card">
                 <div>
-                  <div class="streak-number">{{ estadisticas.rachaActual }}</div>
+                  <div class="streak-number">{{ estadisticas.rachaActual || 0 }}</div>
                   <div class="streak-label">días de racha</div>
                 </div>
                 <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="streak-icon">
@@ -94,27 +142,9 @@
               <!-- Donut Chart Card -->
               <div class="donut-card">
                 <h3 class="donut-card-title">Horas de pomodoro por perfil</h3>
-                <div class="donut-content" v-if="chartDataPerfil && chartDataPerfil.length > 0">
-                  <svg class="donut-chart" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e5d5d5" stroke-width="3"/>
-                    <circle 
-                      v-for="(perfil, index) in chartDataPerfil"
-                      :key="index"
-                      cx="18" cy="18" r="15.915" fill="none" 
-                      :stroke="perfil.color" stroke-width="3" 
-                      :stroke-dasharray="getDashArray(perfil.horas, totalHorasPerfil) + ' ' + (100 - getDashArray(perfil.horas, totalHorasPerfil))" 
-                      :stroke-dashoffset="getDashOffset(index)"
-                    />
-                  </svg>
-                  <div class="donut-legend">
-                    <div class="legend-item" v-for="(perfil, index) in chartDataPerfil" :key="'leg-'+index">
-                      <span class="legend-dot" :style="{ backgroundColor: perfil.color }"></span>
-                      {{ perfil.perfil }} ({{ perfil.horas }}h)
-                    </div>
-                  </div>
-                </div>
-                <div class="donut-content" v-else>
-                  <p class="text-muted" style="font-size: 14px; text-align: center; width: 100%;">No hay horas registradas aún</p>
+                <div class="donut-content">
+                  <Doughnut v-if="chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
+                  <div v-else class="no-data-text">No hay sesiones de pomodoro registradas.</div>
                 </div>
               </div>
             </div>
@@ -122,56 +152,15 @@
             <!-- Bar Chart Card -->
             <div class="bar-chart-card">
               <h3 class="bar-chart-title">Horas de estudio por día</h3>
-              <div class="bar-chart" v-if="chartDataSemana && chartDataSemana.length > 0">
-                <div class="bar-chart-y-axis">
-                  <span>{{ maxBarHours }}</span>
-                  <span>{{ (maxBarHours * 0.75).toFixed(1) }}</span>
-                  <span>{{ (maxBarHours * 0.5).toFixed(1) }}</span>
-                  <span>{{ (maxBarHours * 0.25).toFixed(1) }}</span>
-                  <span>0</span>
-                </div>
-                <div 
-                  v-for="(dia, index) in chartDataSemana" 
-                  :key="index"
-                  class="bar" 
-                  :style="{ height: (animateProgress ? ((dia.horas / maxBarHours) * 100) : 0) + '%' }"
-                  :title="dia.fecha + ' - ' + dia.horas + ' hrs'"
-                >
-                  <div style="font-size: 10px; color: #999; text-align: center; margin-top: -20px; white-space: nowrap;">{{ dia.fecha }}</div>
-                </div>
+              <div class="bar-chart-container" v-if="chartDataSemana && chartDataSemana.length > 0">
+                <Bar :data="barChartData" :options="barChartOptions" />
+              </div>
+              <div v-else class="no-data-text" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                No hay horas de estudio registradas esta semana.
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Pending Tasks Section -->
-        <div class="section-header" style="margin-top: 40px;" v-if="perfilActivo">
-          <div>
-            <h2 class="section-title">Tareas pendientes</h2>
-            <p class="section-subtitle">Tus compromisos para este perfil.</p>
-          </div>
-        </div>
-
-        <div class="profiles-grid" v-if="perfilActivo && tareas.length > 0">
-          <div v-for="tarea in tareas" :key="tarea.idTarea" class="profile-card" style="cursor: default;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-              <h3 class="profile-name" style="color: #612c2d;">{{ tarea.tituloTarea }}</h3>
-              <small :class="estadoColor(tarea)">{{ tarea.estadoTarea }}</small>
-            </div>
-            <p class="profile-date" style="color: #666; margin-bottom: 8px;">{{ tarea.descripcionTarea }}</p>
-            <div style="display: flex; gap: 15px; margin-top: 15px;">
-              <small class="text-muted" style="font-size: 12px;"><i class="far fa-clock"></i> Límite: {{ formatDate(tarea.fechaLimite) }}</small>
-              <small v-if="tarea.estimacionEsfuerzo" class="text-muted" style="font-size: 12px; font-weight: 600; color: #8b4c4c;">
-                🍅 {{ tarea.sesiones_pomodoro_sum_ciclos_completados || 0 }}/{{ tarea.estimacionEsfuerzo }}
-              </small>
-            </div>
-          </div>
-        </div>
-
-        <div class="profile-card" v-if="perfilActivo && tareas.length === 0" style="text-align: center;">
-          <p class="profile-date">No tienes tareas pendientes en este perfil. ¡Buen trabajo!</p>
-        </div>
-
       </main>
     </div>
   </AppLayout>
@@ -220,44 +209,6 @@ const props = defineProps({
   }
 });
 
-const maxBarHours = computed(() => {
-  if (!props.chartDataSemana || props.chartDataSemana.length === 0) return 4;
-  return Math.max(4, ...props.chartDataSemana.map(d => Math.ceil(d.horas)));
-});
-
-const totalHorasPerfil = computed(() => {
-  if (!props.chartDataPerfil) return 0;
-  return props.chartDataPerfil.reduce((sum, p) => sum + p.horas, 0);
-});
-
-const getDashArray = (horas, total) => {
-  if (total === 0) return 0;
-  return (horas / total) * 100;
-};
-
-const getDashOffset = (index) => {
-  let offset = 0;
-  for (let i = 0; i < index; i++) {
-    offset += getDashArray(props.chartDataPerfil[i].horas, totalHorasPerfil.value);
-  }
-  return 25 - offset; 
-};
-
-const formatDate = (date) => {
-  if (!date) return '';
-  const dateStr = date.split(/[ T]/)[0];
-  const [year, month, day] = dateStr.split('-');
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-};
-
-const estadoColor = (tarea) => {
-  if (tarea.estadoTarea === 'Completado') return 'color: #28a745; font-weight: bold;';
-  if (tarea.estadoTarea === 'En Progreso') return 'color: #17a2b8; font-weight: bold;';
-  return 'color: #ffc107; font-weight: bold;';
-};
-
-// Control de animaciones
 const animateProgress = ref(false);
 
 onMounted(() => {
@@ -287,6 +238,71 @@ const seleccionarPerfil = (idPerfil) => {
 // Redireccionar a la gestión de perfiles
 const irAPerfiles = () => {
   router.visit('/gestion-perfil');
+};
+
+const formatDate = (date) => {
+  if (!date) return '';
+  const dateStr = date.split(/[ T]/)[0];
+  const [year, month, day] = dateStr.split('-');
+  const d = new Date(year, month - 1, day);
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const barChartData = computed(() => {
+  const data = [...props.chartDataSemana].reverse();
+  return {
+    labels: data.map(d => d.fecha),
+    datasets: [{
+      label: 'Horas de estudio',
+      backgroundColor: '#612c2d', // Color de marca del tema claro
+      data: data.map(d => d.horas),
+      borderRadius: 4
+    }]
+  }
+});
+
+const barChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: { color: 'rgba(0, 0, 0, 0.05)' },
+      ticks: { color: '#666' }
+    },
+    x: {
+      grid: { display: false },
+      ticks: { color: '#666' }
+    }
+  },
+  plugins: {
+    legend: { display: false }
+  }
+};
+
+const doughnutChartData = computed(() => {
+  return {
+    labels: props.chartDataPerfil.map(d => d.perfil),
+    datasets: [{
+      backgroundColor: props.chartDataPerfil.map((d, index) => {
+        const colorPalette = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
+        return d.color || colorPalette[index % colorPalette.length];
+      }),
+      data: props.chartDataPerfil.map(d => d.horas),
+      borderWidth: 0
+    }]
+  }
+});
+
+const doughnutChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'right',
+      labels: { color: '#333' }
+    }
+  }
 };
 </script>
 
@@ -496,7 +512,7 @@ const irAPerfiles = () => {
 .streak-icon {
   width: 64px;
   height: 64px;
-  color: #612c2c;
+  color: #612c2d;
 }
 
 /* Donut Chart Card */
@@ -517,38 +533,16 @@ const irAPerfiles = () => {
 .donut-content {
   display: flex;
   align-items: center;
-  gap: 24px;
-}
-
-.donut-chart {
-  width: 120px;
-  height: 120px;
+  justify-content: center;
+  height: 150px;
   position: relative;
 }
 
-.donut-legend {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.no-data-text {
   font-size: 13px;
-  color: #333;
+  color: #666;
+  text-align: center;
 }
-
-.legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.legend-dot.a { background-color: #612c2d; }
-.legend-dot.b { background-color: #c4a5a5; }
-.legend-dot.c { background-color: #e5d5d5; }
 
 /* Bar Chart Card */
 .bar-chart-card {
@@ -556,45 +550,72 @@ const irAPerfiles = () => {
   border-radius: 12px;
   padding: 24px;
   border: 1px solid #e5e5e5;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .bar-chart-title {
   font-size: 15px;
   font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
-  text-align: center;
 }
 
-.bar-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  height: 200px;
-  padding: 10px 0;
-  border-left: 1px solid #e5e5e5;
-  border-bottom: 1px solid #e5e5e5;
+.bar-chart-container {
+  height: 230px;
   position: relative;
+  margin-top: 10px;
 }
 
-.bar-chart-y-axis {
-  position: absolute;
-  left: -10px;
-  top: 0;
-  bottom: 0;
+.range-select {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #333;
+  background-color: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.range-select:focus {
+  border-color: #612c2d;
+}
+
+/* Tasks styles */
+.task-card-light {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e5e5;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  font-size: 12px;
-  color: #999;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.bar {
-  width: 32px;
-  background-color: #612c2d;
-  border-radius: 4px 4px 0 0;
-  transition: height 1s ease-out;
+.task-card-light:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.add-profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #c4a5a5;
+  background-color: transparent;
+  color: #612c2d;
+}
+
+.add-profile-card:hover {
+  background-color: rgba(97, 44, 45, 0.02);
+  border-color: #612c2d;
+}
+
+.add-icon {
+  margin-bottom: 8px;
 }
 
 /* Responsive */

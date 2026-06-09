@@ -184,60 +184,77 @@ class TareaController extends Controller
             ];
         })->toArray();
 
-        try {
-            $prompt = "Organizá las siguientes tareas de forma óptima para maximizar la productividad y evitar el agotamiento (burnout). "
-                . "Tomá en cuenta los siguientes factores para cada tarea: \n"
-                . "1. Fecha límite (fechaLimite): Más urgente primero. \n"
-                . "2. Prioridad inicial (prioridadTarea): Alta, Media, Baja. \n"
-                . "3. Estimación de esfuerzo (estimacionEsfuerzo): Representa el esfuerzo estimado en cantidad de sesiones Pomodoro. Priorizá tareas más cortas para lograr victorias rápidas (quick wins) cuando las fechas y prioridades sean similares, o distribuí las tareas de mayor esfuerzo para evitar fatiga. \n\n"
-                . "Fecha de hoy: " . now()->format('Y-m-d') . ". \n\n"
-                . "Devolveme una lista con el orden óptimo de ejecución. Cada elemento de la lista debe contener el idTarea y una explicación breve y motivadora en español rioplatense de por qué está en ese lugar del orden.";
+        $modelos = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+        $response = null;
+        $ultimoError = '';
 
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
-                'contents' => [
-                    'parts' => [
-                        ['text' => $prompt . "\nTareas a organizar:\n" . json_encode($tareasPayload, JSON_UNESCAPED_UNICODE)]
-                    ]
-                ],
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => "Sos un asistente experto en productividad y gestión del tiempo usando la técnica Pomodoro. Tu único objetivo es ordenar una lista de tareas de forma óptima. Debes responder estrictamente en formato JSON utilizando el esquema proporcionado. No agregues texto por fuera del JSON de respuesta."]
-                    ]
-                ],
-                'generationConfig' => [
-                    'responseMimeType' => 'application/json',
-                    'responseSchema' => [
-                        'type' => 'OBJECT',
-                        'properties' => [
-                            'ordenOptimo' => [
-                                'type' => 'ARRAY',
-                                'items' => [
-                                    'type' => 'OBJECT',
-                                    'properties' => [
-                                        'idTarea' => [
-                                            'type' => 'INTEGER',
-                                            'description' => 'El id de la tarea original.'
+        foreach ($modelos as $modelo) {
+            try {
+                $prompt = "Organizá las siguientes tareas de forma óptima para maximizar la productividad y evitar el agotamiento (burnout). "
+                    . "Tomá en cuenta los siguientes factores para cada tarea: \n"
+                    . "1. Fecha límite (fechaLimite): Más urgente primero. \n"
+                    . "2. Prioridad inicial (prioridadTarea): Alta, Media, Baja. \n"
+                    . "3. Estimación de esfuerzo (estimacionEsfuerzo): Representa el esfuerzo estimado en cantidad de sesiones Pomodoro. Priorizá tareas más cortas para lograr victorias rápidas (quick wins) cuando las fechas y prioridades sean similares, o distribuí las tareas de mayor esfuerzo para evitar fatiga. \n\n"
+                    . "Fecha de hoy: " . now()->format('Y-m-d') . ". \n\n"
+                    . "Devolveme una lista con el orden óptimo de ejecución. Cada elemento de la lista debe contener el idTarea y una explicación breve y motivadora en español rioplatense de por qué está en ese lugar del orden.";
+
+                // Reintentamos hasta 2 veces con 500ms de espera ante errores transitorios (ej. 503)
+                $response = Http::retry(2, 500)->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        'parts' => [
+                            ['text' => $prompt . "\nTareas a organizar:\n" . json_encode($tareasPayload, JSON_UNESCAPED_UNICODE)]
+                        ]
+                    ],
+                    'systemInstruction' => [
+                        'parts' => [
+                            ['text' => "Sos un asistente experto en productividad y gestión del tiempo usando la técnica Pomodoro. Tu único objetivo es ordenar una lista de tareas de forma óptima. Debes responder estrictamente en formato JSON utilizando el esquema proporcionado. No agregues texto por fuera del JSON de respuesta."]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'responseMimeType' => 'application/json',
+                        'responseSchema' => [
+                            'type' => 'OBJECT',
+                            'properties' => [
+                                'ordenOptimo' => [
+                                    'type' => 'ARRAY',
+                                    'items' => [
+                                        'type' => 'OBJECT',
+                                        'properties' => [
+                                            'idTarea' => [
+                                                'type' => 'INTEGER',
+                                                'description' => 'El id de la tarea original.'
+                                            ],
+                                            'justificacion' => [
+                                                'type' => 'STRING',
+                                                'description' => 'Breve razón motivadora en español rioplatense (voseo) de por qué tiene esta posición.'
+                                            ]
                                         ],
-                                        'justificacion' => [
-                                            'type' => 'STRING',
-                                            'description' => 'Breve razón motivadora en español rioplatense (voseo) de por qué tiene esta posición.'
-                                        ]
-                                    ],
-                                    'required' => ['idTarea', 'justificacion']
+                                        'required' => ['idTarea', 'justificacion']
+                                    ]
                                 ]
-                            ]
-                        ],
-                        'required' => ['ordenOptimo']
+                            ],
+                            'required' => ['ordenOptimo']
+                        ]
                     ]
-                ]
-            ]);
+                ]);
 
-            if (!$response->successful()) {
-                return response()->json(['error' => 'Error al comunicarse con la API de IA: ' . $response->body()], 502);
+                if ($response->successful()) {
+                    break; // Salimos del bucle si fue exitoso
+                }
+
+                $ultimoError = "Modelo {$modelo} falló con código " . $response->status() . ": " . $response->body();
+            } catch (\Exception $e) {
+                $ultimoError = "Excepción en modelo {$modelo}: " . $e->getMessage();
             }
+        }
 
+        if (!$response || !$response->successful()) {
+            return response()->json(['error' => 'Error al comunicarse con la API de IA. Detalle: ' . $ultimoError], 502);
+        }
+
+        try {
             $resultadoJson = $response->json()['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
             $resultado = json_decode($resultadoJson, true);
 
@@ -263,7 +280,7 @@ class TareaController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Excepción durante la priorización con IA: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Excepción durante el procesamiento de la respuesta de la IA: ' . $e->getMessage()], 500);
         }
     }
 }

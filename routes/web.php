@@ -44,7 +44,9 @@ Route::middleware('auth.custom')->group(function () {
 
     // TAREAS
     Route::get('/tareas', [TareaController::class, 'index'])->name('tareas.index');
-    Route::get('/tareas/priorizar-ia', [TareaController::class, 'priorizarConIA'])->name('tareas.priorizar-ia');
+    Route::get('/tareas/priorizar-ia', [TareaController::class, 'priorizarConIA'])
+        ->name('tareas.priorizar-ia')
+        ->middleware('throttle:3,1440'); // Límite: 3 peticiones cada 1440 minutos (24hs)
     Route::get('/tareas/{id}', [TareaController::class, 'show'])->name('tareas.show');
     Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
@@ -62,21 +64,59 @@ Route::middleware('auth.custom')->group(function () {
     Route::put('/pomodoro/config/{id}', [PomodoroController::class, 'configUpdate'])->name('pomodoro.config.update');
     Route::delete('/pomodoro/config/{id}', [PomodoroController::class, 'configDestroy'])->name('pomodoro.config.destroy');
 
+    Route::get('/calendario', function () {
+        $userId = Auth::user()->idUsuario;
+
+        $tareas = \App\Models\Tarea::whereHas('perfil', function ($query) use ($userId) {
+            $query->where('idUsuario', $userId);
+        })
+        ->with('perfil')
+        ->get()
+        ->map(function ($tarea) {
+            return [
+                'id' => $tarea->idTarea,
+                'perfil' => $tarea->perfil ? $tarea->perfil->tituloPerfil : 'Sin perfil',
+                'nombre' => $tarea->tituloTarea,
+                'desc' => $tarea->descripcionTarea,
+                'fecha' => $tarea->fechaLimite ? \Carbon\Carbon::parse($tarea->fechaLimite)->format('Y-m-d') : null,
+                'prioridad' => $tarea->prioridadTarea ?? 'Media',
+            ];
+        })
+        ->filter(function ($tarea) {
+            return !is_null($tarea['fecha']);
+        })
+        ->values();
+
+        $perfiles = \App\Models\Perfil::where('idUsuario', $userId)->get();
+
+        return Inertia::render('Calendario', [
+            'tareasCargadas' => $tareas,
+            'perfilesDisponibles' => $perfiles
+        ]);
+    })->name('calendario');
+
+    Route::get('/perfil-usuario', function () {
+        $userId = Auth::user()->idUsuario;
+        $estadisticas = \App\Models\Estadistica::where('idUsuario', $userId)->first();
+        if (!$estadisticas) {
+            $estadisticas = (object) [
+                'rachaActual' => 0,
+                'rachaMasLarga' => 0,
+                'tareasTotales' => 0,
+                'tiempoTotalPomodoro' => 0,
+                'horasConcentracionDiaria' => 0
+            ];
+        }
+
+        return Inertia::render('PerfilUsuario', [
+            'estadisticas' => $estadisticas
+        ]);
+    })->name('perfil-usuario');
 });
 
 
 Route::get('/uso', function () {
     return Inertia::render('Uso');
 })->name('uso');
-
-
-
-Route::get('/calendario', function () {
-    return Inertia::render('Calendario');
-})->name('calendario');
-
-Route::get('/perfil-usuario', function () {
-    return Inertia::render('PerfilUsuario');
-})->name('perfil-usuario');
 
 require __DIR__.'/auth.php';

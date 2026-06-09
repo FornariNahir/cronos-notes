@@ -41,6 +41,17 @@ const loadingIA = ref(false);
 const errorIA = ref('');
 const msjIA = ref('');
 
+const filtroEstado = ref('Todos');
+const filtroPrioridad = ref('Todas');
+
+const tareasFiltradas = computed(() => {
+    return tareasList.value.filter(t => {
+        const coincideEstado = filtroEstado.value === 'Todos' || t.estadoTarea === filtroEstado.value;
+        const coincidePrioridad = filtroPrioridad.value === 'Todas' || t.prioridadTarea === filtroPrioridad.value;
+        return coincideEstado && coincidePrioridad;
+    });
+});
+
 const priorizarIA = async () => {
     loadingIA.value = true;
     errorIA.value = '';
@@ -216,6 +227,33 @@ const textoEstado = (estado) => {
         </div>
 
         <div v-if="perfilActivo">
+            <!-- Barra de Filtros -->
+            <div v-if="tareasList.length > 0" class="d-flex flex-wrap gap-3 mb-4 p-3 bg-white border rounded shadow-sm align-items-end">
+                <div class="flex-grow-1">
+                    <label class="form-label text-secondary small fw-medium mb-1">Filtrar por Estado</label>
+                    <select v-model="filtroEstado" class="form-select select-custom form-select-sm">
+                        <option value="Todos">Todos los estados</option>
+                        <option value="Pendiente">Pendientes</option>
+                        <option value="En Progreso">En Progreso</option>
+                        <option value="Completado">Completadas</option>
+                    </select>
+                </div>
+                <div class="flex-grow-1">
+                    <label class="form-label text-secondary small fw-medium mb-1">Filtrar por Prioridad</label>
+                    <select v-model="filtroPrioridad" class="form-select select-custom form-select-sm">
+                        <option value="Todas">Todas las prioridades</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Media">Media</option>
+                        <option value="Baja">Baja</option>
+                    </select>
+                </div>
+                <div>
+                    <button class="btn btn-light btn-sm text-secondary px-3 py-2 border" @click="filtroEstado='Todos'; filtroPrioridad='Todas'" title="Limpiar filtros">
+                        <i class="bi bi-eraser-fill"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
             <div v-if="msjIA" class="alert alert-info alert-dismissible fade show mb-4" role="alert">
                 <i class="bi bi-robot me-2"></i> {{ msjIA }}
                 <button type="button" class="btn-close" @click="msjIA = ''" aria-label="Close"></button>
@@ -225,9 +263,9 @@ const textoEstado = (estado) => {
                 <button type="button" class="btn-close" @click="errorIA = ''" aria-label="Close"></button>
             </div>
             
-            <div v-if="tareasList.length > 0" class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-tareas">
+            <div v-if="tareasFiltradas.length > 0" class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-tareas">
                 
-                <div v-for="tarea in tareasList" :key="tarea.idTarea" class="col-12 col-md-6 col-xl-4 item-tarea-col">
+                <div v-for="tarea in tareasFiltradas" :key="tarea.idTarea" class="col-12 col-md-6 col-xl-4 item-tarea-col">
                     <div class="card card-tarea h-100 p-3 bg-white border">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="fw-bold m-0 text-dark heading-titulo cursor-pointer btn-ver-detalle" @click="abrirDetalle(tarea)">
@@ -270,11 +308,12 @@ const textoEstado = (estado) => {
             <!-- Empty State Tareas -->
             <div v-else class="text-center py-5">
                 <div class="text-muted mb-3">
-                    <i class="bi bi-card-checklist fs-1"></i>
+                    <i class="bi fs-1" :class="tareasList.length > 0 ? 'bi-funnel' : 'bi-card-checklist'"></i>
                 </div>
-                <h5 class="fw-bold text-dark">Sin tareas asignadas</h5>
-                <p class="text-secondary small">Este perfil aún no cuenta con tareas pendientes o finalizadas.</p>
-                <button class="btn btn-outline-secondary px-4 mt-2" @click="abrirCrearTarea">Añadir Tarea</button>
+                <h5 class="fw-bold text-dark">{{ tareasList.length > 0 ? 'No se encontraron tareas' : 'Sin tareas asignadas' }}</h5>
+                <p class="text-secondary small">{{ tareasList.length > 0 ? 'Probá cambiando los filtros seleccionados.' : 'Este perfil aún no cuenta con tareas pendientes o finalizadas.' }}</p>
+                <button v-if="tareasList.length === 0" class="btn btn-outline-secondary px-4 mt-2" @click="abrirCrearTarea">Añadir Tarea</button>
+                <button v-else class="btn btn-outline-secondary px-4 mt-2" @click="filtroEstado='Todos'; filtroPrioridad='Todas'">Limpiar Filtros</button>
             </div>
 
             <footer class="d-flex gap-3 justify-content-start align-items-center mt-5 pt-3 border-top text-secondary small flex-wrap">

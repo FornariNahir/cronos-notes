@@ -16,34 +16,27 @@ class TareaController extends Controller
     {
         $perfilActivoId = session('perfilActivo');
         if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
+            return redirect()->route('gestion-perfil')
                 ->with('error', 'Selecciona un perfil primero');
         }
 
-        $mostrarCompletadas = $request->boolean('completadas');
-
-        $query = Tarea::where('idPerfil', $perfilActivoId);
-
-        if ($mostrarCompletadas) {
-            $query->where('estadoTarea', 'Completado');
-        } else {
-            $query->where('estadoTarea', '!=', 'Completado');
-        }
-
-        $tareas = $query->orderBy('fechaLimite', 'asc')->get();
+        // Retornamos todas las tareas del perfil para que la vista las filtre dinámicamente
+        $tareas = Tarea::where('idPerfil', $perfilActivoId)
+            ->orderBy('fechaLimite', 'asc')
+            ->get();
 
         $perfilActivo = Perfil::find($perfilActivoId);
 
-        return Inertia::render('Tasks/Index', [
+        return Inertia::render('GestionTareas', [
             'tareas' => $tareas,
-            'perfilActivo' => $perfilActivo,
-            'mostrarCompletadas' => $mostrarCompletadas
+            'perfilActivo' => $perfilActivo
         ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'idPerfil' => 'nullable|exists:Perfil,idPerfil',
             'tituloTarea' => 'required|string|max:45',
             'descripcionTarea' => 'nullable|string|max:200',
             'fechaLimite' => 'required|date|after_or_equal:today',
@@ -51,7 +44,7 @@ class TareaController extends Controller
             'estimacionEsfuerzo' => 'nullable|integer|min:1'
         ]);
 
-        $perfilActivoId = session('perfilActivo');
+        $perfilActivoId = $request->idPerfil ?? session('perfilActivo');
         if (!$perfilActivoId) {
             return redirect()->back()->with('error', 'No hay perfil activo');
         }
@@ -83,7 +76,9 @@ class TareaController extends Controller
     public function update(Request $request, $id)
     {
         $tarea = Tarea::where('idTarea', $id)
-            ->where('idPerfil', session('perfilActivo'))
+            ->whereHas('perfil', function ($query) {
+                $query->where('idUsuario', Auth::user()->idUsuario);
+            })
             ->firstOrFail();
 
         $request->validate([
@@ -123,7 +118,9 @@ class TareaController extends Controller
     public function completar($id)
     {
         $tarea = Tarea::where('idTarea', $id)
-            ->where('idPerfil', session('perfilActivo'))
+            ->whereHas('perfil', function ($query) {
+                $query->where('idUsuario', Auth::user()->idUsuario);
+            })
             ->firstOrFail();
 
         $tarea->update([
@@ -140,7 +137,9 @@ class TareaController extends Controller
     public function destroy($id)
     {
         $tarea = Tarea::where('idTarea', $id)
-            ->where('idPerfil', session('perfilActivo'))
+            ->whereHas('perfil', function ($query) {
+                $query->where('idUsuario', Auth::user()->idUsuario);
+            })
             ->firstOrFail();
 
         $tarea->delete();

@@ -30,6 +30,10 @@ Route::middleware('auth.custom')->group(function () {
     // DASHBOARD (principalGestion.html)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // GESTION DINAMICA
+    Route::get('/gestion-perfil', [PerfilController::class, 'index'])->name('gestion-perfil');
+    Route::get('/gestion-tareas', [TareaController::class, 'index'])->name('gestion-tareas');
+
     // PERFILES
     Route::get('/perfiles', [PerfilController::class, 'index'])->name('perfiles.index');
     Route::get('/perfiles/{id}', [PerfilController::class, 'show'])->name('perfiles.show');
@@ -65,13 +69,7 @@ Route::get('/uso', function () {
     return Inertia::render('Uso');
 })->name('uso');
 
-Route::get('/gestion-perfil', function () {
-    return Inertia::render('GestionPerfil');
-})->name('gestion-perfil');
 
-Route::get('/gestion-tareas', function () {
-    return Inertia::render('GestionTareas');
-})->name('gestion-tareas');
 
 Route::get('/calendario', function () {
     return Inertia::render('Calendario');

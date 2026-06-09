@@ -13,7 +13,7 @@ class PerfilController extends Controller
     {
         $perfiles = Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
 
-        return Inertia::render('Profiles/Index', [
+        return Inertia::render('GestionPerfil', [
             'perfiles' => $perfiles
         ]);
     }
@@ -48,7 +48,7 @@ class PerfilController extends Controller
             'idUsuario' => Auth::user()->idUsuario
         ]);
 
-        return redirect()->route('perfiles.index')->with('success', 'Perfil agregado exitosamente');
+        return redirect()->route('gestion-perfil')->with('success', 'Perfil agregado exitosamente');
     }
 
     public function show($id)
@@ -89,7 +89,7 @@ class PerfilController extends Controller
             'descripcionPerfil' => $request->descripcionPerfil
         ]);
 
-        return redirect()->route('perfiles.index')->with('success', 'Perfil actualizado');
+        return redirect()->route('gestion-perfil')->with('success', 'Perfil actualizado');
     }
 
     public function destroy($id)
@@ -100,13 +100,19 @@ class PerfilController extends Controller
 
         $perfil->delete();
 
-        return redirect()->route('perfiles.index')->with('success', 'Perfil eliminado');
+        return redirect()->route('gestion-perfil')->with('success', 'Perfil eliminado');
     }
 
     public function setActivo(Request $request)
     {
-        $request->validate(['idPerfil' => 'required|exists:Perfil,idPerfil']);
+        $request->validate([
+            'idPerfil' => 'required|exists:Perfil,idPerfil',
+            'redirect' => 'nullable|string'
+        ]);
         session(['perfilActivo' => $request->idPerfil]);
+        if ($request->filled('redirect')) {
+            return redirect($request->redirect);
+        }
         return redirect()->route('dashboard');
     }
 }

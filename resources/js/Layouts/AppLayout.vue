@@ -299,7 +299,7 @@ const toggleMode = () => {
 
 @media (max-width: 768px) {
   #sidebarToggle {
-    display: flex;
+    display: flex !important;
   }
   
   .sidebar {
@@ -312,7 +312,21 @@ const toggleMode = () => {
   
   #content {
     margin-left: 0;
-    padding-top: 70px; 
+    padding-top: 70px;
+  }
+
+  .top-bar {
+    margin-top: -70px;
+    padding-left: 64px;
+    border-radius: 0;
+  }
+
+  .search-container {
+    display: none;
+  }
+  
+  .top-bar-actions {
+    margin-left: auto;
   }
 }
 
@@ -323,8 +337,8 @@ const toggleMode = () => {
   align-items: center;
   padding: 16px 24px;
   background-color: #fff;
-  border-radius: 12px;
-  margin-bottom: 24px;
+  border-radius: 0;
+  margin: -20px -20px 24px -20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 

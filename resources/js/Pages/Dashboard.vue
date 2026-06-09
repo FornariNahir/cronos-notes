@@ -48,55 +48,6 @@
           </div>
         </div>
 
-        <!-- Tareas Section -->
-        <div class="tasks-section" style="margin-bottom: 40px;">
-          <div class="section-header" style="margin-bottom: 20px;">
-            <div>
-              <h2 class="section-title">Tareas pendientes</h2>
-              <p v-if="perfilActivo" class="section-subtitle">Tareas asignadas a tu perfil activo actual: <strong>{{ perfilActivo.tituloPerfil }}</strong></p>
-            </div>
-          </div>
-          
-          <div v-if="perfilActivo">
-            <div v-if="tareas.length > 0" class="tasks-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-              <div v-for="tarea in tareas" :key="tarea.idTarea" class="task-card-light">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
-                  <h3 style="font-size: 15px; font-weight: 600; color: #333; margin: 0;">{{ tarea.tituloTarea }}</h3>
-                  <span :style="{
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    backgroundColor: tarea.prioridadTarea === 'Alta' ? '#ffebeb' : (tarea.prioridadTarea === 'Media' ? '#fff4eb' : '#ebefff'),
-                    color: tarea.prioridadTarea === 'Alta' ? '#d32f2f' : (tarea.prioridadTarea === 'Media' ? '#f57c00' : '#1976d2'),
-                    whiteSpace: 'nowrap'
-                  }">
-                    {{ tarea.prioridadTarea || 'Baja' }}
-                  </span>
-                </div>
-                <p style="font-size: 13px; color: #666; margin: 8px 0 0 0; line-height: 1.4; flex-grow: 1;">{{ tarea.descripcionTarea }}</p>
-                <div style="margin-top: 12px; font-size: 11px; color: #999; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 8px;">
-                  <span style="display: flex; align-items: center; gap: 4px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>Vence: {{ formatDate(tarea.fechaLimite) || 'Sin fecha' }}</span>
-                  </span>
-                  <span v-if="tarea.estimacionEsfuerzo" style="font-weight: 600; color: #612c2d; display: flex; align-items: center; gap: 4px;">
-                    🍅 {{ tarea.sesiones_pomodoro_sum_ciclos_completados || 0 }}/{{ tarea.estimacionEsfuerzo }}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div v-else style="background-color: #fff; border-radius: 12px; padding: 32px; border: 1px dashed #e5e5e5; text-align: center; color: #666;">
-              No hay tareas pendientes en este perfil. ¡Buen trabajo!
-            </div>
-          </div>
-          <div v-else style="background-color: #fff; border-radius: 12px; padding: 32px; border: 1px dashed #e5e5e5; text-align: center; color: #666;">
-            Selecciona un perfil de la lista superior para activar tu espacio de trabajo y ver tus tareas pendientes.
-          </div>
-        </div>
-
         <!-- Statistics Section -->
         <div class="stats-section">
           <div class="section-header">

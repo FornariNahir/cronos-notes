@@ -157,8 +157,8 @@ const toggleMode = () => {
 
 <style scoped>
 .layout-container {
-  background-color: #141421;
-  color: white;
+  background-color: #f8f9fa;
+  color: #333;
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;

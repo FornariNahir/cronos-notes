@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
@@ -32,10 +32,40 @@ const esModoEdicion = ref(false);
 let tareaEditandoId = null;
 const tareaDetalle = ref({});
 
+const tareasList = ref([...props.tareas]);
+watch(() => props.tareas, (newVal) => {
+    tareasList.value = [...newVal];
+}, { deep: true });
+
+const loadingIA = ref(false);
+const errorIA = ref('');
+const msjIA = ref('');
+
+const priorizarIA = async () => {
+    loadingIA.value = true;
+    errorIA.value = '';
+    msjIA.value = '';
+    try {
+        const response = await fetch(route('tareas.priorizar-ia'));
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Error al priorizar las tareas');
+        }
+        
+        tareasList.value = data.tareas;
+        msjIA.value = data.explicacionGeneral;
+    } catch (error) {
+        errorIA.value = error.message;
+    } finally {
+        loadingIA.value = false;
+    }
+};
+
 // Estadísticas dinámicas calculadas desde las tareas
-const cantidadPendientes = computed(() => props.tareas.filter(t => t.estadoTarea === 'Pendiente').length);
-const cantidadProgreso = computed(() => props.tareas.filter(t => t.estadoTarea === 'En Progreso' || t.estadoTarea === 'En proceso').length);
-const cantidadFinalizadas = computed(() => props.tareas.filter(t => t.estadoTarea === 'Completado').length);
+const cantidadPendientes = computed(() => tareasList.value.filter(t => t.estadoTarea === 'Pendiente').length);
+const cantidadProgreso = computed(() => tareasList.value.filter(t => t.estadoTarea === 'En Progreso' || t.estadoTarea === 'En proceso').length);
+const cantidadFinalizadas = computed(() => tareasList.value.filter(t => t.estadoTarea === 'Completado').length);
 
 onMounted(() => {
     if (!document.querySelector('link[href*="bootstrap-icons"]')) {
@@ -167,6 +197,10 @@ const textoEstado = (estado) => {
             </div>
             
             <div class="d-flex align-items-center gap-2">
+                <button v-if="perfilActivo" class="btn btn-outline-info d-flex align-items-center gap-2 px-3 py-2" @click="priorizarIA" :disabled="loadingIA" title="Priorizar con IA">
+                    <i class="bi" :class="loadingIA ? 'bi-hourglass-split' : 'bi-magic'"></i>
+                    <span class="d-none d-md-inline">{{ loadingIA ? 'Priorizando...' : 'Priorizar con IA' }}</span>
+                </button>
                 <div class="btn-group conmutador-vistas-box" role="group" aria-label="Cambiar vista">
                     <button type="button" class="btn btn-vista" :class="{'active': esVistaGrid}" @click="esVistaGrid = true" title="Vista Tarjetas">
                         <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -182,9 +216,18 @@ const textoEstado = (estado) => {
         </div>
 
         <div v-if="perfilActivo">
-            <div v-if="tareas.length > 0" class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-tareas">
+            <div v-if="msjIA" class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-robot me-2"></i> {{ msjIA }}
+                <button type="button" class="btn-close" @click="msjIA = ''" aria-label="Close"></button>
+            </div>
+            <div v-if="errorIA" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorIA }}
+                <button type="button" class="btn-close" @click="errorIA = ''" aria-label="Close"></button>
+            </div>
+            
+            <div v-if="tareasList.length > 0" class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-tareas">
                 
-                <div v-for="tarea in tareas" :key="tarea.idTarea" class="col-12 col-md-6 col-xl-4 item-tarea-col">
+                <div v-for="tarea in tareasList" :key="tarea.idTarea" class="col-12 col-md-6 col-xl-4 item-tarea-col">
                     <div class="card card-tarea h-100 p-3 bg-white border">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="fw-bold m-0 text-dark heading-titulo cursor-pointer btn-ver-detalle" @click="abrirDetalle(tarea)">
@@ -195,6 +238,9 @@ const textoEstado = (estado) => {
                         <p class="text-secondary small text-desc flex-grow-1 cursor-pointer btn-ver-detalle" @click="abrirDetalle(tarea)">
                             {{ tarea.descripcionTarea || 'Sin descripción' }}
                         </p>
+                        <div v-if="tarea.sugerenciaIA" class="mt-2 mb-1 p-2 bg-light rounded text-dark small border-start border-3 border-info">
+                            <i class="bi bi-robot text-info me-1"></i> <strong>IA:</strong> {{ tarea.sugerenciaIA }}
+                        </div>
                         <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                             <span class="badge badge-estado" :class="claseEstado(tarea.estadoTarea)">
                                 <i class="bi me-1" :class="iconoEstado(tarea.estadoTarea)"></i> {{ textoEstado(tarea.estadoTarea) }}

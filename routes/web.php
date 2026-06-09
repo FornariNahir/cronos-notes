@@ -41,6 +41,7 @@ Route::middleware('auth.custom')->group(function () {
 
     // TAREAS
     Route::get('/tareas', [TareaController::class, 'index'])->name('tareas.index');
+    Route::get('/tareas/priorizar-ia', [TareaController::class, 'priorizarConIA'])->name('tareas.priorizar-ia');
     Route::get('/tareas/{id}', [TareaController::class, 'show'])->name('tareas.show');
     Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');

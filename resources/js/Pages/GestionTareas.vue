@@ -199,8 +199,13 @@ const textoEstado = (estado) => {
                             <span class="badge badge-estado" :class="claseEstado(tarea.estadoTarea)">
                                 <i class="bi me-1" :class="iconoEstado(tarea.estadoTarea)"></i> {{ textoEstado(tarea.estadoTarea) }}
                             </span>
-                            <div class="small text-muted metadata-fecha">
-                                <i class="bi bi-calendar-event me-1"></i> {{ formatDateView(tarea.fechaLimite) }}
+                            <div class="d-flex gap-3">
+                                <div class="small text-muted metadata-fecha" title="Esfuerzo Estimado">
+                                    <i class="bi bi-hourglass-split me-1 text-warning"></i> {{ tarea.estimacionEsfuerzo || 1 }}
+                                </div>
+                                <div class="small text-muted metadata-fecha">
+                                    <i class="bi bi-calendar-event me-1"></i> {{ formatDateView(tarea.fechaLimite) }}
+                                </div>
                             </div>
                         </div>
                         <div class="d-flex gap-2 mt-3 botonera-card">
@@ -277,6 +282,11 @@ const textoEstado = (estado) => {
                                 <option value="Baja">Baja</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small fw-medium">Estimación de Esfuerzo (Pomodoros)</label>
+                            <input type="number" v-model="formTarea.estimacionEsfuerzo" class="form-control input-custom" min="1" placeholder="Ej. 3">
+                            <div v-if="formTarea.errors.estimacionEsfuerzo" class="text-danger small mt-1">{{ formTarea.errors.estimacionEsfuerzo }}</div>
+                        </div>
                         <div v-if="esModoEdicion" class="mb-4">
                             <label class="form-label text-secondary small fw-medium">Estado</label>
                             <select v-model="formTarea.estadoTarea" class="form-select select-custom" required>
@@ -314,13 +324,19 @@ const textoEstado = (estado) => {
                         <p class="text-muted small lh-base m-0">{{ tareaDetalle.descripcionTarea || 'Sin descripción.' }}</p>
                     </div>
                     <div class="row g-3 mb-4 pt-2 border-top">
-                        <div class="col-6">
+                        <div class="col-4">
                             <div class="small text-uppercase text-secondary fw-bold text-lbl">Fecha Límite</div>
                             <div class="d-flex align-items-center gap-2 fw-semibold text-dark small mt-1">
                                 <i class="bi bi-calendar text-danger"></i> <span>{{ formatDateView(tareaDetalle.fechaLimite) }}</span>
                             </div>
                         </div>
-                        <div class="col-6">
+                        <div class="col-4">
+                            <div class="small text-uppercase text-secondary fw-bold text-lbl">Esfuerzo</div>
+                            <div class="d-flex align-items-center gap-2 fw-semibold text-dark small mt-1">
+                                <i class="bi bi-hourglass-split text-warning"></i> <span>{{ tareaDetalle.estimacionEsfuerzo || 1 }} Pomodoros</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
                             <div class="small text-uppercase text-secondary fw-bold text-lbl">Estado Actual</div>
                             <div class="d-flex align-items-center gap-2 fw-semibold text-dark small mt-1">
                                 <i class="bi bi-info-circle text-marron-institucional"></i> <span>{{ textoEstado(tareaDetalle.estadoTarea) }}</span>

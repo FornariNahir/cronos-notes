@@ -184,7 +184,7 @@ class TareaController extends Controller
             ];
         })->toArray();
 
-        $modelos = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+        $modelos = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-2.0-flash-lite'];
         $response = null;
         $ultimoError = '';
 
@@ -251,7 +251,8 @@ class TareaController extends Controller
         }
 
         if (!$response || !$response->successful()) {
-            return response()->json(['error' => 'Error al comunicarse con la API de IA. Detalle: ' . $ultimoError], 502);
+            \Illuminate\Support\Facades\Log::error('Fallo en priorizarConIA: ' . $ultimoError);
+            return response()->json(['error' => 'No pudimos priorizar tus tareas en este momento. Los servicios de inteligencia artificial no están disponibles. Por favor, intentá de nuevo en unos minutos.'], 502);
         }
 
         try {

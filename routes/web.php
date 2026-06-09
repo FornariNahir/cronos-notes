@@ -8,6 +8,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PomodoroController;
+use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
 
 Route::get('/', function () {
@@ -64,6 +65,9 @@ Route::middleware('auth.custom')->group(function () {
     Route::post('/pomodoro/config', [PomodoroController::class, 'configStore'])->name('pomodoro.config.store');
     Route::put('/pomodoro/config/{id}', [PomodoroController::class, 'configUpdate'])->name('pomodoro.config.update');
     Route::delete('/pomodoro/config/{id}', [PomodoroController::class, 'configDestroy'])->name('pomodoro.config.destroy');
+
+    // ESTADISTICAS (Global)
+    Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
 
     Route::get('/calendario', function () {
         $userId = Auth::user()->idUsuario;

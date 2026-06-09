@@ -58,8 +58,8 @@
                 <i class="fas fa-circle"></i> {{ tarea.estadoTarea }}
               </small>
               <small class="text-muted"><i class="fas fa-flag"></i> Prioridad: {{ tarea.prioridadTarea }}</small>
-              <small v-if="tarea.estimacionEsfuerzo" class="text-muted">
-                <i class="fas fa-hourglass-half"></i> Esfuerzo: {{ tarea.estimacionEsfuerzo }} Pomodoros
+              <small v-if="tarea.estimacionEsfuerzo" class="text-muted" style="font-weight: 500; color: #f28b82 !important;">
+                🍅 {{ tarea.sesiones_pomodoro_sum_ciclos_completados || 0 }}/{{ tarea.estimacionEsfuerzo }} Pomodoros
               </small>
             </div>
           </div>

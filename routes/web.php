@@ -8,6 +8,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PomodoroController;
+use App\Http\Controllers\ApunteController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -112,6 +113,14 @@ Route::middleware('auth.custom')->group(function () {
             'estadisticas' => $estadisticas
         ]);
     })->name('perfil-usuario');
+
+    // APUNTES
+    Route::get('/apuntes', [ApunteController::class, 'index'])->name('apuntes.index');
+    Route::get('/apuntes/crear', [ApunteController::class, 'create'])->name('apuntes.create');
+    Route::post('/apuntes', [ApunteController::class, 'store'])->name('apuntes.store');
+    Route::get('/apuntes/{id}/editar', [ApunteController::class, 'edit'])->name('apuntes.edit');
+    Route::put('/apuntes/{id}', [ApunteController::class, 'update'])->name('apuntes.update');
+    Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
 });
 
 

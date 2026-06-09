@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "db-setup": "php setup-db.php"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.3.25",
@@ -22,6 +23,7 @@
     },
     "dependencies": {
         "chart.js": "^4.5.1",
+        "lucide-vue-next": "^1.0.0",
         "vue-chartjs": "^5.3.3"
     }
 }

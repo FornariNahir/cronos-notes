@@ -64,4 +64,8 @@ Route::get('/uso', function () {
     return Inertia::render('Uso');
 })->name('uso');
 
+Route::get('/gestion-perfil', function () {
+    return Inertia::render('GestionPerfil');
+})->name('gestion-perfil');
+
 require __DIR__.'/auth.php';

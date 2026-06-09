@@ -1,6 +1,18 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { router } from '@inertiajs/vue3';
+
+const props = defineProps({
+    tareasCargadas: {
+        type: Array,
+        default: () => []
+    },
+    perfilesDisponibles: {
+        type: Array,
+        default: () => []
+    }
+});
 
 onMounted(() => {
     // 1. Cargar dinámicamente los iconos de Bootstrap si no están en el head
@@ -27,15 +39,11 @@ onMounted(() => {
 });
 
 function inicializarLogicaDOM() {
-    // 1. BASE DE DATOS LOCAL TEMPORAL (Estructura simulada para persistencia)
-    let tareasDB = [
-        { id: 1, perfil: "Programación en Ambientes WEB", nombre: "JWT Endpoints", desc: "Desarrollar controladores de autenticación usando JSON Web Tokens.", fecha: "2026-06-05", prioridad: "Alta" },
-        { id: 2, perfil: "Ingeniería de Software II", nombre: "Esquema Arquitectura", desc: "Presentar diagrama de despliegue del cluster.", fecha: "2026-06-12", prioridad: "Media" },
-        { id: 3, perfil: "Modelos y Simulación", nombre: "Simulación FlexSim", desc: "Optimización de la cadena logística de Astillero Regnicoli.", fecha: "2026-06-22", prioridad: "Baja" }
-    ];
+    // 1. BASE DE DATOS LOCAL TEMPORAL (ahora usa la data inyectada desde Inertia)
+    let tareasDB = [...props.tareasCargadas];
 
     // Variables de control cronológico
-    let fechaActual = new Date(2026, 5, 1); // Fijado en Junio de 2026 (index 5)
+    let fechaActual = new Date(); 
     let tareaSeleccionadaId = null;
 
     // Componentes del DOM
@@ -192,6 +200,12 @@ function inicializarLogicaDOM() {
         });
     }
 
+    // Observar los cambios que provengan del servidor cuando agregamos o borramos tareas
+    watch(() => props.tareasCargadas, (newTareas) => {
+        tareasDB = [...newTareas];
+        renderizarCalendario();
+    }, { deep: true });
+
     // Guardado de nueva tarea e inserción inmediata reactiva
     formTarea.addEventListener("submit", function (e) {
         e.preventDefault();
@@ -202,22 +216,19 @@ function inicializarLogicaDOM() {
             return;
         }
 
-        const nuevaTarea = {
-            id: Date.now(), // ID único basado en timestamp
-            perfil: perfilSelect.value,
-            nombre: document.getElementById("input-task-name").value,
-            desc: document.getElementById("input-task-desc").value,
-            fecha: inputDate.value, // Captura el string YYYY-MM-DD
-            prioridad: document.getElementById("input-task-priority").value
-        };
-
-        // Empujar a la base de datos interna y re-renderizar la grilla al instante
-        tareasDB.push(nuevaTarea);
-        renderizarCalendario();
-
-        // Cierre fluido del modal
-        modalCrear.hide();
-        formTarea.reset();
+        router.post(route('tareas.store'), {
+            idPerfil: perfilSelect.value,
+            tituloTarea: document.getElementById("input-task-name").value,
+            descripcionTarea: document.getElementById("input-task-desc").value,
+            fechaLimite: inputDate.value,
+            prioridadTarea: document.getElementById("input-task-priority").value,
+            estimacionEsfuerzo: 1 // o un default si no está
+        }, {
+            onSuccess: () => {
+                modalCrear.hide();
+                formTarea.reset();
+            }
+        });
     });
 
     // Acción de eliminar tarea desde la ventana emergente de detalles
@@ -225,10 +236,12 @@ function inicializarLogicaDOM() {
     if (btnEliminarTarea) {
         btnEliminarTarea.addEventListener("click", function () {
             if (tareaSeleccionadaId && confirm("¿Estás seguro de eliminar esta tarea del calendario de Cronos?")) {
-                tareasDB = tareasDB.filter(t => t.id !== tareaSeleccionadaId);
-                renderizarCalendario();
-                modalDetalle.hide();
-                tareaSeleccionadaId = null;
+                router.delete(route('tareas.destroy', tareaSeleccionadaId), {
+                    onSuccess: () => {
+                        modalDetalle.hide();
+                        tareaSeleccionadaId = null;
+                    }
+                });
             }
         });
     }
@@ -303,9 +316,7 @@ function inicializarLogicaDOM() {
                         <div class="d-flex align-items-center gap-2">
                             <select class="form-select select-perfil-header" id="modal-select-perfil" form="formNuevaTareaCalendario" required>
                                 <option value="" selected disabled>Seleccione Perfil</option>
-                                <option value="Programación en Ambientes WEB">Programación en Ambientes WEB</option>
-                                <option value="Ingeniería de Software II">Ingeniería de Software II</option>
-                                <option value="Modelos y Simulación">Modelos y Simulación</option>
+                                <option v-for="perfil in perfilesDisponibles" :key="perfil.idPerfil" :value="perfil.idPerfil">{{ perfil.tituloPerfil }}</option>
                             </select>
                             <button type="button" class="btn-close fs-small" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>

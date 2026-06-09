@@ -5,6 +5,17 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const page = usePage();
 
+const props = defineProps({
+    estadisticas: {
+        type: Object,
+        default: () => ({
+            rachaActual: 0,
+            tiempoTotalPomodoro: 0,
+            tareasTotales: 0
+        })
+    }
+});
+
 // Pull user properties dynamically if available, otherwise fallback to mock values
 const nombre = ref(page.props.auth?.user?.nombre || 'José Andrés');
 const apellido = ref(page.props.auth?.user?.apellido || 'Ayala');
@@ -123,7 +134,7 @@ const eliminarCuenta = () => {
     <div class="main-layout-container p-3 p-md-4">
         
         <div class="mb-4 mt-2">
-            <h1 class="h3 fw-bold text-dark m-0">Mi Perfil</h1>
+            <h1 class="h3 fw-bold text-dark m-0">Mis Datos</h1>
             <p class="text-secondary small m-0 mt-1">Gestiona tus datos personales y la seguridad de tu cuenta de acceso.</p>
         </div>
 
@@ -132,12 +143,8 @@ const eliminarCuenta = () => {
             <div class="col-12 col-md-4">
                 
                 <div class="card card-ajustes p-4 text-center mb-4">
-                    <div class="position-relative d-inline-block mx-auto mb-3">
-                        <img :src="avatarUrl" alt="Avatar" class="rounded-circle profile-avatar-lg border">
-                        <button @click="triggerFileSelect" class="btn btn-marron btn-sm btn-edit-photo rounded-circle position-absolute bottom-0 end-0" title="Cambiar Avatar">
-                            <i class="bi bi-camera-fill"></i>
-                        </button>
-                        <input type="file" ref="fileInput" @change="onAvatarChange" accept="image/*" style="display: none">
+                    <div class="mx-auto mb-3">
+                        <i class="bi bi-person-circle" style="font-size: 5rem; color: #dee2e6; line-height: 1;"></i>
                     </div>
                     <h5 class="fw-bold m-0 text-dark">{{ displayName }}</h5>
                     <p class="text-secondary small mb-3">{{ email }}</p>
@@ -149,7 +156,7 @@ const eliminarCuenta = () => {
                         <i class="bi bi-fire fs-3 text-danger animate-pulse"></i>
                         <h6 class="text-uppercase text-secondary small m-0 fw-bold tracking-wider">Racha Activa</h6>
                     </div>
-                    <div class="display-6 fw-bold text-marron-institucional">15 Días</div>
+                    <div class="display-6 fw-bold text-marron-institucional">{{ estadisticas.rachaActual }} Días</div>
                     <p class="text-secondary small m-0 mt-2">¡Increíble constancia! Seguí así para evitar el agotamiento.</p>
                 </div>
 
@@ -159,13 +166,13 @@ const eliminarCuenta = () => {
                         <div class="col-6">
                             <div class="bg-light rounded-3 p-2 border">
                                 <span class="small text-secondary d-block">Enfoque Total</span>
-                                <strong class="text-dark fs-5">42h 15m</strong>
+                                <strong class="text-dark fs-5">{{ Math.floor((estadisticas.tiempoTotalPomodoro || 0) / 60) }}h {{ (estadisticas.tiempoTotalPomodoro || 0) % 60 }}m</strong>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="bg-light rounded-3 p-2 border">
                                 <span class="small text-secondary d-block">Tareas OK</span>
-                                <strong class="text-dark fs-5">28</strong>
+                                <strong class="text-dark fs-5">{{ estadisticas.tareasTotales || 0 }}</strong>
                             </div>
                         </div>
                     </div>

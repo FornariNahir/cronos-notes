@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('Usuario', function (Blueprint $table) {
-            $table->id('idUsuario'); // Laravel usar├í esto como Primary Key
+            $table->id('idUsuario'); 
             $table->string('nombre', 50);
             $table->string('apellido', 50);
             $table->string('email', 100)->unique();

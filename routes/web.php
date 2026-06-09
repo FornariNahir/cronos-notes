@@ -8,6 +8,7 @@ use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PomodoroController;
+use App\Http\Controllers\ApunteController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -56,6 +57,14 @@ Route::middleware('auth.custom')->group(function () {
     Route::post('/pomodoro/config', [PomodoroController::class, 'configStore'])->name('pomodoro.config.store');
     Route::put('/pomodoro/config/{id}', [PomodoroController::class, 'configUpdate'])->name('pomodoro.config.update');
     Route::delete('/pomodoro/config/{id}', [PomodoroController::class, 'configDestroy'])->name('pomodoro.config.destroy');
+
+    // APUNTES
+    Route::get('/apuntes', [ApunteController::class, 'index'])->name('apuntes.index');
+    Route::get('/apuntes/crear', [ApunteController::class, 'create'])->name('apuntes.create');
+    Route::post('/apuntes', [ApunteController::class, 'store'])->name('apuntes.store');
+    Route::get('/apuntes/{id}/editar', [ApunteController::class, 'edit'])->name('apuntes.edit');
+    Route::put('/apuntes/{id}', [ApunteController::class, 'update'])->name('apuntes.update');
+    Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
 
 });
 

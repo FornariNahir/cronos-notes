@@ -104,12 +104,12 @@
           </Link>
         </li>
         <li>
-          <a href="#" class="nav-item" @click="closeSidebarOnMobile">
+          <Link :href="route('apuntes.index')" class="nav-item" :class="{ active: route().current('apuntes.index') || route().current('apuntes.create') || route().current('apuntes.edit') }" @click="closeSidebarOnMobile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
             Mis apuntes
-          </a>
+          </Link>
         </li>
         <li class="logout-li">
           <Link :href="route('logout')" method="post" as="button" class="nav-item nav-btn logout-btn" @click="closeSidebarOnMobile">

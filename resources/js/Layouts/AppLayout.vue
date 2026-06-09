@@ -27,7 +27,7 @@
           </Link>
         </li>
         <li>
-          <Link :href="route('perfiles.index')" class="nav-item" :class="{ active: route().current('perfiles.index') }" @click="closeSidebarOnMobile">
+          <Link href="/gestion-perfil" class="nav-item" :class="{ active: $page.url === '/gestion-perfil' }" @click="closeSidebarOnMobile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="7" height="7"/>
               <rect x="14" y="3" width="7" height="7"/>
@@ -35,6 +35,18 @@
               <rect x="3" y="14" width="7" height="7"/>
             </svg>
             Mis perfiles
+          </Link>
+        </li>
+        <li>
+          <Link href="/gestion-tareas" class="nav-item" :class="{ active: $page.url === '/gestion-tareas' }" @click="closeSidebarOnMobile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            Mis tareas
           </Link>
         </li>
         <li>
@@ -68,6 +80,7 @@
             Cambiar Modo
           </button>
         </li>
+
       </ul>
 
       <div class="nav-section-title">Pomodoro</div>

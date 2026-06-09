@@ -1,9 +1,7 @@
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-
-// Lista de elementos de modal movidos al body para poder limpiarlos al salir
-let modalesInstanciados = [];
 
 onMounted(() => {
     // 1. Cargar dinámicamente los iconos de Bootstrap si no están en el head
@@ -23,44 +21,26 @@ onMounted(() => {
         };
         document.head.appendChild(scriptBS);
     } else {
-        inicializarLogicaDOM();
+        setTimeout(() => {
+            inicializarLogicaDOM();
+        }, 50);
     }
-});
-
-onBeforeUnmount(() => {
-    // Limpieza de los modales en el body al desmontar el componente para evitar duplicaciones
-    modalesInstanciados.forEach(modal => {
-        if (modal && modal.parentNode) {
-            modal.parentNode.removeChild(modal);
-        }
-    });
 });
 
 function inicializarLogicaDOM() {
-    // Mover modales a la raíz del body para resolver el bug de z-index (pantalla oscurecida congelada)
     const modalPerfilElement = document.getElementById("modalCrearPerfil");
-    if (modalPerfilElement) {
-        document.body.appendChild(modalPerfilElement);
-        modalesInstanciados.push(modalPerfilElement);
-    }
-    
     const modalTareaElement = document.getElementById("modalAñadirTarea");
-    if (modalTareaElement) {
-        document.body.appendChild(modalTareaElement);
-        modalesInstanciados.push(modalTareaElement);
-    }
-
     const modalDetalleElement = document.getElementById("modalDetalleTarea");
-    if (modalDetalleElement) {
-        document.body.appendChild(modalDetalleElement);
-        modalesInstanciados.push(modalDetalleElement);
-    }
-
     const formPerfil = document.getElementById("formPerfil");
     const contenedorPerfiles = document.getElementById("contenedor-perfiles");
     const btnVistaGrid = document.getElementById("vista-grid-btn");
     const btnVistaList = document.getElementById("vista-list-btn");
-    
+
+    if (!modalPerfilElement || !modalTareaElement || !modalDetalleElement || !formPerfil || !contenedorPerfiles || !btnVistaGrid || !btnVistaList) {
+        console.warn("Algunos elementos del DOM no están listos en GestionPerfil.");
+        return;
+    }
+
     // Instancias únicas globales de los modales
     const modalPerfilInstance = new bootstrap.Modal(modalPerfilElement);
     const modalTareaInstance = new bootstrap.Modal(modalTareaElement);
@@ -116,7 +96,7 @@ function inicializarLogicaDOM() {
             const nuevaCardCol = document.createElement("div");
             nuevaCardCol.className = "col-12 col-md-6 col-xl-4 item-perfil-col";
             nuevaCardCol.innerHTML = `
-                <div class="card card-perfil h-100 p-3 bg-white border">
+                <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center gap-2 header-card-titulo">
                             <div class="icon-box-perfil p-2 border rounded"><i class="bi bi-folder-fill text-marron fs-5"></i></div>
@@ -141,27 +121,45 @@ function inicializarLogicaDOM() {
 
     // 3. CAPTURA POR DELEGACIÓN DE EVENTOS (Para tarjetas dinámicas)
     contenedorPerfiles.addEventListener("click", function (e) {
+        // 1. Eliminar perfil
         if (e.target.classList.contains("btn-eliminar-dinamico") || e.target.closest(".btn-outline-danger")) {
             const cardCol = e.target.closest(".item-perfil-col");
             if (confirm("¿Estás seguro de eliminar este perfil/espacio de trabajo de Cronos Notes?")) {
                 cardCol.remove();
             }
+            return;
         }
 
-        if (e.target.classList.contains("btn-editar-dinamico") && !e.target.hasAttribute("onclick")) {
-            const cardBox = e.target.closest(".card-perfil");
-            nodoPerfilAEditar = cardBox;
-            esModoEdicion = true;
+        // 2. Editar perfil (dinámico)
+        const btnEditar = e.target.closest(".btn-editar-dinamico");
+        if (btnEditar) {
+            if (!btnEditar.hasAttribute("onclick")) {
+                const cardBox = e.target.closest(".card-perfil");
+                nodoPerfilAEditar = cardBox;
+                esModoEdicion = true;
 
-            const tituloActual = cardBox.querySelector(".heading-titulo").textContent;
-            const descActual = cardBox.querySelector(".text-desc").textContent;
+                const tituloActual = cardBox.querySelector(".heading-titulo").textContent;
+                const descActual = cardBox.querySelector(".text-desc").textContent;
 
-            document.getElementById("inputTituloPerfil").value = tituloActual;
-            document.getElementById("inputDescPerfil").value = descActual;
-            document.getElementById("tituloModalPerfil").textContent = "Modificar Perfil";
-            document.getElementById("btnGuardarPerfil").textContent = "Guardar Cambios";
+                document.getElementById("inputTituloPerfil").value = tituloActual;
+                document.getElementById("inputDescPerfil").value = descActual;
+                document.getElementById("tituloModalPerfil").textContent = "Modificar Perfil";
+                document.getElementById("btnGuardarPerfil").textContent = "Guardar Cambios";
 
-            modalPerfilInstance.show(document.getElementById("falso-disparador-javascript"));
+                modalPerfilInstance.show(document.getElementById("falso-disparador-javascript"));
+            }
+            return;
+        }
+
+        // 3. Ignorar clics en el botón de tres puntos o el menú desplegable
+        if (e.target.classList.contains("bi-three-dots-vertical") || e.target.closest(".dropdown-menu")) {
+            return;
+        }
+
+        // 4. Navegar a la gestión de tareas al hacer clic en cualquier parte de la tarjeta de perfil
+        const cardBox = e.target.closest(".card-perfil");
+        if (cardBox) {
+            router.visit('/gestion-tareas');
         }
     });
 
@@ -238,7 +236,7 @@ function inicializarLogicaDOM() {
         <div class="row g-3 g-md-4 vista-grid" id="contenedor-perfiles">
             
             <div class="col-12 col-md-6 col-xl-4 item-perfil-col">
-                <div class="card card-perfil h-100 p-3 bg-white border">
+                <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center gap-2 header-card-titulo">
                             <div class="icon-box-perfil p-2 border rounded"><i class="bi bi-code-slash text-marron fs-5"></i></div>
@@ -256,25 +254,25 @@ function inicializarLogicaDOM() {
             </div>
 
             <div class="col-12 col-md-6 col-xl-4 item-perfil-col">
-                <div class="card card-perfil h-100 p-3 bg-white border container-click-emergente">
+                <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="d-flex align-items-center gap-2 header-card-titulo" data-bs-toggle="modal" data-bs-target="#modalDetalleTarea">
+                        <div class="d-flex align-items-center gap-2 header-card-titulo">
                             <div class="icon-box-perfil p-2 border rounded"><i class="bi bi-gear-fill text-marron fs-5"></i></div>
                             <h5 class="fw-bold m-0 text-dark heading-titulo">Ingeniería de Software II</h5>
                         </div>
                         <i class="bi bi-three-dots-vertical text-secondary cursor-pointer"></i>
                     </div>
-                    <p class="text-secondary small text-desc flex-grow-1" data-bs-toggle="modal" data-bs-target="#modalDetalleTarea">Haga clic aquí para ver la ventana emergente exacta con el diseño de la API de Autenticación.</p>
-                    <div class="small text-muted mb-3 metadata-tiempo" data-bs-toggle="modal" data-bs-target="#modalDetalleTarea"><i class="bi bi-clock me-1"></i> Última vez: Hace 5 días</div>
+                    <p class="text-secondary small text-desc flex-grow-1">Haga clic aquí para ver la gestión de tareas de este perfil.</p>
+                    <div class="small text-muted mb-3 metadata-tiempo"><i class="bi bi-clock me-1"></i> Última vez: Hace 5 días</div>
                     <div class="d-flex gap-2 botonera-card">
-                        <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-dinamico" onclick="abrirEditarPerfil('Ingeniería de Software II', 'Haga clic aquí para ver la ventana emergente exacta con el diseño de la API de Autenticación.')"><i class="bi bi-pencil me-1"></i> Editar</button>
+                        <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-dinamico" onclick="abrirEditarPerfil('Ingeniería de Software II', 'Haga clic aquí para ver la gestión de tareas de este perfil.')"><i class="bi bi-pencil me-1"></i> Editar</button>
                         <button class="btn btn-outline-danger w-50 btn-sm btn-eliminar-dinamico"><i class="bi bi-trash me-1"></i> Eliminar</button>
                     </div>
                 </div>
             </div>
 
             <div class="col-12 col-md-6 col-xl-4 item-perfil-col">
-                <div class="card card-perfil h-100 p-3 bg-white border">
+                <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center gap-2 header-card-titulo">
                             <div class="icon-box-perfil p-2 border rounded"><i class="bi bi-bar-chart-fill text-marron fs-5"></i></div>
@@ -294,6 +292,12 @@ function inicializarLogicaDOM() {
         </div>
     </div>
 
+    <!-- Botón Flotante Tarea -->
+    <button class="btn btn-marron btn-flotante-tarea shadow" data-bs-toggle="modal" data-bs-target="#modalAñadirTarea" title="Nueva Tarea">
+        <i class="bi bi-plus-lg fs-5"></i>
+    </button>
+
+    <Teleport to="body">
     <!-- Modal Detalle Tarea -->
     <div class="modal fade" id="modalDetalleTarea" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-custom-vertical">
@@ -384,11 +388,6 @@ function inicializarLogicaDOM() {
         </div>
     </div>
 
-    <!-- Botón Flotante Tarea -->
-    <button class="btn btn-marron btn-flotante-tarea shadow" data-bs-toggle="modal" data-bs-target="#modalAñadirTarea" title="Nueva Tarea">
-        <i class="bi bi-plus-lg fs-5"></i>
-    </button>
-
     <!-- Modal Añadir Tarea -->
     <div class="modal fade" id="modalAñadirTarea" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-custom-vertical">
@@ -435,10 +434,11 @@ function inicializarLogicaDOM() {
             </div>
         </div>
     </div>
+    </Teleport>
   </AppLayout>
 </template>
 
-<style scoped>
+<style>
 /* PALETA DE COLORES INSTITUCIONAL CRONOS NOTES */
 :root {
     --text-marron: #69342e;

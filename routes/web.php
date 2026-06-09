@@ -68,4 +68,8 @@ Route::get('/gestion-perfil', function () {
     return Inertia::render('GestionPerfil');
 })->name('gestion-perfil');
 
+Route::get('/gestion-tareas', function () {
+    return Inertia::render('GestionTareas');
+})->name('gestion-tareas');
+
 require __DIR__.'/auth.php';

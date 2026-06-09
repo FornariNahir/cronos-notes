@@ -286,7 +286,7 @@ const seleccionarPerfil = (idPerfil) => {
 
 // Redireccionar a la gestión de perfiles
 const irAPerfiles = () => {
-  router.visit(route('perfiles.index'));
+  router.visit('/gestion-perfil');
 };
 </script>
 

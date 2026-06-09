@@ -85,7 +85,9 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
    DB_USERNAME=root
    DB_PASSWORD=      # Coloca tu contraseña si usas XAMPP; déjalo vacío si usas Laragon
    ```
-3. Si deseas probar el **inicio de sesión con Google**, debes configurar tus credenciales en el archivo `.env`. Sigue estos pasos para obtenerlas en **Google Cloud Console**:
+3. **Clave de la API de Gemini (IA)**: El archivo `.env.example` ya incluye una clave de desarrollo compartida (`GEMINI_API_KEY`) para que todo el equipo pueda probar las funciones de Inteligencia Artificial inmediatamente sin configuraciones manuales. Al copiar el archivo en el paso 1, esta clave ya estará en tu entorno local.
+
+4. Si deseas probar el **inicio de sesión con Google**, debes configurar tus credenciales en el archivo `.env`. Sigue estos pasos para obtenerlas en **Google Cloud Console**:
     - **Paso A. Crear/Seleccionar Proyecto:**
       1. Ingresa a [Google Cloud Console](https://console.cloud.google.com/).
       2. Inicia sesión con tu cuenta de Google.

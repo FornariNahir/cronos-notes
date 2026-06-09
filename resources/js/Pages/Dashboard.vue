@@ -2,14 +2,6 @@
   <AppLayout>
     <div class="dashboard-page">
       <!-- Top Bar -->
-      <div class="topbar">
-        <div class="topbar-left">
-          <span>{{ currentFormattedDate }}</span>
-        </div>
-        <div class="topbar-right">
-          <span class="user-fullname">{{ $page.props.auth.user.nombre }} {{ $page.props.auth.user.apellido }}</span>
-        </div>
-      </div>
 
       <!-- Main Content Area -->
       <main class="main-content">
@@ -21,13 +13,7 @@
             <h2 class="section-title">Tus perfiles</h2>
             <p class="section-subtitle">Seguí organizando y avanzando en tus lugares de trabajo.</p>
           </div>
-          <button class="add-button" @click="irAPerfiles">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            Agregar perfil
-          </button>
+          
         </div>
 
         <div class="profiles-grid">
@@ -57,13 +43,7 @@
 
           <!-- Mensaje cuando no hay perfiles creados -->
           <div class="profile-card add-profile-card" @click="irAPerfiles" v-if="perfiles.length === 0">
-            <div class="profile-icon add-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </div>
-            <h3 class="profile-name">Crea tu primer perfil</h3>
+            <h3 class="profile-name">¡Aún no tienes perfiles creados!</h3>
             <p class="profile-date">Comienza a organizar tus tareas</p>
           </div>
         </div>

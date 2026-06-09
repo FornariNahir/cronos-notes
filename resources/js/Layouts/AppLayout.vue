@@ -183,7 +183,7 @@ const toggleMode = () => {
 .sidebar {
   width: 220px;
   background-color: #fff;
-  padding: 24px 16px;
+  padding: 12px 16px 24px 16px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #e5e5e5;
@@ -199,12 +199,13 @@ const toggleMode = () => {
 .logo-area {
   display: flex;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: -15px;
   padding: 0 8px;
 }
 
 .logo-icon img {
-  width: 130px;
+  margin-top: -15px;
+  width: 150px;
   height: auto;
   object-fit: contain;
 }

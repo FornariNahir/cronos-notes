@@ -72,4 +72,12 @@ Route::get('/gestion-tareas', function () {
     return Inertia::render('GestionTareas');
 })->name('gestion-tareas');
 
+Route::get('/calendario', function () {
+    return Inertia::render('Calendario');
+})->name('calendario');
+
+Route::get('/perfil-usuario', function () {
+    return Inertia::render('PerfilUsuario');
+})->name('perfil-usuario');
+
 require __DIR__.'/auth.php';

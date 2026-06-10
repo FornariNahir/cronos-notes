@@ -2,6 +2,17 @@
 import { onMounted, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
+import AlertModal from '@/Components/AlertModal.vue';
+
+import { ref } from 'vue';
+const showAlertModal = ref(false);
+const alertTitle = ref('');
+const alertMessage = ref('');
+const showCustomAlert = (title, message) => {
+  alertTitle.value = title;
+  alertMessage.value = message;
+  showAlertModal.value = true;
+};
 
 const props = defineProps({
     tareasCargadas: {
@@ -212,7 +223,7 @@ function inicializarLogicaDOM() {
 
         const perfilSelect = document.getElementById("modal-select-perfil");
         if (!perfilSelect || !perfilSelect.value) {
-            alert("Por favor, selecciona un perfil para la tarea.");
+            showCustomAlert("Atención", "Por favor, selecciona un perfil para la tarea.");
             return;
         }
 
@@ -395,6 +406,13 @@ function inicializarLogicaDOM() {
             </div>
         </div>
   </Teleport>
+
+    <AlertModal 
+      :show="showAlertModal" 
+      :title="alertTitle" 
+      :message="alertMessage" 
+      @close="showAlertModal = false" 
+    />
   </AppLayout>
 </template>
 

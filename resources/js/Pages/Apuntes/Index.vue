@@ -20,7 +20,7 @@
         <div v-for="apunte in apuntes" :key="apunte.idApunte" class="note-card">
           <div class="note-card-content" @click="editNote(apunte.idApunte)">
             <h3 class="note-title">{{ apunte.tituloApunte }}</h3>
-            <span class="note-date">📅 {{ formatDate(apunte.fechaCreacion) }}</span>
+            <span class="note-date"> {{ formatDate(apunte.fechaCreacion) }}</span>
             <p class="note-preview">{{ stripHtml(apunte.contenidoApunte) || 'Sin contenido en esta nota...' }}</p>
           </div>
           <div class="note-card-actions">
@@ -90,12 +90,12 @@ const deleteNote = (id) => {
 
 <style scoped>
 .notes-page {
-  background-color: #e8e5e1;
+  background-color: #f8f9fa;
   min-height: 100vh;
   padding: 40px;
   margin: -20px; /* Compensa el padding de AppLayout */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: #333;
+  color: #69342e;
 }
 
 .header-section {
@@ -111,13 +111,13 @@ const deleteNote = (id) => {
 .page-title {
   font-size: 28px;
   font-weight: 700;
-  color: #333;
+  color: #69342e;
   text-align: left;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #666;
+  color: #69342e;
   margin-top: 4px;
   text-align: left;
 }

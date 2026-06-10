@@ -10,7 +10,6 @@
       >
         <option v-for="o in FONTS" :key="o" :value="o">{{ o }}</option>
       </select>
-      <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
 
     <!-- Font size -->
@@ -23,7 +22,6 @@
       >
         <option v-for="o in SIZES" :key="o" :value="o">{{ o }}</option>
       </select>
-      <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
 
     <span class="mx-1 hidden h-6 w-px bg-border sm:block"></span>

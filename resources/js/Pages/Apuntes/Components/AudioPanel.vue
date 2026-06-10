@@ -35,47 +35,48 @@
         <X class="size-5" />
       </button>
 
-      <div class="space-y-3 rounded-lg bg-card p-3 text-card-foreground">
+      <div class="space-y-2 rounded-lg bg-card p-2.5 text-card-foreground">
         <div class="relative">
           <select
             aria-label="Micrófono"
-            class="w-full appearance-none rounded-md border border-border bg-card px-3 py-2 pr-8 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            class="w-full appearance-none rounded-md border border-border bg-card px-2.5 py-1.5 pr-8 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
           >
             <option>Micrófono</option>
             <option>Micrófono integrado</option>
             <option>Auriculares</option>
           </select>
-          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         </div>
         
         <div class="relative">
           <select
             aria-label="Guardar en"
-            class="w-full appearance-none rounded-md border border-border bg-card px-3 py-2 pr-8 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring"
+            class="w-full appearance-none rounded-md border border-border bg-card px-2.5 py-1.5 pr-8 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
           >
             <option>Guardar en</option>
             <option>Mis notas</option>
             <option>Carpeta de audio</option>
           </select>
-          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         </div>
       </div>
 
-      <div class="flex flex-1 flex-col items-center justify-center gap-6">
+      <br>
+      <div class="flex flex-1 flex-col items-center justify-center gap-4">
         <button
           type="button"
           @click="toggleRecording"
           :aria-label="recording ? 'Detener grabación' : 'Grabar audio'"
-          class="relative flex size-40 items-center justify-center rounded-full bg-card text-primary transition-transform hover:scale-105"
+          class="relative flex size-28 sm:size-32 items-center justify-center rounded-full bg-card text-primary transition-transform hover:scale-105"
         >
           <span v-if="recording" class="absolute inset-0 animate-ping rounded-full bg-card/40" aria-hidden="true"></span>
-          <Square v-if="recording" class="size-12 fill-current" />
-          <Mic v-else class="size-16" />
+          <Square v-if="recording" class="size-8 sm:size-10 fill-current" />
+          <Mic v-else class="size-10 sm:size-12" />
         </button>
 
         <div class="text-center">
-          <p class="text-2xl font-bold">{{ recording ? formattedTimer : "Grabar audio" }}</p>
-          <p v-if="recording" class="mt-1 text-sm text-primary-foreground/80">Grabando...</p>
+          <p class="text-xl sm:text-2xl font-bold">{{ recording ? formattedTimer : "Grabar audio" }}</p>
+          <p v-if="recording" class="mt-0.5 text-xs sm:text-sm text-primary-foreground/80">Grabando...</p>
         </div>
 
         <div v-if="audioUrl && !recording" class="w-full space-y-2">

@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 
 const props = defineProps({
   cornellMode: Boolean,
@@ -63,6 +63,14 @@ watch(() => props.modelValue, (newVal) => {
   if (mainEditor.value && mainEditor.value.innerHTML !== newVal) {
     mainEditor.value.innerHTML = newVal || ''
   }
+})
+
+watch(() => props.cornellMode, () => {
+  nextTick(() => {
+    if (mainEditor.value) {
+      mainEditor.value.innerHTML = props.modelValue || ''
+    }
+  })
 })
 
 onMounted(() => {

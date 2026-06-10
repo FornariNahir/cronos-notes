@@ -612,11 +612,6 @@ const cerrarModalAvanzado = () => {
               :class="{ active: activeTab === 'tab-gifs' }" 
               @click="activeTab = 'tab-gifs'"
             >Fondos Animados (GIF)</button>
-            <button 
-              class="tab-link" 
-              :class="{ active: activeTab === 'tab-sonidos' }" 
-              @click="activeTab = 'tab-sonidos'"
-            >Sonidos Howler.js</button>
           </div>
 
           <!-- Tab Fondos Estaticos -->
@@ -672,32 +667,6 @@ const cerrarModalAvanzado = () => {
                 <div class="mode-selectors">
                   <span class="mode-badge claro" :class="{ active: !isDarkMode }" @click.stop="aplicarCambioModo(false)">Sol</span>
                   <span class="mode-badge oscuro" :class="{ active: isDarkMode }" @click.stop="aplicarCambioModo(true)">Luna</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tab Sonidos Avanzados -->
-          <div v-show="activeTab === 'tab-sonidos'" class="tab-panel active">
-            <p class="section-hint-text">Elegí una pista inmersiva de Howler en bucle continuo:</p>
-            
-            <div v-for="(group, catName) in soundCategories" :key="catName" class="seccion-sonidos">
-              <div class="sound-category-header">
-                {{ catName === 'Naturaleza' ? '🌳 Sonidos de Naturaleza' : catName === 'Ambiente' ? '🏢 Sonidos de Ambiente' : '🧘 Sonidos de Meditación' }}
-              </div>
-              <div class="lista-audios-avanzados">
-                <div 
-                  v-for="(nombre, key) in group" 
-                  :key="key" 
-                  class="audio-row-item" 
-                  :class="{ playing: mixerState[key]?.active }"
-                  @click="toggleMixerSound(key)"
-                >
-                  <div class="d-flex-align">
-                    <i class="icon-audio-state">{{ getSoundEmoji(key) }}</i>
-                    <span>{{ nombre }}</span>
-                  </div>
-                  <span class="badge-howler">{{ catName }}</span>
                 </div>
               </div>
             </div>

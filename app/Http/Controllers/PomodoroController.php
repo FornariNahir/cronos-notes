@@ -131,7 +131,7 @@ class PomodoroController extends Controller
 
         $sesionActiva = session('sesionPomodoroActiva');
         if (!$sesionActiva) {
-            return response()->json(['error' => 'No hay sesión activa'], 400);
+            return redirect()->back()->withErrors(['error' => 'No hay sesión activa']);
         }
 
         $sesion = SesionPomodoro::find($sesionActiva['idSesion']);
@@ -155,7 +155,7 @@ class PomodoroController extends Controller
 
         $sesionActiva = session('sesionPomodoroActiva');
         if (!$sesionActiva) {
-            return response()->json(['error' => 'No hay sesión activa'], 400);
+            return redirect()->back()->withErrors(['error' => 'No hay sesión activa']);
         }
 
         $sesion = SesionPomodoro::find($sesionActiva['idSesion']);

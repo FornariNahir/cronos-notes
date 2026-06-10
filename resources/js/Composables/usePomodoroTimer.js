@@ -139,7 +139,7 @@ export function usePomodoroTimer(props) {
     if (!isRestored) {
       saveStateToStorage();
       if (localSesionActiva.value && !props.isGuest) {
-        router.patch(route('pomodoro.estado'), { estado: 'En Progreso' }, { preserveScroll: true, preserveState: true });
+        window.axios.patch(route('pomodoro.estado'), { estado: 'En Progreso' });
       }
     }
 
@@ -161,7 +161,7 @@ export function usePomodoroTimer(props) {
     clearInterval(timerInterval);
     saveStateToStorage();
     if (localSesionActiva.value && !props.isGuest) {
-      router.patch(route('pomodoro.estado'), { estado: 'Pausada' }, { preserveScroll: true, preserveState: true });
+      window.axios.patch(route('pomodoro.estado'), { estado: 'Pausada' });
     }
   };
 
@@ -177,7 +177,7 @@ export function usePomodoroTimer(props) {
     
     if (currentPhase.value === 'work') {
       if (!props.isGuest) {
-        axios.post(route('pomodoro.registrarTrabajo'), { minutosTrabajados: currentMinutos });
+        window.axios.post(route('pomodoro.registrarTrabajo'), { minutosTrabajados: currentMinutos });
       }
       if (currentCycle.value >= localSesionActiva.value.sesionesPrevioDescansoLargo) {
         currentPhase.value = 'longBreak';
@@ -195,12 +195,7 @@ export function usePomodoroTimer(props) {
       totalSeconds.value = localSesionActiva.value.duracionSesion * 60;
     }
 
-    if (localSesionActiva.value && !props.isGuest) {
-      router.patch(route('pomodoro.completarFase'), {
-        fase: currentPhase.value,
-        ciclo: currentCycle.value
-      }, { preserveScroll: true, preserveState: true });
-    }
+    // El backend ya fue notificado con registrarTrabajo arriba si era necesario
     
     timeLeft.value = totalSeconds.value;
     saveStateToStorage();
@@ -226,9 +221,18 @@ export function usePomodoroTimer(props) {
     const ciclosCompletados = currentCycle.value - 1 + (currentPhase.value !== 'work' ? 1 : 0);
     const finalEstado = ciclosCompletados >= ciclosObjetivo ? 'Completada' : 'Cancelada';
 
-    router.post(route('pomodoro.finalizar'), {
+    window.axios.post(route('pomodoro.finalizar'), {
       estado: finalEstado,
       minutosTrabajados: minutosIncompletos
+    }).then(() => {
+      window.location.href = route('pomodoro.index');
+    }).catch(error => {
+      if (error.response && error.response.status === 419) {
+        // CSRF expirado o sesión expirada: forzamos recarga para refrescar
+        window.location.reload();
+      } else {
+        window.location.href = route('pomodoro.index');
+      }
     });
   };
 

@@ -202,7 +202,7 @@ const textoEstado = (estado) => {
             <div>
                 <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Tareas por Perfil</h1>
                 <p class="text-marron-institucional small fw-semibold m-0 mt-1">
-                    <i class="bi bi-folder-fill me-1"></i> 
+                    <i :class="'bi ' + (perfilActivo?.iconoPerfil || 'bi-folder-fill') + ' me-1'"></i> 
                     <span class="text-uppercase">{{ perfilActivo ? perfilActivo.tituloPerfil : 'Sin perfil seleccionado' }}</span>
                 </p>
             </div>

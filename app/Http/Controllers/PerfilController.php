@@ -38,7 +38,8 @@ class PerfilController extends Controller
     {
         $request->validate([
             'tituloPerfil' => 'required|string|max:30',
-            'descripcionPerfil' => 'nullable|string|max:100'
+            'descripcionPerfil' => 'nullable|string|max:100',
+            'iconoPerfil' => 'nullable|string|max:50'
         ]);
 
         // Validar que el usuario no tenga otro perfil con el mismo nombre
@@ -61,6 +62,7 @@ class PerfilController extends Controller
         Perfil::create([
             'tituloPerfil' => $request->tituloPerfil,
             'descripcionPerfil' => $request->descripcionPerfil,
+            'iconoPerfil' => $request->iconoPerfil ?? 'bi-folder-fill',
             'idUsuario' => Auth::user()->idUsuario
         ]);
 
@@ -84,7 +86,8 @@ class PerfilController extends Controller
 
         $request->validate([
             'tituloPerfil' => 'required|string|max:30',
-            'descripcionPerfil' => 'nullable|string|max:100'
+            'descripcionPerfil' => 'nullable|string|max:100',
+            'iconoPerfil' => 'nullable|string|max:50'
         ]);
 
         // Validar que el usuario no tenga otro perfil con el mismo nombre
@@ -100,7 +103,8 @@ class PerfilController extends Controller
 
         $perfil->update([
             'tituloPerfil' => $request->tituloPerfil,
-            'descripcionPerfil' => $request->descripcionPerfil
+            'descripcionPerfil' => $request->descripcionPerfil,
+            'iconoPerfil' => $request->iconoPerfil ?? 'bi-folder-fill'
         ]);
 
         return redirect()->route('gestion-perfil')->with('success', 'Perfil actualizado');

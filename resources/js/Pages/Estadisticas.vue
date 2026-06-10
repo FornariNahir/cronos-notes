@@ -54,7 +54,7 @@ onMounted(() => {
   <AppLayout>
     <div class="main-layout-container fade-in">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 fw-bold m-0" style="color: var(--text-marron-institucional);">Estadísticas de Agustina</h1>
+        <h1 class="h3 fw-bold m-0" style="color: var(--text-marron-institucional);">Estadísticas de {{ $page.props.auth.user.nombre }} </h1>
       </div>
       <div class="d-flex justify-content-between align-items-center mb-4" style="margin-top: -20px;">
         <h2 class="h3 m-0" style="color: var(--text-marron-institucional); font-size: 15px;">Monitoreo detallado de tu actividad y hábitos de enfoque.</h2>

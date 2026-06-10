@@ -11,11 +11,26 @@ const props = defineProps({
 });
 
 const esVistaGrid = ref(true);
+const filtroActivo = ref('todos');
+
+const perfilesFiltrados = computed(() => {
+    if (filtroActivo.value === 'recientes') {
+        return [...props.perfiles].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+    return props.perfiles;
+});
+
+const iconosDisponibles = [
+    'bi-folder-fill', 'bi-briefcase-fill', 'bi-book-fill', 'bi-laptop', 
+    'bi-star-fill', 'bi-heart-fill', 'bi-house-fill', 'bi-palette-fill', 
+    'bi-rocket-takeoff-fill', 'bi-lightning-fill'
+];
 
 // Formularios Inertia
 const formPerfil = useForm({
     tituloPerfil: '',
-    descripcionPerfil: ''
+    descripcionPerfil: '',
+    iconoPerfil: 'bi-folder-fill'
 });
 
 const formTarea = useForm({
@@ -66,6 +81,7 @@ const abrirCrearPerfil = () => {
     esModoEdicion.value = false;
     perfilEditandoId = null;
     formPerfil.reset();
+    formPerfil.iconoPerfil = 'bi-folder-fill';
     formPerfil.clearErrors();
     if (modalPerfilInstance) modalPerfilInstance.show();
 };
@@ -75,6 +91,7 @@ const abrirEditarPerfil = (perfil) => {
     perfilEditandoId = perfil.idPerfil;
     formPerfil.tituloPerfil = perfil.tituloPerfil;
     formPerfil.descripcionPerfil = perfil.descripcionPerfil || '';
+    formPerfil.iconoPerfil = perfil.iconoPerfil || 'bi-folder-fill';
     formPerfil.clearErrors();
     if (modalPerfilInstance) modalPerfilInstance.show();
 };
@@ -164,17 +181,17 @@ const formatDate = (dateStr) => {
         </div>
 
         <div class="d-flex gap-2 mb-4 overflow-x-auto pb-2 barra-filtros-scroll">
-            <button class="btn btn-filtro active">Todos los Perfiles</button>
-            <button class="btn btn-filtro">Recientes</button>
+            <button class="btn btn-filtro" :class="{ active: filtroActivo === 'todos' }" @click="filtroActivo = 'todos'">Todos los Perfiles</button>
+            <button class="btn btn-filtro" :class="{ active: filtroActivo === 'recientes' }" @click="filtroActivo = 'recientes'">Recientes</button>
         </div>
 
         <div class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-perfiles">
             
-            <div v-for="perfil in perfiles" :key="perfil.idPerfil" class="col-12 col-md-6 col-xl-4 item-perfil-col">
+            <div v-for="perfil in perfilesFiltrados" :key="perfil.idPerfil" class="col-12 col-md-6 col-xl-4 item-perfil-col">
                 <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer" @click="seleccionarPerfil(perfil.idPerfil)">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="d-flex align-items-center gap-2 header-card-titulo">
-                            <div class="icon-box-perfil p-2 border rounded"><i class="bi bi-folder-fill text-marron fs-5"></i></div>
+                            <div class="icon-box-perfil p-2 border rounded"><i :class="'bi ' + (perfil.iconoPerfil || 'bi-folder-fill') + ' text-marron fs-5'"></i></div>
                             <h5 class="fw-bold m-0 text-dark heading-titulo">{{ perfil.tituloPerfil }}</h5>
                         </div>
                         <i class="bi bi-three-dots-vertical text-secondary cursor-pointer" @click.stop></i>
@@ -193,7 +210,7 @@ const formatDate = (dateStr) => {
             </div>
 
             <!-- Empty State -->
-            <div v-if="perfiles.length === 0" class="col-12 text-center py-5">
+            <div v-if="perfilesFiltrados.length === 0" class="col-12 text-center py-5">
                 <div class="text-muted mb-3">
                     <i class="bi bi-inboxes fs-1"></i>
                 </div>
@@ -225,6 +242,21 @@ const formatDate = (dateStr) => {
                                 <label class="form-label text-secondary small fw-medium">Título del Perfil</label>
                                 <input type="text" v-model="formPerfil.tituloPerfil" class="form-control input-custom" placeholder="Ej. Trabajo de Campo" required>
                                 <div v-if="formPerfil.errors.tituloPerfil" class="text-danger small mt-1">{{ formPerfil.errors.tituloPerfil }}</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-secondary small fw-medium">Icono del Perfil</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button 
+                                        type="button" 
+                                        v-for="icono in iconosDisponibles" 
+                                        :key="icono"
+                                        class="btn p-2 d-flex align-items-center justify-content-center border"
+                                        :class="formPerfil.iconoPerfil === icono ? 'border-marron text-marron bg-light shadow-sm' : 'border-secondary-subtle text-secondary bg-white'"
+                                        @click="formPerfil.iconoPerfil = icono"
+                                        style="width: 42px; height: 42px; border-radius: 10px; transition: all 0.2s;">
+                                        <i :class="'bi ' + icono + ' fs-5'"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label text-secondary small fw-medium">Descripción Corta</label>

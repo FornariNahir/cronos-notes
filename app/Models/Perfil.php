@@ -15,7 +15,8 @@ class Perfil extends Model
     protected $fillable = [
         'idUsuario',
         'tituloPerfil',
-        'descripcionPerfil'
+        'descripcionPerfil',
+        'iconoPerfil'
     ];
 
     // Relación Inversa: Un Perfil PERTENECE A un Usuario (belongsTo)

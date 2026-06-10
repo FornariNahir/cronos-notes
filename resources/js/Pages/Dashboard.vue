@@ -5,7 +5,7 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
-        <h1 class="welcome-title">¡Bienvenida, {{ $page.props.auth.user.nombre }}!</h1>
+        <h1 class="welcome-title">¡Bienvenido, {{ $page.props.auth.user.nombre }}!</h1>
 
         <!-- Profiles Section -->
         <div class="section-header">
@@ -25,16 +25,12 @@
             :class="{ 'active-card': perfilActivo && perfilActivo.idPerfil === perfil.idPerfil }"
             @click="seleccionarPerfil(perfil.idPerfil)"
           >
-            <div class="profile-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-                <polyline points="2 17 12 22 22 17"/>
-                <polyline points="2 12 12 17 22 12"/>
-              </svg>
+            <div class="profile-icon d-flex align-items-center justify-content-center">
+              <i :class="'bi ' + (perfil.iconoPerfil || 'bi-folder-fill')" style="font-size: 1.5rem;"></i>
             </div>
             <h3 class="profile-name">{{ perfil.tituloPerfil }}</h3>
             <p class="profile-date">
-              {{ perfilActivo && perfilActivo.idPerfil === perfil.idPerfil ? '🟢 Perfil Activo' : 'Haz clic para seleccionar' }}
+              {{ perfilActivo && perfilActivo.idPerfil === perfil.idPerfil ? 'Perfil Activo' : 'Haz clic para seleccionar' }}
             </p>
             <div class="progress-bar">
               <div class="progress-fill" :style="{ width: (animateProgress ? calcularProgreso(perfil) : 0) + '%' }"></div>

@@ -294,8 +294,10 @@ const toggleSettingsPanel = (e) => {
 };
 
 const abrirModalAvanzado = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  if (e) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+  }
   settingsPanelOpen.value = false;
   modalAvanzadoOpen.value = true;
 };
@@ -387,6 +389,20 @@ function makeDraggable(element) {
         >
           <i class="bi bi-house-door-fill"></i>
         </Link>
+        <button 
+          @click="aplicarCambioModo(!isDarkMode)" 
+          class="floating-btn" 
+          :title="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'"
+        >
+          <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
+        </button>
+        <button 
+          @click="abrirModalAvanzado" 
+          class="floating-btn" 
+          title="Configuración Avanzada"
+        >
+          <i class="bi bi-gear-fill"></i>
+        </button>
       </div>
       <!-- Background Video support -->
       <video 
@@ -446,22 +462,7 @@ function makeDraggable(element) {
 
         <div class="settings-panel" :class="{ open: settingsPanelOpen }">
           <div class="settings-content">
-            
-            <div class="setting-row pb-2 border-bottom-setting">
-              <div class="setting-label">
-                <svg class="mode-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                </svg>
-                <span>Modo Oscuro</span>
-              </div>
-              <button class="toggle-switch" :class="{ active: isDarkMode }" @click="aplicarCambioModo(!isDarkMode)">
-                <span class="toggle-slider"></span>
-              </button>
-            </div>
-
-            <div class="sound-header mt-2">SONIDO DE SESIÓN</div>
+            <div class="sound-header">SONIDO DE SESIÓN</div>
             <div class="sound-options">
               <button 
                 class="sound-option" 
@@ -497,14 +498,6 @@ function makeDraggable(element) {
                 @click="toggleSound('Lluvia')"
               >
                 Lluvia
-              </button>
-              
-              <button type="button" class="sound-option opcion-tuerca-mas" @click="abrirModalAvanzado">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-                <strong>Más opciones...</strong>
               </button>
             </div>
           </div>
@@ -681,6 +674,7 @@ function makeDraggable(element) {
   top: 20px;
   right: 20px;
   display: flex;
+  flex-direction: column;
   gap: 10px;
   z-index: 1005; /* Above widgets */
 }
@@ -822,14 +816,7 @@ function makeDraggable(element) {
 .sound-option.active span:first-child {
   background: rgba(255, 255, 255, 0.25) !important;
 }
-.opcion-tuerca-mas {
-  border-top: 1px solid rgba(0,0,0,0.06) !important; border-radius: 0 0 12px 12px !important;
-  margin-top: 4px; padding: 12px !important; color: #69342e !important;
-}
-.opcion-tuerca-mas:hover {
-  background: rgba(105, 52, 46, 0.05) !important;
-  padding-left: 16px !important;
-}
+
 
 /* Modo Oscuro Overrides para Sonidos */
 .pomodoro-zen-container.dark-mode .sound-option {
@@ -848,18 +835,12 @@ function makeDraggable(element) {
 .pomodoro-zen-container.dark-mode .sound-option.active span:first-child {
   background: rgba(97, 44, 45, 0.15) !important;
 }
-.pomodoro-zen-container.dark-mode .opcion-tuerca-mas {
-  border-top-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-.pomodoro-zen-container.dark-mode .opcion-tuerca-mas:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-}
+
 
 /* Switches de Modos Sincronizados */
 .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .setting-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #8a7065; }
-.border-bottom-setting { border-bottom: 1px solid rgba(0,0,0,0.06); }
+
 
 .toggle-switch {
   position: relative; width: 44px; height: 22px; background: #ced4da; border-radius: 22px; border: none; cursor: pointer;

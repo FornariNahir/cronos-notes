@@ -60,28 +60,28 @@ const bancoSonidos = {
 };
 
 const bancoFondos = {
-  'paisaje1': { claro: '/imagenes/atardecer.png', oscuro: '/imagenes/noche.png', nombre: 'Paisaje 1' },
-  'paisaje2': { claro: '/imagenes/paisaje2-claro.jpg', oscuro: '/imagenes/paisaje2-oscuro.jpeg', nombre: 'Paisaje 2' },
-  'paisaje3': { claro: '/imagenes/paisaje3-claro.png', oscuro: '/imagenes/paisaje3-oscuro.jpg', nombre: 'Paisaje 3' },
-  'paisaje4': { claro: '/imagenes/paisaje4-claro.png', oscuro: '/imagenes/paisaje4-oscuro.jpg', nombre: 'Paisaje 4' },
-  'paisaje5': { claro: '/imagenes/paisaje5-claro.png', oscuro: '/imagenes/paisaje5-oscuro.jpg', nombre: 'Paisaje 5' },
-  'paisaje6': { claro: '/imagenes/paisaje6-claro.jpg', oscuro: '/imagenes/paisaje6-oscuro.png', nombre: 'Paisaje 6' },
-  'paisaje7': { claro: '/imagenes/paisaje7-claro.png', oscuro: '/imagenes/paisaje7-oscuro.jpg', nombre: 'Paisaje 7' },
-  'paisaje8': { claro: '/imagenes/paisaje8-claro.png', oscuro: '/imagenes/paisaje8-oscuro.jpg', nombre: 'Paisaje 8' },
-  'paisaje9': { claro: '/imagenes/paisaje9-claro.png', oscuro: '/imagenes/paisaje9-oscuro.png', nombre: 'Paisaje 9' },
+  'paisaje1': { claro: '/imagenes/atardecer.webp', oscuro: '/imagenes/noche.webp', nombre: 'Paisaje 1' },
+  'paisaje2': { claro: '/imagenes/paisaje2-claro.webp', oscuro: '/imagenes/paisaje2-oscuro.webp', nombre: 'Paisaje 2' },
+  'paisaje3': { claro: '/imagenes/paisaje3-claro.webp', oscuro: '/imagenes/paisaje3-oscuro.webp', nombre: 'Paisaje 3' },
+  'paisaje4': { claro: '/imagenes/paisaje4-claro.webp', oscuro: '/imagenes/paisaje4-oscuro.webp', nombre: 'Paisaje 4' },
+  'paisaje5': { claro: '/imagenes/paisaje5-claro.webp', oscuro: '/imagenes/paisaje5-oscuro.webp', nombre: 'Paisaje 5' },
+  'paisaje6': { claro: '/imagenes/paisaje6-claro.webp', oscuro: '/imagenes/paisaje6-oscuro.webp', nombre: 'Paisaje 6' },
+  'paisaje7': { claro: '/imagenes/paisaje7-claro.webp', oscuro: '/imagenes/paisaje7-oscuro.webp', nombre: 'Paisaje 7' },
+  'paisaje8': { claro: '/imagenes/paisaje8-claro.webp', oscuro: '/imagenes/paisaje8-oscuro.webp', nombre: 'Paisaje 8' },
+  'paisaje9': { claro: '/imagenes/paisaje9-claro.webp', oscuro: '/imagenes/paisaje9-oscuro.webp', nombre: 'Paisaje 9' },
   'paisaje4-gif': { 
     claro: '/gif/paisaje4-claroGif.mp4', 
     oscuro: '/gif/paisaje4-oscuroGif.mp4', 
-    claroPreview: '/imagenes/paisaje4-claro.png',
-    oscuroPreview: '/imagenes/paisaje4-oscuro.jpg',
+    claroPreview: '/imagenes/paisaje4-claro.webp',
+    oscuroPreview: '/imagenes/paisaje4-oscuro.webp',
     nombre: 'Paisaje 4 Animado', 
     isVideo: true 
   },
   'paisaje9-gif': { 
     claro: '/gif/paisaje9-claroGif.mp4', 
     oscuro: '/gif/paisaje9-oscuroGif.mp4', 
-    claroPreview: '/imagenes/paisaje9-claro.png',
-    oscuroPreview: '/imagenes/paisaje9-oscuro.png',
+    claroPreview: '/imagenes/paisaje9-claro.webp',
+    oscuroPreview: '/imagenes/paisaje9-oscuro.webp',
     nombre: 'Paisaje 9 Animado', 
     isVideo: true 
   }
@@ -634,32 +634,32 @@ function makeDraggable(element) {
 
 <style>
 /* FONDOS AMBIENTALES DINÁMICOS POR CLASES (Resuelven rutas relativas al CSS) */
-.pomodoro-zen-container.fondo-paisaje1-claro { background-image: url('/imagenes/atardecer.png'); }
-.pomodoro-zen-container.fondo-paisaje1-oscuro { background-image: url('/imagenes/noche.png'); }
+.pomodoro-zen-container.fondo-paisaje1-claro { background-image: url('/imagenes/atardecer.webp'); }
+.pomodoro-zen-container.fondo-paisaje1-oscuro { background-image: url('/imagenes/noche.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje2-claro { background-image: url('/imagenes/paisaje2-claro.jpg'); }
-.pomodoro-zen-container.fondo-paisaje2-oscuro { background-image: url('/imagenes/paisaje2-oscuro.jpeg'); }
+.pomodoro-zen-container.fondo-paisaje2-claro { background-image: url('/imagenes/paisaje2-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje2-oscuro { background-image: url('/imagenes/paisaje2-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje3-claro { background-image: url('/imagenes/paisaje3-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje3-oscuro { background-image: url('/imagenes/paisaje3-oscuro.jpg'); }
+.pomodoro-zen-container.fondo-paisaje3-claro { background-image: url('/imagenes/paisaje3-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje3-oscuro { background-image: url('/imagenes/paisaje3-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje4-claro { background-image: url('/imagenes/paisaje4-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje4-oscuro { background-image: url('/imagenes/paisaje4-oscuro.jpg'); }
+.pomodoro-zen-container.fondo-paisaje4-claro { background-image: url('/imagenes/paisaje4-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje4-oscuro { background-image: url('/imagenes/paisaje4-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje5-claro { background-image: url('/imagenes/paisaje5-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje5-oscuro { background-image: url('/imagenes/paisaje5-oscuro.jpg'); }
+.pomodoro-zen-container.fondo-paisaje5-claro { background-image: url('/imagenes/paisaje5-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje5-oscuro { background-image: url('/imagenes/paisaje5-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje6-claro { background-image: url('/imagenes/paisaje6-claro.jpg'); }
-.pomodoro-zen-container.fondo-paisaje6-oscuro { background-image: url('/imagenes/paisaje6-oscuro.png'); }
+.pomodoro-zen-container.fondo-paisaje6-claro { background-image: url('/imagenes/paisaje6-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje6-oscuro { background-image: url('/imagenes/paisaje6-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje7-claro { background-image: url('/imagenes/paisaje7-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje7-oscuro { background-image: url('/imagenes/paisaje7-oscuro.jpg'); }
+.pomodoro-zen-container.fondo-paisaje7-claro { background-image: url('/imagenes/paisaje7-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje7-oscuro { background-image: url('/imagenes/paisaje7-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje8-claro { background-image: url('/imagenes/paisaje8-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje8-oscuro { background-image: url('/imagenes/paisaje8-oscuro.jpg'); }
+.pomodoro-zen-container.fondo-paisaje8-claro { background-image: url('/imagenes/paisaje8-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje8-oscuro { background-image: url('/imagenes/paisaje8-oscuro.webp'); }
 
-.pomodoro-zen-container.fondo-paisaje9-claro { background-image: url('/imagenes/paisaje9-claro.png'); }
-.pomodoro-zen-container.fondo-paisaje9-oscuro { background-image: url('/imagenes/paisaje9-oscuro.png'); }
+.pomodoro-zen-container.fondo-paisaje9-claro { background-image: url('/imagenes/paisaje9-claro.webp'); }
+.pomodoro-zen-container.fondo-paisaje9-oscuro { background-image: url('/imagenes/paisaje9-oscuro.webp'); }
 
 /* Contenedor Zen Pomodoro adaptado al Layout */
 .pomodoro-zen-container {
@@ -934,25 +934,25 @@ function makeDraggable(element) {
 }
 
 /* Previsualizaciones de paisajes (Rutas absolutas) */
-.opcion-img-card[data-landscape="paisaje1"] .img-preview { background-image: url('/imagenes/atardecer.png'); }
-.opcion-img-card[data-landscape="paisaje2"] .img-preview { background-image: url('/imagenes/paisaje2-claro.jpg'); }
-.opcion-img-card[data-landscape="paisaje3"] .img-preview { background-image: url('/imagenes/paisaje3-claro.png'); }
-.opcion-img-card[data-landscape="paisaje4"] .img-preview { background-image: url('/imagenes/paisaje4-claro.png'); }
-.opcion-img-card[data-landscape="paisaje5"] .img-preview { background-image: url('/imagenes/paisaje5-claro.png'); }
-.opcion-img-card[data-landscape="paisaje6"] .img-preview { background-image: url('/imagenes/paisaje6-claro.jpg'); }
-.opcion-img-card[data-landscape="paisaje7"] .img-preview { background-image: url('/imagenes/paisaje7-claro.png'); }
-.opcion-img-card[data-landscape="paisaje8"] .img-preview { background-image: url('/imagenes/paisaje8-claro.png'); }
-.opcion-img-card[data-landscape="paisaje9"] .img-preview { background-image: url('/imagenes/paisaje9-claro.png'); }
+.opcion-img-card[data-landscape="paisaje1"] .img-preview { background-image: url('/imagenes/atardecer.webp'); }
+.opcion-img-card[data-landscape="paisaje2"] .img-preview { background-image: url('/imagenes/paisaje2-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje3"] .img-preview { background-image: url('/imagenes/paisaje3-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje4"] .img-preview { background-image: url('/imagenes/paisaje4-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje5"] .img-preview { background-image: url('/imagenes/paisaje5-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje6"] .img-preview { background-image: url('/imagenes/paisaje6-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje7"] .img-preview { background-image: url('/imagenes/paisaje7-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje8"] .img-preview { background-image: url('/imagenes/paisaje8-claro.webp'); }
+.opcion-img-card[data-landscape="paisaje9"] .img-preview { background-image: url('/imagenes/paisaje9-claro.webp'); }
 
-.dark-mode .opcion-img-card[data-landscape="paisaje1"] .img-preview { background-image: url('/imagenes/noche.png'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje2"] .img-preview { background-image: url('/imagenes/paisaje2-oscuro.jpeg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje3"] .img-preview { background-image: url('/imagenes/paisaje3-oscuro.jpg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje4"] .img-preview { background-image: url('/imagenes/paisaje4-oscuro.jpg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje5"] .img-preview { background-image: url('/imagenes/paisaje5-oscuro.jpg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje6"] .img-preview { background-image: url('/imagenes/paisaje6-oscuro.png'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje7"] .img-preview { background-image: url('/imagenes/paisaje7-oscuro.jpg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje8"] .img-preview { background-image: url('/imagenes/paisaje8-oscuro.jpg'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje9"] .img-preview { background-image: url('/imagenes/paisaje9-oscuro.png'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje1"] .img-preview { background-image: url('/imagenes/noche.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje2"] .img-preview { background-image: url('/imagenes/paisaje2-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje3"] .img-preview { background-image: url('/imagenes/paisaje3-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje4"] .img-preview { background-image: url('/imagenes/paisaje4-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje5"] .img-preview { background-image: url('/imagenes/paisaje5-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje6"] .img-preview { background-image: url('/imagenes/paisaje6-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje7"] .img-preview { background-image: url('/imagenes/paisaje7-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje8"] .img-preview { background-image: url('/imagenes/paisaje8-oscuro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje9"] .img-preview { background-image: url('/imagenes/paisaje9-oscuro.webp'); }
 
 .landscape-name {
   font-size: 11px;
@@ -1006,11 +1006,11 @@ function makeDraggable(element) {
 }
 
 /* Previsualizaciones del paisaje animado (Rutas absolutas) */
-.opcion-img-card[data-landscape="paisaje4-gif"] .img-preview { background-image: url('/imagenes/paisaje4-claro.png'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje4-gif"] .img-preview { background-image: url('/imagenes/paisaje4-oscuro.jpg'); }
+.opcion-img-card[data-landscape="paisaje4-gif"] .img-preview { background-image: url('/imagenes/paisaje4-claro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje4-gif"] .img-preview { background-image: url('/imagenes/paisaje4-oscuro.webp'); }
 
-.opcion-img-card[data-landscape="paisaje9-gif"] .img-preview { background-image: url('/imagenes/paisaje9-claro.png'); }
-.dark-mode .opcion-img-card[data-landscape="paisaje9-gif"] .img-preview { background-image: url('/imagenes/paisaje9-oscuro.png'); }
+.opcion-img-card[data-landscape="paisaje9-gif"] .img-preview { background-image: url('/imagenes/paisaje9-claro.webp'); }
+.dark-mode .opcion-img-card[data-landscape="paisaje9-gif"] .img-preview { background-image: url('/imagenes/paisaje9-oscuro.webp'); }
 
 .sound-category-header {
   font-size: 11px;

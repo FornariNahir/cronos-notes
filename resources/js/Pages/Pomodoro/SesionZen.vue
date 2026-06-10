@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
 import ProfileSelectionModal from '@/Components/ProfileSelectionModal.vue';
+import AlertModal from '@/Components/AlertModal.vue';
 
 const props = defineProps({
   configs: {
@@ -24,6 +25,15 @@ const props = defineProps({
     default: false
   }
 });
+
+const showAlertModal = ref(false);
+const alertTitle = ref('');
+const alertMessage = ref('');
+const showCustomAlert = (title, message) => {
+  alertTitle.value = title;
+  alertMessage.value = message;
+  showAlertModal.value = true;
+};
 
 const page = usePage();
 
@@ -326,12 +336,12 @@ const startTimerWrapper = (isRestored = false) => {
   }
   startTimer(null, () => {
     if (localSesionActiva.value) {
-      alert("¡Tiempo cumplido!");
+      showCustomAlert("¡Tiempo cumplido!", "El pomodoro ha finalizado exitosamente.");
     } else {
       if (currentPhase.value === 'work') {
-        alert("¡Sesión de trabajo finalizada! Es hora de un descanso.");
+        showCustomAlert("¡Sesión finalizada!", "¡Sesión de trabajo finalizada! Es hora de un descanso.");
       } else {
-        alert("¡Descanso terminado! Volvemos al trabajo.");
+        showCustomAlert("¡Descanso terminado!", "¡Descanso terminado! Volvemos al trabajo.");
       }
     }
     completePhase();
@@ -414,7 +424,10 @@ const cerrarModalAvanzado = () => {
 
 <template>
   <component :is="isGuest ? 'div' : AppLayout" :class="{ 'min-vh-100': isGuest }">
+    <ProfileSelectionModal v-if="mustSelectProfile" :perfiles="perfiles || []" />
+
     <div 
+      v-else
       id="app-pomodoro" 
       class="pomodoro-zen-container" 
       :class="[
@@ -749,6 +762,12 @@ const cerrarModalAvanzado = () => {
         </div>
       </div>
     </Teleport>
+    <AlertModal 
+      :show="showAlertModal" 
+      :title="alertTitle" 
+      :message="alertMessage" 
+      @close="showAlertModal = false" 
+    />
   </component>
 </template>
 

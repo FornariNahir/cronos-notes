@@ -2,6 +2,16 @@
 import { ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import AlertModal from '@/Components/AlertModal.vue';
+
+const showAlertModal = ref(false);
+const alertTitle = ref('');
+const alertMessage = ref('');
+const showCustomAlert = (title, message) => {
+  alertTitle.value = title;
+  alertMessage.value = message;
+  showAlertModal.value = true;
+};
 
 const page = usePage();
 
@@ -80,7 +90,7 @@ const onAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
         avatarUrl.value = URL.createObjectURL(file);
-        alert("¡Avatar seleccionado con éxito (vista previa local)!");
+        showCustomAlert("Avatar Actualizado", "¡Avatar seleccionado con éxito (vista previa local)!");
     }
 };
 
@@ -88,11 +98,11 @@ const guardarDatosPersonales = () => {
     nombre.value = inputNombre.value;
     apellido.value = inputApellido.value;
     displayName.value = `${nombre.value} ${apellido.value}`;
-    alert("¡Información del perfil actualizada con éxito!");
+    showCustomAlert("Perfil Actualizado", "¡Información del perfil actualizada con éxito!");
 };
 
 const cambiarCorreo = () => {
-    alert(`Solicitud procesada con éxito. Se ha enviado un enlace de confirmación a: ${inputNewEmail.value}`);
+    showCustomAlert("Correo", `Solicitud procesada con éxito. Se ha enviado un enlace de confirmación a: ${inputNewEmail.value}`);
     if (modalCorreoInstance) {
         modalCorreoInstance.hide();
     }
@@ -101,16 +111,16 @@ const cambiarCorreo = () => {
 
 const cambiarPassword = () => {
     if (inputNewPass.value.length < 8) {
-        alert("Error: La nueva contraseña debe tener al menos 8 caracteres de seguridad.");
+        showCustomAlert("Error de Seguridad", "La nueva contraseña debe tener al menos 8 caracteres de seguridad.");
         return;
     }
 
     if (inputNewPass.value !== inputConfirmPass.value) {
-        alert("Error: Las nuevas contraseñas ingresadas no coinciden. Por favor, verificalas.");
+        showCustomAlert("Error", "Las nuevas contraseñas ingresadas no coinciden. Por favor, verificalas.");
         return;
     }
 
-    alert("Seguridad: ¡Tu contraseña ha sido actualizada correctamente en el sistema!");
+    showCustomAlert("Contraseña Actualizada", "Seguridad: ¡Tu contraseña ha sido actualizada correctamente en el sistema!");
     if (modalPasswordInstance) {
         modalPasswordInstance.hide();
     }
@@ -122,8 +132,10 @@ const cambiarPassword = () => {
 const eliminarCuenta = () => {
     if (confirm("¿Estás seguro de que deseas eliminar permanentemente tu cuenta de Cronos Notes?")) {
         if (confirm("Esta acción es irreversible y borrará tus estadísticas de racha, apuntes y perfiles. ¿Proceder?")) {
-            alert("Cuenta dada de baja simuladamente.");
-            window.location.reload(); 
+            showCustomAlert("Cuenta Eliminada", "Cuenta dada de baja simuladamente.");
+            setTimeout(() => {
+              window.location.reload(); 
+            }, 2000);
         }
     }
 };
@@ -290,6 +302,12 @@ const eliminarCuenta = () => {
                 </div>
             </div>
         </div>
+        <AlertModal 
+          :show="showAlertModal" 
+          :title="alertTitle" 
+          :message="alertMessage" 
+          @close="showAlertModal = false" 
+        />
     </Teleport>
   </AppLayout>
 </template>

@@ -50,6 +50,13 @@
         <AudioPanel v-model:open="audioOpen" @recorded="onAudioRecorded" />
       </div>
     </div>
+
+    <AlertModal 
+      :show="showAlertModal" 
+      :title="alertTitle" 
+      :message="alertMessage" 
+      @close="showAlertModal = false" 
+    />
   </AppLayout>
 </template>
 
@@ -61,6 +68,16 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import EditorToolbar from './Components/EditorToolbar.vue'
 import NoteEditor from './Components/NoteEditor.vue'
 import AudioPanel from './Components/AudioPanel.vue'
+import AlertModal from '@/Components/AlertModal.vue'
+
+const showAlertModal = ref(false)
+const alertTitle = ref('')
+const alertMessage = ref('')
+const showCustomAlert = (title, message) => {
+  alertTitle.value = title
+  alertMessage.value = message
+  showAlertModal.value = true
+}
 
 const props = defineProps({
   apunte: {
@@ -132,7 +149,7 @@ const onAudioRecorded = (blob) => {
 
 const saveNote = () => {
   if (!form.tituloApunte.trim()) {
-    alert('Por favor, ingresa un título para el apunte.')
+    showCustomAlert('Aviso', 'Por favor, ingresa un título para el apunte.')
     return
   }
 

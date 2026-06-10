@@ -15,7 +15,11 @@ const props = defineProps({
     default: () => []
   },
   perfilActivo: Object,
-  sesionActiva: Object
+  sesionActiva: Object,
+  isGuest: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const page = usePage();
@@ -64,6 +68,8 @@ const toggleFullscreen = () => {
 
 const settingsPanelOpen = ref(false);
 const modalAvanzadoOpen = ref(false);
+const modalRegistroOpen = ref(false);
+const mensajeRegistro = ref('');
 const activeTab = ref('tab-fondos');
 
 const timerWidget = ref(null);
@@ -142,6 +148,25 @@ const videoLandscapes = computed(() => {
   }
   return result;
 });
+
+const isLandscapeLocked = (key) => {
+  if (!props.isGuest) return false;
+  return !['paisaje1', 'paisaje2', 'paisaje3', 'paisaje4'].includes(key);
+};
+
+const isSoundLocked = (key) => {
+  if (!props.isGuest) return false;
+  return !['Lluvia', 'Cafetería', 'Viento'].includes(key);
+};
+
+const handleSelectLandscape = (key) => {
+  if (isLandscapeLocked(key)) {
+    mensajeRegistro.value = 'Este fondo es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
+    modalRegistroOpen.value = true;
+    return;
+  }
+  selectedLandscape.value = key;
+};
 
 const appBackgroundClass = computed(() => {
   const info = bancoFondos[selectedLandscape.value];
@@ -261,6 +286,11 @@ const updateMixerVolume = (soundKey) => {
 };
 
 const toggleMixerSound = (soundKey) => {
+  if (isSoundLocked(soundKey)) {
+    mensajeRegistro.value = 'Este sonido es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
+    modalRegistroOpen.value = true;
+    return;
+  }
   const state = mixerState[soundKey];
   state.active = !state.active;
 
@@ -371,7 +401,7 @@ const cerrarModalAvanzado = () => {
 </script>
 
 <template>
-  <AppLayout>
+  <component :is="isGuest ? 'div' : AppLayout" :class="{ 'min-vh-100': isGuest }">
     <div 
       id="app-pomodoro" 
       class="pomodoro-zen-container" 
@@ -383,6 +413,14 @@ const cerrarModalAvanzado = () => {
     >
       <!-- Floating Action Controls (Top Right) -->
       <div class="floating-controls">
+        <Link 
+          v-if="isGuest"
+          href="/" 
+          class="floating-btn text-decoration-none d-flex align-items-center justify-content-center bg-danger text-white border-0" 
+          title="Volver al inicio"
+        >
+          <i class="bi bi-box-arrow-left"></i>
+        </Link>
         <button 
           @click="toggleFullscreen" 
           class="floating-btn" 
@@ -482,23 +520,27 @@ const cerrarModalAvanzado = () => {
           <template v-else>
             <div class="setup-header">Configurar Sesión</div>
             <div class="setup-body mt-2">
-              <label class="zen-label">Tarea a realizar (Opcional)</label>
-              <select v-model="quickStartTaskId" class="form-select-zen mb-3">
-                <option value="">Sin tarea específica</option>
-                <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea">{{ t.tituloTarea }}</option>
-              </select>
+              <div v-if="!isGuest">
+                <label class="zen-label">Tarea a realizar (Opcional)</label>
+                <select v-model="quickStartTaskId" class="form-select-zen mb-3">
+                  <option value="">Sin tarea específica</option>
+                  <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea">{{ t.tituloTarea }}</option>
+                </select>
+              </div>
               
               <button @click="iniciarInicioRapido" class="btn-zen-primary w-100 mb-3">Inicio Rápido (25 min)</button>
               
               <div class="zen-divider"><span>O PERSONALIZADO</span></div>
               
-              <label class="zen-label">Plantilla Guardada</label>
-              <select v-model="selectedConfigId" class="form-select-zen mb-2">
-                <option value="">-- Manual --</option>
-                <option v-for="c in configs" :key="c.idConfiguracionPomodoro" :value="c.idConfiguracionPomodoro">
-                  Trabajo: {{ c.duracionSesion }}m | Desc: {{ c.duracionDescansoCorto }}m
-                </option>
-              </select>
+              <div v-if="!isGuest">
+                <label class="zen-label">Plantilla Guardada</label>
+                <select v-model="selectedConfigId" class="form-select-zen mb-2">
+                  <option value="">-- Manual --</option>
+                  <option v-for="c in configs" :key="c.idConfiguracionPomodoro" :value="c.idConfiguracionPomodoro">
+                    Trabajo: {{ c.duracionSesion }}m | Desc: {{ c.duracionDescansoCorto }}m
+                  </option>
+                </select>
+              </div>
               
               <div v-if="!selectedConfigId" class="custom-times mb-3">
                  <div class="time-input-group">
@@ -560,7 +602,7 @@ const cerrarModalAvanzado = () => {
                 class="mixer-row"
               >
                 <div class="mixer-label" @click="toggleMixerSound(soundKey)">
-                  {{ soundKey }}
+                  {{ soundKey }} <span v-if="isSoundLocked(soundKey)" title="Exclusivo para registrados">🔒</span>
                 </div>
                 <div class="mixer-control-pill" :class="{ active: state.active }">
                   <div class="mixer-icon" @click="toggleMixerSound(soundKey)">
@@ -638,10 +680,10 @@ const cerrarModalAvanzado = () => {
                 class="opcion-img-card" 
                 :class="{ active: selectedLandscape === key }"
                 :data-landscape="key"
-                @click="selectedLandscape = key"
+                @click="handleSelectLandscape(key)"
               >
                 <div class="img-preview"></div>
-                <span class="landscape-name">{{ info.nombre }}</span>
+                <span class="landscape-name">{{ info.nombre }} <span v-if="isLandscapeLocked(key)" title="Exclusivo para registrados">🔒</span></span>
                 <div class="mode-selectors">
                   <span class="mode-badge claro" :class="{ active: !isDarkMode }" @click.stop="aplicarCambioModo(false)">Sol</span>
                   <span class="mode-badge oscuro" :class="{ active: isDarkMode }" @click.stop="aplicarCambioModo(true)">Luna</span>
@@ -660,10 +702,10 @@ const cerrarModalAvanzado = () => {
                 class="opcion-img-card" 
                 :class="{ active: selectedLandscape === key }"
                 :data-landscape="key"
-                @click="selectedLandscape = key"
+                @click="handleSelectLandscape(key)"
               >
                 <div class="img-preview"></div>
-                <span class="landscape-name">{{ info.nombre }}</span>
+                <span class="landscape-name">{{ info.nombre }} <span v-if="isLandscapeLocked(key)" title="Exclusivo para registrados">🔒</span></span>
                 <div class="mode-selectors">
                   <span class="mode-badge claro" :class="{ active: !isDarkMode }" @click.stop="aplicarCambioModo(false)">Sol</span>
                   <span class="mode-badge oscuro" :class="{ active: isDarkMode }" @click.stop="aplicarCambioModo(true)">Luna</span>
@@ -678,7 +720,24 @@ const cerrarModalAvanzado = () => {
         </div>
       </div>
     </Teleport>
-  </AppLayout>
+
+    <!-- Modal Personalizado para Promoción de Registro -->
+    <Teleport to="body">
+      <div v-if="modalRegistroOpen" class="zen-custom-modal-overlay">
+        <div class="zen-custom-modal">
+          <div class="zen-modal-icon">
+            <i class="bi bi-star-fill text-warning"></i>
+          </div>
+          <h3 class="zen-modal-title">Contenido Exclusivo</h3>
+          <p class="zen-modal-text">{{ mensajeRegistro }}</p>
+          <div class="zen-modal-actions">
+            <button class="zen-btn-secondary" @click="modalRegistroOpen = false">Cancelar</button>
+            <Link :href="route('register')" class="zen-btn-primary">Registrarse Gratis</Link>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+  </component>
 </template>
 
 <style>
@@ -1479,5 +1538,91 @@ body.distraction-free-mode #content {
 body.distraction-free-mode .pomodoro-zen-container {
   height: 100vh !important;
   border-radius: 0 !important;
+}
+
+/* Modal Personalizado */
+.zen-custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.zen-custom-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-custom-modal,
+body.dark-mode .zen-custom-modal {
+  background: #2a2a2a;
+  color: white;
+}
+.zen-modal-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+.zen-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #333;
+}
+.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-modal-title {
+  color: #fff;
+}
+.zen-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 25px;
+}
+.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-modal-text {
+  color: #ccc;
+}
+.zen-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.zen-btn-secondary {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #666;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn-secondary:hover {
+  background: #f0f0f0;
+}
+.zen-btn-primary {
+  flex: 1;
+  padding: 10px;
+  background: #f7a072;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.zen-btn-primary:hover {
+  background: #e68d5e;
+  color: white;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 </style>

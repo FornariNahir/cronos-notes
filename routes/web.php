@@ -22,6 +22,15 @@ Route::get('/', function () {
     ]);
 });
 
+// POMODORO INVITADO (Público)
+Route::get('/pomodoro/invitado', function () {
+    return Inertia::render('Pomodoro/SesionZen', [
+        'isGuest' => true,
+        'configs' => [],
+        'tareas' => []
+    ]);
+})->name('pomodoro.invitado');
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth.custom', 'verified'])->name('dashboard');
@@ -57,7 +66,7 @@ Route::middleware('auth.custom')->group(function () {
     Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
 
-    // POMODORO
+    // POMODORO (Autenticado)
     Route::get('/pomodoro', [PomodoroController::class, 'index'])->name('pomodoro.index');
     Route::post('/pomodoro/iniciar', [PomodoroController::class, 'iniciarSesion'])->name('pomodoro.iniciar');
     Route::post('/pomodoro/registrar', [PomodoroController::class, 'registrarTrabajo'])->name('pomodoro.registrar');

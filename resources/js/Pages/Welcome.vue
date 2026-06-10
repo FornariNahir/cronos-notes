@@ -50,6 +50,7 @@ onMounted(() => {
                         <Link :href="route('logout')" method="post" as="button" class="btn btn-outline">Cerrar sesión</Link>
                     </template>
                     <template v-else>
+                        <Link :href="route('pomodoro.invitado')" class="btn btn-outline" style="border-color: #f7a072; color: #f7a072;">Modo invitado</Link>
                         <Link :href="route('login')" class="btn btn-outline">Iniciar sesión</Link>
                         <Link :href="route('register')" class="btn btn-outline">Registrarse</Link>
                     </template>

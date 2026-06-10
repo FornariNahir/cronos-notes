@@ -147,4 +147,8 @@ Route::get('/uso', function () {
     return Inertia::render('Uso');
 })->name('uso');
 
+Route::get('/sesion-pomodoro', function () {
+    return Inertia::render('SesionPomodoro');
+})->name('sesion-pomodoro');
+
 require __DIR__.'/auth.php';

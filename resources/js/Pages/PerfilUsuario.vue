@@ -134,7 +134,7 @@ const eliminarCuenta = () => {
     <div class="main-layout-container p-3 p-md-4">
         
         <div class="mb-4 mt-2">
-            <h1 class="h3 fw-bold text-dark m-0">Mis Datos</h1>
+            <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Mis Datos</h1>
             <p class="text-secondary small m-0 mt-1">Gestiona tus datos personales y la seguridad de tu cuenta de acceso.</p>
         </div>
 

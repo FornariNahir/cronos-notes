@@ -200,7 +200,7 @@ const textoEstado = (estado) => {
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 mt-2">
             <div>
-                <h1 class="h3 fw-bold text-dark m-0">Tareas por Perfil</h1>
+                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Tareas por Perfil</h1>
                 <p class="text-marron-institucional small fw-semibold m-0 mt-1">
                     <i class="bi bi-folder-fill me-1"></i> 
                     <span class="text-uppercase">{{ perfilActivo ? perfilActivo.tituloPerfil : 'Sin perfil seleccionado' }}</span>

@@ -322,10 +322,11 @@ const doughnutChartOptions = {
 }
 
 .welcome-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 32px;
+  margin-top: -80px;
+  font-size: 28px; 
+  font-weight: 700; 
+  color: #69342e; 
+  text-align: left;
 }
 
 /* Profiles Section */

@@ -195,16 +195,15 @@ const {
   iniciarInicioRapido,
   iniciarSesion,
   initTimer,
-  startTimer,
-  stopTimer: stopTimerLogic,
-  resetTimer: resetTimerLogic,
+  resetTimerLogic,
   completePhase,
   endSession,
   saveStateToStorage,
-  totalSeconds
+  totalSeconds,
+  localSesionActiva
 } = usePomodoroTimer(props);
 
-watch(() => props.sesionActiva, () => {
+watch(() => localSesionActiva.value, () => {
   initTimer();
 }, { immediate: true });
 
@@ -317,8 +316,11 @@ const toggleMixerSound = (soundKey) => {
 };
 
 const startTimerWrapper = (isRestored = false) => {
+  if (settingsPanelOpen.value) {
+    settingsPanelOpen.value = false;
+  }
   startTimer(null, () => {
-    if (props.sesionActiva) {
+    if (localSesionActiva.value) {
       alert("¡Tiempo cumplido!");
     } else {
       if (currentPhase.value === 'work') {
@@ -355,6 +357,11 @@ const resetTimerWrapper = () => {
   }
 };
 
+const pageTitle = computed(() => {
+  if (!localSesionActiva.value) return 'Temporizador Libre';
+  return `${localSesionActiva.value.tituloTarea} - Pomodoro`;
+});
+
 const endSessionWrapper = () => {
   endSession();
   for (const key in howlerInstances) {
@@ -363,7 +370,7 @@ const endSessionWrapper = () => {
 };
 
 const phaseText = computed(() => {
-  if (!props.sesionActiva) return 'Temporizador Libre';
+  if (!localSesionActiva.value) return 'Temporizador Libre';
   if (currentPhase.value === 'work') return 'Trabajo';
   if (currentPhase.value === 'shortBreak') return 'Descanso Corto';
   return 'Descanso Largo';
@@ -488,11 +495,11 @@ const cerrarModalAvanzado = () => {
           </button>
         </div>
         
-        <div v-show="!isMinimized" class="timer-content" :class="{ 'with-setup': !sesionActiva }">
+        <div v-show="!isMinimized" class="timer-content" :class="{ 'with-setup': !localSesionActiva }">
           
-          <template v-if="sesionActiva">
+          <template v-if="localSesionActiva">
             <div class="phase-indicator">{{ phaseText }} <span v-if="currentPhase === 'work'">- Ciclo {{ currentCycle }}</span></div>
-            <div v-if="sesionActiva.tituloTarea" class="task-badge">{{ sesionActiva.tituloTarea }}</div>
+            <div v-if="localSesionActiva.tituloTarea" class="task-badge">{{ localSesionActiva.tituloTarea }}</div>
             
             <div class="timer-controls mt-2">
               <button v-show="!isRunning" @click="startTimerWrapper(false)" class="control-btn" aria-label="Iniciar">
@@ -564,7 +571,7 @@ const cerrarModalAvanzado = () => {
 
         <!-- Minimized View -->
         <div v-show="isMinimized" class="timer-minimized-view" @click="toggleMinimize">
-          <span v-if="sesionActiva" class="mini-time">{{ displayTime }}</span>
+          <span v-if="localSesionActiva" class="mini-time">{{ displayTime }}</span>
           <span v-else class="mini-icon">⚙️ Setup</span>
         </div>
       </div>

@@ -124,12 +124,11 @@ class EstadisticaService
 
         if ($rachaActiva) {
             if ($rachaActiva->fechaFinRacha && Carbon::parse($rachaActiva->fechaFinRacha)->isSameDay($ayer)) {
+                $nuevaRachaActual = $rachaActiva->rachaActual + 1;
                 $rachaActiva->update([
                     'fechaFinRacha' => $hoy->toDateString(),
-                    'rachaActual' => $rachaActiva->rachaActual + 1
+                    'rachaActual' => $nuevaRachaActual
                 ]);
-
-                $nuevaRachaActual = $rachaActiva->rachaActual;
             } else {
                 $rachaActiva->update(['rachaActiva' => 0]);
 

@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="notes-page">
+    <div class="notes-page" v-if="!mustSelectProfile">
       <div class="header-section">
         <div>
           <h1 class="page-title">Mis apuntes</h1>
@@ -46,6 +46,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Selección de Perfil -->
+    <div v-if="mustSelectProfile" class="profile-selection-modal-overlay">
+      <div class="profile-selection-modal">
+        <div class="modal-header">
+          <h2>Selecciona un perfil</h2>
+          <p>Debes elegir un perfil para ver y crear apuntes.</p>
+        </div>
+        <div class="profiles-list">
+          <div v-if="perfiles.length === 0" class="no-profiles">
+            <p>No tienes ningún perfil creado.</p>
+            <Link :href="route('gestion-perfil')" class="btn-primary mt-3">Ir a crear uno</Link>
+          </div>
+          <button
+            v-else
+            v-for="perfil in perfiles"
+            :key="perfil.idPerfil"
+            @click="selectProfile(perfil.idPerfil)"
+            class="profile-option"
+          >
+            <div class="profile-icon">
+              <i :class="perfil.iconoPerfil || 'bi bi-folder'"></i>
+            </div>
+            <div class="profile-info">
+              <h4>{{ perfil.tituloPerfil }}</h4>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
@@ -55,8 +85,19 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
   apuntes: Array,
-  perfilActivo: Object
+  perfilActivo: Object,
+  mustSelectProfile: Boolean,
+  perfiles: Array
 });
+
+const selectProfile = (idPerfil) => {
+  router.post(route('perfiles.activar'), { idPerfil }, {
+    onSuccess: () => {
+      // Reload page to get active profile
+      window.location.reload();
+    }
+  });
+};
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -286,5 +327,123 @@ const deleteNote = (id) => {
 .empty-state p {
   font-size: 14px;
   color: #666;
+}
+
+/* Modal de Selección de Perfiles */
+.profile-selection-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(18, 9, 9, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.profile-selection-modal {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 40px 32px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* Dibujo de líneas decorativas (Background pattern) */
+.profile-selection-modal::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='none' stroke='%23612c2d' stroke-width='3' stroke-opacity='0.15' d='M0,192L48,197.3C96,203,192,213,288,192C384,171,480,117,576,106.7C672,96,768,128,864,154.7C960,181,1056,203,1152,181.3C1248,160,1344,96,1392,64L1440,32'/%3E%3Cpath fill='none' stroke='%23612c2d' stroke-width='2' stroke-opacity='0.1' d='M0,96L60,122.7C120,149,240,203,360,208C480,213,600,171,720,133.3C840,96,960,64,1080,74.7C1200,85,1320,139,1380,165.3L1440,192'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: cover;
+  pointer-events: none;
+}
+
+.profile-selection-modal .modal-header {
+  position: relative;
+  text-align: center;
+  margin-bottom: 32px;
+  z-index: 1;
+}
+
+.profile-selection-modal .modal-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #612c2d;
+  margin-bottom: 8px;
+}
+
+.profile-selection-modal .modal-header p {
+  font-size: 14.5px;
+  color: #666;
+}
+
+.profiles-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 1;
+}
+
+.profile-option {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.profile-option:hover {
+  background: #fff;
+  border-color: #612c2d;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.profile-icon {
+  font-size: 24px;
+  color: #612c2d;
+  margin-right: 16px;
+}
+
+.profile-info h4 {
+  font-size: 16px;
+  color: #333;
+  margin: 0;
+}
+
+.no-profiles {
+  text-align: center;
+  padding: 20px;
+}
+
+.btn-primary {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #612c2d;
+  color: #fff;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #4a1f20;
 }
 </style>

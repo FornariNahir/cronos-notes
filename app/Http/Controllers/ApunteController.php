@@ -30,13 +30,23 @@ class ApunteController extends Controller
 
     public function index()
     {
+        $perfilActivoId = session('perfilActivo');
+        if (!$perfilActivoId) {
+            $perfiles = \App\Models\Perfil::where('idUsuario', \Illuminate\Support\Facades\Auth::id())->get();
+            return \Inertia\Inertia::render('Apuntes/Index', [
+                'mustSelectProfile' => true,
+                'perfiles' => $perfiles,
+                'apuntes' => []
+            ]);
+        }
+
         $perfil = $this->verificarAccesoPerfil('ver');
 
         $apuntes = Apunte::where('idPerfil', $perfil->idPerfil)
             ->orderBy('fechaCreacion', 'desc')
             ->get();
 
-        return Inertia::render('Apuntes/Index', [
+        return \Inertia\Inertia::render('Apuntes/Index', [
             'apuntes' => $apuntes,
             'perfilActivo' => $perfil
         ]);

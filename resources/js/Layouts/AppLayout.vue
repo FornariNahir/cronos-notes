@@ -128,7 +128,6 @@
     <main id="content" :class="{ 'expanded': isSidebarClosed }">
       <header class="top-bar">
           <div class="search-container">
-              <input type="text" class="search-input" placeholder="Search">
           </div>
           <div class="top-bar-actions">
               <button class="icon-button">

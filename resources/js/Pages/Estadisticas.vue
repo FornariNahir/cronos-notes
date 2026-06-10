@@ -54,37 +54,47 @@ onMounted(() => {
   <AppLayout>
     <div class="main-layout-container fade-in">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 fw-bold m-0" style="color: var(--text-marron-institucional);">Tus Estadísticas Globales</h1>
+        <h1 class="h3 fw-bold m-0" style="color: var(--text-marron-institucional);">Estadísticas de Agustina</h1>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mb-4" style="margin-top: -20px;">
+        <h2 class="h3 m-0" style="color: var(--text-marron-institucional); font-size: 15px;">Monitoreo detallado de tu actividad y hábitos de enfoque.</h2>
       </div>
 
       <!-- Fila Superior: Resumen Rápido -->
       <div class="summary-grid">
         <div class="stat-card">
-          <div class="stat-icon racha-icon">🔥</div>
+          <div class="stat-icon racha-icon"></div>
           <div class="stat-info">
-            <h4 class="stat-value">{{ rachaActual }}</h4>
-            <p class="stat-label">Racha actual</p>
+            <p class="stat-label">Tareas Completadas</p>
+            <h4 class="stat-value">{{ tareasCompletadas }}</h4>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon racha-max-icon">🏆</div>
+          <div class="stat-icon racha-max-icon"></div>
           <div class="stat-info">
-            <h4 class="stat-value">{{ rachaMasLarga }}</h4>
+            <p class="stat-label">Finalizadas con Retraso</p>
+            <h4 class="stat-value">{{ tareasRetrasadas }}</h4>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon time-icon"></div>
+          <div class="stat-info">
+            <p class="stat-label">Tiempo total de Concentración</p>
+            <h4 class="stat-value">{{ tiempoTotalPomodoro }} minutos</h4>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon eff-icon"></div>
+          <div class="stat-info">
             <p class="stat-label">Racha más larga</p>
+            <h4 class="stat-value">{{ rachaMasLarga }} días</h4>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon time-icon">⏱️</div>
+          <div class="stat-icon eff-icon"></div>
           <div class="stat-info">
-            <h4 class="stat-value">{{ tiempoTotalPomodoro }}</h4>
-            <p class="stat-label">Minutos concentrado</p>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon eff-icon">📈</div>
-          <div class="stat-info">
-            <h4 class="stat-value">{{ eficiencia }}%</h4>
-            <p class="stat-label">Eficiencia total</p>
+            <p class="stat-label">Racha actual</p>
+            <h4 class="stat-value">{{ rachaActual }} días</h4>
           </div>
         </div>
       </div>
@@ -237,10 +247,10 @@ onMounted(() => {
     background-color: #fff;
     border: 1px solid var(--borde-card-color);
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 1px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     transition: transform 0.2s;
 }
@@ -254,8 +264,8 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 55px;
-    height: 55px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background-color: #fdf8f7;
 }
@@ -412,7 +422,7 @@ onMounted(() => {
     background-color: #8b4c4c;
 }
 .comparison-fill-completed {
-    background-color: #2fb344;
+    background-color: #8b4c4c;
 }
 .comparison-number {
     color: white;
@@ -467,10 +477,10 @@ onMounted(() => {
     --fill-color: #69342e;
 }
 .eff-color {
-    --fill-color: #2fb344;
+    --fill-color: #8b4c4c;
 }
 .delay-color {
-    --fill-color: #f59f00;
+    --fill-color: #8b4c4c;
 }
 .circular-label {
     font-weight: 600;

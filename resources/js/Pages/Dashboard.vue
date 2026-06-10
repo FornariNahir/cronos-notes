@@ -58,38 +58,49 @@
           </div>
 
           <div class="stats-grid">
-            <div class="stats-left">
+            <div class="stats-left flex flex-col gap-5">
               <!-- Streak Card -->
-              <div class="streak-card">
-                <div>
-                  <div class="streak-number">{{ estadisticas.rachaActual || 0 }}</div>
-                  <div class="streak-label">días de racha</div>
-                </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="streak-icon">
-                  <path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>
-                </svg>
-              </div>
+              <Card>
+                <CardContent class="p-6 pt-6 flex items-center justify-between">
+                  <div>
+                    <div class="text-5xl font-bold text-[#612c2d]">{{ estadisticas.rachaActual || 0 }}</div>
+                    <div class="text-sm text-[#666] mt-1">días de racha</div>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-[#612c2d] opacity-80">
+                    <path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>
+                  </svg>
+                </CardContent>
+              </Card>
 
               <!-- Donut Chart Card -->
-              <div class="donut-card">
-                <h3 class="donut-card-title">Horas de pomodoro por perfil</h3>
-                <div class="donut-content">
-                  <Doughnut v-if="chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
-                  <div v-else class="no-data-text">No hay sesiones de pomodoro registradas.</div>
-                </div>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Horas de pomodoro por perfil</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div class="flex items-center justify-center h-[180px]">
+                    <Doughnut v-if="chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
+                    <div v-else class="text-sm text-[#666]">No hay sesiones de pomodoro registradas.</div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             <!-- Bar Chart Card -->
-            <div class="bar-chart-card">
-              <h3 class="bar-chart-title">Horas de estudio por día</h3>
-              <div class="bar-chart-container" v-if="chartDataSemana && chartDataSemana.length > 0">
-                <Bar :data="barChartData" :options="barChartOptions" />
-              </div>
-              <div v-else class="no-data-text" style="display: flex; align-items: center; justify-content: center; height: 100%;">
-                No hay horas de estudio registradas esta semana.
-              </div>
-            </div>
+            <Card class="flex flex-col">
+              <CardHeader>
+                <CardTitle>Horas de estudio por día</CardTitle>
+                <CardDescription>Resumen de tu actividad en los últimos días</CardDescription>
+              </CardHeader>
+              <CardContent class="flex-1">
+                <div class="h-[280px] w-full" v-if="chartDataSemana && chartDataSemana.length > 0">
+                  <Bar :data="barChartData" :options="barChartOptions" />
+                </div>
+                <div v-else class="flex items-center justify-center h-full text-sm text-[#666]">
+                  No hay horas de estudio registradas esta semana.
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
@@ -101,6 +112,11 @@
 import { ref, onMounted, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Card from '@/Components/ui/Card.vue';
+import CardHeader from '@/Components/ui/CardHeader.vue';
+import CardTitle from '@/Components/ui/CardTitle.vue';
+import CardDescription from '@/Components/ui/CardDescription.vue';
+import CardContent from '@/Components/ui/CardContent.vue';
 import { Bar, Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement } from 'chart.js';
 
@@ -198,16 +214,33 @@ const barChartOptions = {
   scales: {
     y: {
       beginAtZero: true,
-      grid: { color: 'rgba(0, 0, 0, 0.05)' },
-      ticks: { color: '#666' }
+      grid: { color: 'rgba(0, 0, 0, 0.05)', borderDash: [5, 5] },
+      ticks: { color: '#666', font: { size: 12 } },
+      border: { display: false }
     },
     x: {
       grid: { display: false },
-      ticks: { color: '#666' }
+      ticks: { color: '#666', font: { size: 12 } },
+      border: { display: false }
     }
   },
   plugins: {
-    legend: { display: false }
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#fff',
+      titleColor: '#1a1a1a',
+      bodyColor: '#666',
+      borderColor: '#e5e5e5',
+      borderWidth: 1,
+      padding: 12,
+      boxPadding: 4,
+      usePointStyle: true,
+      callbacks: {
+        label: function(context) {
+          return context.parsed.y + ' hrs';
+        }
+      }
+    }
   }
 };
 
@@ -228,10 +261,20 @@ const doughnutChartData = computed(() => {
 const doughnutChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  cutout: '75%',
   plugins: {
     legend: {
       position: 'right',
-      labels: { color: '#333' }
+      labels: { color: '#666', usePointStyle: true, pointStyle: 'circle' }
+    },
+    tooltip: {
+      backgroundColor: '#fff',
+      titleColor: '#1a1a1a',
+      bodyColor: '#666',
+      borderColor: '#e5e5e5',
+      borderWidth: 1,
+      padding: 12,
+      usePointStyle: true,
     }
   }
 };

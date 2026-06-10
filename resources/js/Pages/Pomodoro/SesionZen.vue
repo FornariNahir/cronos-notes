@@ -4,6 +4,7 @@ import { Link, usePage, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
+import ProfileSelectionModal from '@/Components/ProfileSelectionModal.vue';
 
 const props = defineProps({
   configs: {
@@ -16,6 +17,8 @@ const props = defineProps({
   },
   perfilActivo: Object,
   sesionActiva: Object,
+  mustSelectProfile: Boolean,
+  perfiles: Array,
   isGuest: {
     type: Boolean,
     default: false
@@ -195,6 +198,8 @@ const {
   iniciarInicioRapido,
   iniciarSesion,
   initTimer,
+  startTimer,
+  stopTimerLogic,
   resetTimerLogic,
   completePhase,
   endSession,

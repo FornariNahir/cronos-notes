@@ -17,8 +17,15 @@ class PomodoroController extends Controller
     {
         $perfilActivoId = session('perfilActivo');
         if (!$perfilActivoId) {
-            return redirect()->route('perfiles.index')
-                ->with('error', 'Selecciona un perfil primero');
+            $perfiles = \App\Models\Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
+            return Inertia::render('Pomodoro/SesionZen', [
+                'mustSelectProfile' => true,
+                'perfiles' => $perfiles,
+                'configs' => [],
+                'tareas' => [],
+                'perfilActivo' => null,
+                'sesionActiva' => null
+            ]);
         }
 
         $estadisticaService = new EstadisticaService();

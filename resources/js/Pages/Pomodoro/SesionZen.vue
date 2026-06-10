@@ -355,8 +355,10 @@ const toggleSettingsPanel = (e) => {
 };
 
 const abrirModalAvanzado = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  if (e) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+  }
   settingsPanelOpen.value = false;
   modalAvanzadoOpen.value = true;
 };
@@ -395,6 +397,27 @@ const cerrarModalAvanzado = () => {
         >
           <i class="bi bi-house-door-fill"></i>
         </Link>
+        <button 
+          @click="aplicarCambioModo(!isDarkMode)" 
+          class="floating-btn" 
+          :title="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'"
+        >
+          <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
+        </button>
+        <button 
+          @click="toggleDistractionFree" 
+          class="floating-btn" 
+          :title="isDistractionFree ? 'Mostrar Interfaz' : 'Ocultar Interfaz (Modo Zen)'"
+        >
+          <i class="bi" :class="isDistractionFree ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+        </button>
+        <button 
+          @click="abrirModalAvanzado" 
+          class="floating-btn" 
+          title="Configuración Avanzada"
+        >
+          <i class="bi bi-gear-fill"></i>
+        </button>
       </div>
       <!-- Background Video support -->
       <video 
@@ -529,33 +552,6 @@ const cerrarModalAvanzado = () => {
         <div class="settings-panel" :class="{ open: settingsPanelOpen }">
           <div class="settings-content">
             
-            <div class="setting-row pb-2 border-bottom-setting">
-              <div class="setting-label">
-                <svg class="mode-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <span>Ocultar Interfaz (Modo Zen)</span>
-              </div>
-              <button class="toggle-switch" :class="{ active: isDistractionFree }" @click="toggleDistractionFree">
-                <span class="toggle-slider"></span>
-              </button>
-            </div>
-
-            <div class="setting-row pb-2 border-bottom-setting mt-2">
-              <div class="setting-label">
-                <svg class="mode-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="5"></circle>
-                  <line x1="12" y1="1" x2="12" y2="3"></line>
-                  <line x1="12" y1="21" x2="12" y2="23"></line>
-                </svg>
-                <span>Tema Oscuro</span>
-              </div>
-              <button class="toggle-switch" :class="{ active: isDarkMode }" @click="aplicarCambioModo(!isDarkMode)">
-                <span class="toggle-slider"></span>
-              </button>
-            </div>
-
             <div class="sound-header mt-2">MEZCLADOR DE SONIDOS</div>
             <div class="sound-options mixer-options">
               <div 
@@ -765,6 +761,7 @@ const cerrarModalAvanzado = () => {
   top: 20px;
   right: 20px;
   display: flex;
+  flex-direction: column;
   gap: 10px;
   z-index: 1005; /* Above widgets */
 }
@@ -935,14 +932,7 @@ const cerrarModalAvanzado = () => {
 .sound-option.active span:first-child {
   background: rgba(255, 255, 255, 0.25) !important;
 }
-.opcion-tuerca-mas {
-  border-top: 1px solid rgba(0,0,0,0.06) !important; border-radius: 0 0 12px 12px !important;
-  margin-top: 4px; padding: 12px !important; color: #69342e !important;
-}
-.opcion-tuerca-mas:hover {
-  background: rgba(105, 52, 46, 0.05) !important;
-  padding-left: 16px !important;
-}
+
 
 /* Mixer CSS */
 .mixer-options { max-height: 280px; overflow-y: auto; padding-right: 8px; margin-right: -4px; }
@@ -993,18 +983,12 @@ const cerrarModalAvanzado = () => {
 .pomodoro-zen-container.dark-mode .sound-option.active span:first-child {
   background: rgba(97, 44, 45, 0.15) !important;
 }
-.pomodoro-zen-container.dark-mode .opcion-tuerca-mas {
-  border-top-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
-}
-.pomodoro-zen-container.dark-mode .opcion-tuerca-mas:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-}
+
 
 /* Switches de Modos Sincronizados */
 .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .setting-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #8a7065; }
-.border-bottom-setting { border-bottom: 1px solid rgba(0,0,0,0.06); }
+
 
 .toggle-switch {
   position: relative; width: 44px; height: 22px; background: #ced4da; border-radius: 22px; border: none; cursor: pointer;

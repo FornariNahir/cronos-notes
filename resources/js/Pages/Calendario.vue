@@ -286,8 +286,8 @@ function inicializarLogicaDOM() {
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
             <div>
-                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -30px;">Calendario de Tareas</h1>
-                <p style="font-size: 15px; font-weight: 500; color: #a55e57;">Organiza y prioriza tus entregas académicas</p>
+                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -2px;">Calendario de Tareas</h1>
+                <p style="font-size: 15px; font-weight: 500; color: #a55e57;">Organiza y prioriza tus entregas.</p>
             </div>
             
             <div class="d-flex align-items-center gap-3">
@@ -425,9 +425,9 @@ function inicializarLogicaDOM() {
     --bg-gris-fuera-rango: #f8f9fa;
     
     /* Colores para las prioridades de tareas en los casilleros */
-    --alta-bg: #f9ebea; --alta-borde: #c0392b;
-    --media-bg: #fef9e7; --media-borde: #f39c12;
-    --baja-bg: #eaf2f8; --baja-borde: #2980b9;
+    --alta-bg: #f4be95; --alta-borde: #612c2d;
+    --media-bg: #f4be95; --media-borde: #612c2d;
+    --baja-bg: #f4be95; --baja-borde: #612c2d;
 }
 
 .main-layout-calendario {

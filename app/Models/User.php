@@ -96,7 +96,17 @@ class User extends Authenticatable
     public function perfilesCompartidos()
     {
         return $this->belongsToMany(Perfil::class, 'PerfilCompartido', 'idUsuario', 'idPerfil')
-            ->withPivot('permiso');
+            ->withPivot('permiso', 'compartidoPor', 'fechaCompartido');
+    }
+
+    public function invitacionesRecibidas()
+    {
+        return $this->hasMany(InvitacionPerfil::class, 'idUsuarioInvitado', 'idUsuario');
+    }
+
+    public function invitacionesEnviadas()
+    {
+        return $this->hasMany(InvitacionPerfil::class, 'idUsuarioInvita', 'idUsuario');
     }
 
     /** @use HasFactory<UserFactory> */

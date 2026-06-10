@@ -14,7 +14,13 @@ class PerfilCompartido extends Model
     protected $fillable = [
         'idUsuario',
         'idPerfil',
-        'permiso'
+        'permiso',
+        'compartidoPor',
+        'fechaCompartido',
+    ];
+
+    protected $casts = [
+        'fechaCompartido' => 'datetime',
     ];
 
     public function usuario()
@@ -26,4 +32,10 @@ class PerfilCompartido extends Model
     {
         return $this->belongsTo(Perfil::class, 'idPerfil', 'idPerfil');
     }
+
+    public function compartidoPorUsuario()
+    {
+        return $this->belongsTo(User::class, 'compartidoPor', 'idUsuario');
+    }
 }
+

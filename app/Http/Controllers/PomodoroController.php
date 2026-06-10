@@ -31,7 +31,7 @@ class PomodoroController extends Controller
 
         $sesionActiva = session('sesionPomodoroActiva');
 
-        return Inertia::render('Pomodoro/Index', [
+        return Inertia::render('Pomodoro/SesionZen', [
             'configs' => $configs,
             'tareas' => $tareas,
             'perfilActivo' => Perfil::find($perfilActivoId),
@@ -113,7 +113,7 @@ class PomodoroController extends Controller
             ]
         ]);
 
-        return redirect()->route('pomodoro.index');
+        return redirect()->back();
     }
 
     public function registrarTrabajo(Request $request)
@@ -193,7 +193,7 @@ class PomodoroController extends Controller
 
         session()->forget('sesionPomodoroActiva');
 
-        return redirect()->route('pomodoro.index')
+        return redirect()->back()
             ->with('success', $request->estado === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión Pomodoro cancelada');
     }
 

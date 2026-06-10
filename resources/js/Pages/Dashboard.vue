@@ -110,7 +110,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
 import CardHeader from '@/Components/ui/CardHeader.vue';

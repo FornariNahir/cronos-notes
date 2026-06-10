@@ -11,6 +11,9 @@ importers:
       chart.js:
         specifier: ^4.5.1
         version: 4.5.1
+      lucide-vue-next:
+        specifier: ^1.0.0
+        version: 1.0.0(vue@3.5.35)
       vue-chartjs:
         specifier: ^5.3.3
         version: 5.3.3(chart.js@4.5.1)(vue@3.5.35)
@@ -952,6 +955,12 @@ packages:
 
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
+
+  lucide-vue-next@1.0.0:
+    resolution: {integrity: sha512-V6SPvx1IHTj/UY+FrIYWV5faISsPSb8BnWSFDxAtezWKvWc9ZZ40PDrdu1/Qb5vg4lHWr1hs1BAMGVGm6V1Xdg==}
+    deprecated: Package deprecated. Please use @lucide/vue instead.
+    peerDependencies:
+      vue: '>=3.0.1'
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -2037,6 +2046,10 @@ snapshots:
   lines-and-columns@1.2.4: {}
 
   lodash-es@4.18.1: {}
+
+  lucide-vue-next@1.0.0(vue@3.5.35):
+    dependencies:
+      vue: 3.5.35
 
   magic-string@0.30.21:
     dependencies:

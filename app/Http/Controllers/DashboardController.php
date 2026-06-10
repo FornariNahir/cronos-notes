@@ -25,7 +25,8 @@ class DashboardController extends Controller
                 'tareas',
                 'tareas as tareas_completadas_count' => function ($query) {
                     $query->where('estadoTarea', 'Completado');
-                }
+                },
+                'usuariosCompartidos'
             ])
             ->get();
 
@@ -37,7 +38,8 @@ class DashboardController extends Controller
                 'tareas',
                 'tareas as tareas_completadas_count' => function ($query) {
                     $query->where('estadoTarea', 'Completado');
-                }
+                },
+                'usuariosCompartidos'
             ])
             ->get()
             ->map(function ($perfil) use ($user) {

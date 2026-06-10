@@ -15,11 +15,29 @@ class PerfilController extends Controller
 
     public function index()
     {
-        $perfiles = Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
+        $perfiles = Perfil::where('idUsuario', Auth::user()->idUsuario)
+            ->with([
+                'usuariosCompartidos' => function ($query) {
+                    $query->select('Usuario.idUsuario', 'nombre', 'apellido', 'email');
+                },
+                'invitaciones' => function ($query) {
+                    $query->where('estado', 'Pendiente')
+                          ->where('tokenUtilizado', false)
+                          ->select('idInvitacion', 'idPerfil', 'emailInvitado', 'permisoOfrecido', 'fechaEnvio');
+                }
+            ])
+            ->withCount('usuariosCompartidos')
+            ->get();
 
         // Perfiles compartidos con este usuario
         $perfilesCompartidos = Auth::user()->perfilesCompartidos()
-            ->with('usuario:idUsuario,nombre,apellido')
+            ->with([
+                'usuario:idUsuario,nombre,apellido',
+                'usuariosCompartidos' => function ($query) {
+                    $query->select('Usuario.idUsuario', 'nombre', 'apellido', 'email');
+                }
+            ])
+            ->withCount('usuariosCompartidos')
             ->get()
             ->map(function ($perfil) {
                 $perfil->esCompartido = true;

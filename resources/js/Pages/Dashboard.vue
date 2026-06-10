@@ -19,17 +19,36 @@
         <div class="profiles-grid">
           <!-- Perfiles Dinámicos -->
           <div 
-            v-for="perfil in perfiles" 
+            v-for="perfil in todosLosPerfiles" 
             :key="perfil.idPerfil" 
             class="profile-card"
             :class="{ 'active-card': perfilActivo && perfilActivo.idPerfil === perfil.idPerfil }"
             @click="seleccionarPerfil(perfil.idPerfil)"
+            style="position: relative;"
           >
+            <!-- Owner initials avatar for shared profiles -->
+            <div 
+              v-if="perfil.esCompartido" 
+              class="owner-avatar-badge-card"
+              :title="'Propietario: ' + perfil.propietario"
+            >
+              {{ obtenerIniciales(perfil.propietario) }}
+            </div>
+            <!-- People icon for own profiles that are shared -->
+            <div 
+              v-else-if="perfil.usuarios_compartidos_count > 0" 
+              class="shared-icon-badge-card"
+              title="Perfil compartido con otros"
+            >
+              <i class="bi bi-people-fill"></i>
+            </div>
+
             <div class="profile-icon d-flex align-items-center justify-content-center">
               <i :class="'bi ' + (perfil.iconoPerfil || 'bi-folder-fill')" style="font-size: 1.5rem;"></i>
             </div>
             <h3 class="profile-name">{{ perfil.tituloPerfil }}</h3>
             <p class="profile-date">
+              <span v-if="perfil.esCompartido" class="badge bg-light text-secondary border me-1" style="font-size: 9px; font-weight: 500;">Compartido</span>
               {{ perfilActivo && perfilActivo.idPerfil === perfil.idPerfil ? 'Perfil Activo' : 'Haz clic para seleccionar' }}
             </p>
             <div class="progress-bar">
@@ -38,7 +57,7 @@
           </div>
 
           <!-- Mensaje cuando no hay perfiles creados -->
-          <div class="profile-card add-profile-card" @click="irAPerfiles" v-if="perfiles.length === 0">
+          <div class="profile-card add-profile-card" @click="irAPerfiles" v-if="todosLosPerfiles.length === 0">
             <h3 class="profile-name">¡Aún no tienes perfiles creados!</h3>
             <p class="profile-date">Comienza a organizar tus tareas</p>
           </div>
@@ -124,6 +143,10 @@ const props = defineProps({
     type: Array,
     default: () => []
   },
+  perfilesCompartidos: {
+    type: Array,
+    default: () => []
+  },
   perfilActivo: {
     type: Object,
     default: null
@@ -153,6 +176,23 @@ const props = defineProps({
 });
 
 const animateProgress = ref(false);
+
+const todosLosPerfiles = computed(() => {
+  return [
+    ...props.perfiles,
+    ...props.perfilesCompartidos
+  ];
+});
+
+const obtenerIniciales = (nombreCompleto) => {
+  if (!nombreCompleto) return 'U';
+  return nombreCompleto
+    .split(' ')
+    .filter(n => n)
+    .map(n => n[0].toUpperCase())
+    .slice(0, 2)
+    .join('');
+};
 
 onMounted(() => {
   setTimeout(() => {
@@ -587,6 +627,40 @@ const doughnutChartOptions = {
 
 .add-icon {
   margin-bottom: 8px;
+}
+
+.owner-avatar-badge-card {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: #69342e;
+  color: #fff;
+  font-weight: bold;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  z-index: 5;
+  transition: transform 0.2s ease;
+}
+
+.profile-card:hover .owner-avatar-badge-card {
+  transform: scale(1.1);
+}
+
+.shared-icon-badge-card {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  color: #69342e;
+  opacity: 0.8;
+  font-size: 16px;
+  z-index: 5;
 }
 
 /* Responsive */

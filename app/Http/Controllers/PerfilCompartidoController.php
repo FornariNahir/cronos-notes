@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use App\Notifications\InvitacionPerfilNotification;
+use Illuminate\Support\Facades\Notification;
 
 class PerfilCompartidoController extends Controller
 {
@@ -53,12 +55,7 @@ class PerfilCompartidoController extends Controller
             ->where('tokenUtilizado', false)
             ->get(['idInvitacion', 'emailInvitado', 'permisoOfrecido', 'fechaEnvio']);
 
-        return Inertia::render('PerfilCompartido/Index', [
-            'perfil' => $perfil,
-            'usuariosCompartidos' => $usuariosCompartidos,
-            'invitacionesPendientes' => $invitacionesPendientes,
-            'esPropietario' => $perfil->idUsuario === $user->idUsuario,
-        ]);
+        return redirect()->route('gestion-perfil')->with('openShareModal', $idPerfil);
     }
 
     /**
@@ -122,7 +119,7 @@ class PerfilCompartidoController extends Controller
         }
 
         // Crear la invitación
-        InvitacionPerfil::create([
+        $invitacion = InvitacionPerfil::create([
             'idPerfil' => $idPerfil,
             'idUsuarioInvita' => $user->idUsuario,
             'emailInvitado' => $request->email,
@@ -134,6 +131,8 @@ class PerfilCompartidoController extends Controller
             'token' => Str::random(64),
             'tokenUtilizado' => false,
         ]);
+
+        Notification::route('mail', $request->email)->notify(new InvitacionPerfilNotification($invitacion));
 
         return redirect()->back()->with('success', 'Invitación enviada correctamente.');
     }

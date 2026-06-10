@@ -1,10 +1,15 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useForm, router } from '@inertiajs/vue3';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import CompartirPerfilModal from '@/Components/CompartirPerfilModal.vue';
 
 const props = defineProps({
     perfiles: {
+        type: Array,
+        default: () => []
+    },
+    perfilesCompartidos: {
         type: Array,
         default: () => []
     }
@@ -13,11 +18,38 @@ const props = defineProps({
 const esVistaGrid = ref(true);
 const filtroActivo = ref('todos');
 
-const perfilesFiltrados = computed(() => {
-    if (filtroActivo.value === 'recientes') {
-        return [...props.perfiles].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+// Sharing Modal State
+const isShareModalOpen = ref(false);
+const perfilParaCompartir = ref(null);
+
+const abrirCompartirPerfil = (perfil) => {
+    perfilParaCompartir.value = perfil;
+    isShareModalOpen.value = true;
+};
+
+// Sync profile data when props reload
+watch(() => [props.perfiles, props.perfilesCompartidos], () => {
+    if (perfilParaCompartir.value) {
+        const found = [
+            ...props.perfiles,
+            ...props.perfilesCompartidos
+        ].find(p => p.idPerfil === perfilParaCompartir.value.idPerfil);
+        
+        if (found) {
+            perfilParaCompartir.value = found;
+        }
     }
-    return props.perfiles;
+}, { deep: true });
+
+const perfilesFiltrados = computed(() => {
+    const todosPerfiles = [
+        ...props.perfiles,
+        ...props.perfilesCompartidos
+    ];
+    if (filtroActivo.value === 'recientes') {
+        return todosPerfiles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+    return todosPerfiles;
 });
 
 const iconosDisponibles = [
@@ -73,6 +105,21 @@ onMounted(() => {
         document.head.appendChild(scriptBS);
     } else {
         setTimeout(() => initModals(), 50);
+    }
+
+    // 3. Auto-open sharing modal if flash request is present
+    const page = usePage();
+    const flashShare = page.props.flash?.openShareModal;
+    if (flashShare) {
+        setTimeout(() => {
+            const perfil = [
+                ...props.perfiles,
+                ...props.perfilesCompartidos
+            ].find(p => p.idPerfil === Number(flashShare));
+            if (perfil) {
+                abrirCompartirPerfil(perfil);
+            }
+        }, 150);
     }
 });
 
@@ -153,6 +200,16 @@ const formatDate = (dateStr) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
+
+const obtenerIniciales = (nombreCompleto) => {
+    if (!nombreCompleto) return 'U';
+    return nombreCompleto
+        .split(' ')
+        .filter(n => n)
+        .map(n => n[0].toUpperCase())
+        .slice(0, 2)
+        .join('');
+};
 </script>
 
 <template>
@@ -190,21 +247,78 @@ const formatDate = (dateStr) => {
             <div v-for="perfil in perfilesFiltrados" :key="perfil.idPerfil" class="col-12 col-md-6 col-xl-4 item-perfil-col">
                 <div class="card card-perfil h-100 p-3 bg-white border cursor-pointer" @click="seleccionarPerfil(perfil.idPerfil)">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="d-flex align-items-center gap-2 header-card-titulo">
-                            <div class="icon-box-perfil p-2 border rounded"><i :class="'bi ' + (perfil.iconoPerfil || 'bi-folder-fill') + ' text-marron fs-5'"></i></div>
-                            <h5 class="fw-bold m-0 text-dark heading-titulo">{{ perfil.tituloPerfil }}</h5>
+                        <div class="d-flex align-items-center gap-2 header-card-titulo w-100">
+                            <div class="icon-box-perfil p-2 border rounded">
+                                <i :class="'bi ' + (perfil.iconoPerfil || 'bi-folder-fill') + ' text-marron fs-5'"></i>
+                            </div>
+                            <div class="d-flex flex-column align-items-start">
+                                <h5 class="fw-bold m-0 text-dark heading-titulo d-flex align-items-center gap-1.5 flex-wrap">
+                                    {{ perfil.tituloPerfil }}
+                                    <i v-if="!perfil.esCompartido && perfil.usuarios_compartidos_count > 0" class="bi bi-people-fill text-secondary" style="font-size: 13px;" title="Perfil compartido"></i>
+                                </h5>
+                                <span v-if="perfil.esCompartido" class="badge bg-light text-secondary border mt-1" style="font-size: 10px; font-weight: 500; padding: 2px 6px;">
+                                    {{ perfil.permisoCompartido }}
+                                </span>
+                            </div>
                         </div>
-                        <i class="bi bi-three-dots-vertical text-secondary cursor-pointer" @click.stop></i>
+                        <div v-if="perfil.esCompartido" class="owner-avatar-badge-card" :title="'Propietario: ' + perfil.propietario">
+                            {{ obtenerIniciales(perfil.propietario) }}
+                        </div>
+                        <i v-else class="bi bi-three-dots-vertical text-secondary cursor-pointer" @click.stop></i>
                     </div>
                     <p class="text-secondary small text-desc flex-grow-1">{{ perfil.descripcionPerfil || 'Sin descripción' }}</p>
-                    <div class="small text-muted mb-3 metadata-tiempo"><i class="bi bi-clock me-1"></i> Creado: {{ formatDate(perfil.created_at) }}</div>
+                    
+                    <div class="small text-muted mb-3 metadata-tiempo">
+                        <template v-if="perfil.esCompartido">
+                            <i class="bi bi-person me-1"></i> Propietario: {{ perfil.propietario }}
+                        </template>
+                        <template v-else>
+                            <i class="bi bi-clock me-1"></i> Creado: {{ formatDate(perfil.created_at) }}
+                        </template>
+                    </div>
+
                     <div class="d-flex gap-2 botonera-card">
-                        <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-dinamico" @click.stop="abrirEditarPerfil(perfil)">
-                            <i class="bi bi-pencil me-1"></i> Editar
+                        <!-- Compartir button -->
+                        <button 
+                            v-if="!perfil.esCompartido || perfil.permisoCompartido === 'Administrador'" 
+                            class="btn btn-outline-secondary btn-sm flex-grow-1 d-flex align-items-center justify-content-center gap-1" 
+                            @click.stop="abrirCompartirPerfil(perfil)"
+                        >
+                            <i class="bi bi-people-fill"></i> Compartir
                         </button>
-                        <button class="btn btn-outline-danger w-50 btn-sm btn-eliminar-dinamico" @click.stop="eliminarPerfil(perfil)">
-                            <i class="bi bi-trash me-1"></i> Eliminar
+                        
+                        <!-- Editar button -->
+                        <button 
+                            v-if="!perfil.esCompartido || perfil.permisoCompartido === 'Editor' || perfil.permisoCompartido === 'Administrador'" 
+                            class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-1" 
+                            :class="{ 'flex-grow-1': perfil.esCompartido && perfil.permisoCompartido !== 'Administrador', 'px-2': !perfil.esCompartido || perfil.permisoCompartido === 'Administrador' }"
+                            :style="(!perfil.esCompartido || perfil.permisoCompartido === 'Administrador') ? 'width: 40px;' : ''"
+                            @click.stop="abrirEditarPerfil(perfil)" 
+                            :title="(!perfil.esCompartido || perfil.permisoCompartido === 'Administrador') ? 'Editar' : ''"
+                        >
+                            <i class="bi bi-pencil"></i>
+                            <span v-if="perfil.esCompartido && perfil.permisoCompartido !== 'Administrador'">Editar</span>
                         </button>
+                        
+                        <!-- Eliminar button (Only owner can delete profile itself) -->
+                        <button 
+                            v-if="!perfil.esCompartido" 
+                            class="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center" 
+                            style="width: 40px;" 
+                            @click.stop="eliminarPerfil(perfil)" 
+                            title="Eliminar"
+                        >
+                            <i class="bi bi-trash"></i>
+                        </button>
+
+                        <!-- If Lector (No actions allowed on profile metadata) -->
+                        <span 
+                            v-if="perfil.esCompartido && perfil.permisoCompartido === 'Lector'" 
+                            class="text-secondary small w-100 text-center py-1 d-flex align-items-center justify-content-center gap-1 border rounded bg-light"
+                            style="font-size: 12px; height: 31px;"
+                        >
+                            <i class="bi bi-lock-fill"></i> Solo vista
+                        </span>
                     </div>
                 </div>
             </div>
@@ -323,6 +437,13 @@ const formatDate = (dateStr) => {
                 </div>
             </div>
         </div>
+
+        <!-- Modal Compartir Perfil (Google Drive style) -->
+        <CompartirPerfilModal 
+            :isOpen="isShareModalOpen" 
+            :perfil="perfilParaCompartir" 
+            @close="isShareModalOpen = false" 
+        />
     </Teleport>
   </AppLayout>
 </template>
@@ -521,5 +642,25 @@ const formatDate = (dateStr) => {
 .scroll-modal-fijo .modal-body {
     max-height: 70vh;
     overflow-y: auto;
+}
+
+.owner-avatar-badge-card {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background-color: #69342e;
+    color: #fff;
+    font-weight: bold;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.card-perfil:hover .owner-avatar-badge-card {
+    transform: scale(1.1);
 }
 </style>

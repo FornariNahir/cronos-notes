@@ -218,8 +218,8 @@ const obtenerIniciales = (nombreCompleto) => {
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 mt-2">
             <div>
-                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Gestión de Perfiles</h1>
-                <p class="text-secondary small m-0 mt-1">Configura y personaliza los accesos de tus espacios de trabajo.</p>
+                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -180px;">Gestión de Perfiles</h1>
+                <p style="font-size: 15px; font-weight: 500; color: #a55e57;">Configura y personaliza los accesos de tus espacios de trabajo.</p>
             </div>
             
             <div class="d-flex align-items-center gap-2">

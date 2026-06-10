@@ -134,8 +134,8 @@ const eliminarCuenta = () => {
     <div class="main-layout-container p-3 p-md-4">
         
         <div class="mb-4 mt-2">
-            <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Mis Datos</h1>
-            <p class="text-secondary small m-0 mt-1">Gestiona tus datos personales y la seguridad de tu cuenta de acceso.</p>
+            <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -915px;">Mis Datos</h1>
+            <p style="font-size: 15px; font-weight: 500; color: #a55e57;">Gestiona tus datos personales y la seguridad de tu cuenta de acceso.</p>
         </div>
 
         <div class="row g-4">
@@ -148,33 +148,6 @@ const eliminarCuenta = () => {
                     </div>
                     <h5 class="fw-bold m-0 text-dark">{{ displayName }}</h5>
                     <p class="text-secondary small mb-0">{{ email }}</p>
-                </div>
-
-                <div class="card card-ajustes p-4 text-center bg-racha-streak mb-4">
-                    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
-                        <i class="bi bi-fire fs-3 text-danger animate-pulse"></i>
-                        <h6 class="text-uppercase text-secondary small m-0 fw-bold tracking-wider">Racha Activa</h6>
-                    </div>
-                    <div class="display-6 fw-bold text-marron-institucional">{{ estadisticas.rachaActual }} Días</div>
-                    <p class="text-secondary small m-0 mt-2">¡Increíble constancia! Seguí así para evitar el agotamiento.</p>
-                </div>
-
-                <div class="card card-ajustes p-4">
-                    <h6 class="text-uppercase text-secondary small fw-bold tracking-wider mb-3"><i class="bi bi-bar-chart-line me-2"></i>Productividad General</h6>
-                    <div class="row g-2 text-center">
-                        <div class="col-6">
-                            <div class="bg-light rounded-3 p-2 border">
-                                <span class="small text-secondary d-block">Enfoque Total</span>
-                                <strong class="text-dark fs-5">{{ Math.floor((estadisticas.tiempoTotalPomodoro || 0) / 60) }}h {{ (estadisticas.tiempoTotalPomodoro || 0) % 60 }}m</strong>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="bg-light rounded-3 p-2 border">
-                                <span class="small text-secondary d-block">Tareas OK</span>
-                                <strong class="text-dark fs-5">{{ estadisticas.tareasTotales || 0 }}</strong>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
             </div>

@@ -5,7 +5,7 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
-        <h1 class="welcome-title">¡Bienvenido, {{ $page.props.auth.user.nombre }}!</h1>
+        <h1 class="welcome-title">¡Que bueno verte, {{ $page.props.auth.user.nombre }}!</h1>
 
         <!-- Profiles Section -->
         <div class="section-header">
@@ -380,8 +380,9 @@ const doughnutChartOptions = {
 }
 
 .section-subtitle {
-  font-size: 13px;
-  color: #666;
+  font-size: 15px; 
+  font-weight: 500; 
+  color: #a55e57;
   margin-top: 4px;
 }
 

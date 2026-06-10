@@ -57,7 +57,7 @@ onMounted(() => {
         <h1 class="h3 fw-bold m-0" style="color: var(--text-marron-institucional);">Estadísticas de {{ $page.props.auth.user.nombre }} </h1>
       </div>
       <div class="d-flex justify-content-between align-items-center mb-4" style="margin-top: -20px;">
-        <h2 class="h3 m-0" style="color: var(--text-marron-institucional); font-size: 15px;">Monitoreo detallado de tu actividad y hábitos de enfoque.</h2>
+        <h2 class="h3 m-0" style="font-size: 15px; font-weight: 500; color: #a55e57;">Monitoreo detallado de tu actividad y hábitos de enfoque.</h2>
       </div>
 
       <!-- Fila Superior: Resumen Rápido -->

@@ -154,6 +154,7 @@ const deleteNote = (id) => {
   font-weight: 700;
   color: #69342e;
   text-align: left;
+  margin-left: -215px;
 }
 
 .page-subtitle {

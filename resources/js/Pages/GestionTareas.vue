@@ -73,11 +73,6 @@ const priorizarIA = async () => {
     }
 };
 
-// Estadísticas dinámicas calculadas desde las tareas
-const cantidadPendientes = computed(() => tareasList.value.filter(t => t.estadoTarea === 'Pendiente').length);
-const cantidadProgreso = computed(() => tareasList.value.filter(t => t.estadoTarea === 'En Progreso' || t.estadoTarea === 'En proceso').length);
-const cantidadFinalizadas = computed(() => tareasList.value.filter(t => t.estadoTarea === 'Completado').length);
-
 onMounted(() => {
     if (!document.querySelector('link[href*="bootstrap-icons"]')) {
         const linkIcons = document.createElement('link');
@@ -203,7 +198,7 @@ const textoEstado = (estado) => {
                 <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Tareas por Perfil</h1>
                 <p class="text-marron-institucional small fw-semibold m-0 mt-1">
                     <i :class="'bi ' + (perfilActivo?.iconoPerfil || 'bi-folder-fill') + ' me-1'"></i> 
-                    <span class="text-uppercase">{{ perfilActivo ? perfilActivo.tituloPerfil : 'Sin perfil seleccionado' }}</span>
+                    <span class="text">Perfil actual: {{ perfilActivo ? perfilActivo.tituloPerfil : 'Sin perfil seleccionado' }}</span>
                 </p>
             </div>
             
@@ -284,9 +279,6 @@ const textoEstado = (estado) => {
                                 <i class="bi me-1" :class="iconoEstado(tarea.estadoTarea)"></i> {{ textoEstado(tarea.estadoTarea) }}
                             </span>
                             <div class="d-flex gap-3">
-                                <div class="small text-muted metadata-fecha" title="Esfuerzo Estimado">
-                                    <i class="bi bi-hourglass-split me-1 text-warning"></i> {{ tarea.estimacionEsfuerzo || 1 }}
-                                </div>
                                 <div class="small text-muted metadata-fecha">
                                     <i class="bi bi-calendar-event me-1"></i> {{ formatDateView(tarea.fechaLimite) }}
                                 </div>
@@ -316,11 +308,6 @@ const textoEstado = (estado) => {
                 <button v-else class="btn btn-outline-secondary px-4 mt-2" @click="filtroEstado='Todos'; filtroPrioridad='Todas'">Limpiar Filtros</button>
             </div>
 
-            <footer class="d-flex gap-3 justify-content-start align-items-center mt-5 pt-3 border-top text-secondary small flex-wrap">
-                <div class="d-flex align-items-center gap-1.5"><span class="indicador-dot dot-gray"></span> Pendientes: <strong class="text-dark">{{ cantidadPendientes }}</strong></div>
-                <div class="d-flex align-items-center gap-1.5"><span class="indicador-dot dot-red"></span> En progreso: <strong class="text-dark">{{ cantidadProgreso }}</strong></div>
-                <div class="d-flex align-items-center gap-1.5"><span class="indicador-dot dot-green"></span> Finalizadas: <strong class="text-dark">{{ cantidadFinalizadas }}</strong></div>
-            </footer>
         </div>
         
         <!-- Empty State Perfil -->
@@ -452,9 +439,9 @@ const textoEstado = (estado) => {
     --border-card-color: #e9ecef;
     
     /* Prioridades Badges */
-    --p-alta-bg: #fce4e4; --p-alta-txt: #c92a2a;
-    --p-media-bg: #fff4e6; --p-media-txt: #e67e22;
-    --p-baja-bg: #ebfbee; --p-baja-txt: #2b8a3e;
+    --p-alta-bg: #612c2d; --p-alta-txt: #ffffff;
+    --p-media-bg: #e38e76; --p-media-txt: #ffffff;
+    --p-baja-bg: #f4be95; --p-baja-txt: #612c2d;
 }
 
 .text-marron-institucional {
@@ -529,9 +516,7 @@ const textoEstado = (estado) => {
     border: 1px solid #e9ecef;
     color: #4b5563;
 }
-.est-finalizada { background-color: #ebfbee; color: #2b8a3e; border-color: #d3f9d8; }
-.est-progreso { background-color: #fff3bf; color: #e67e22; border-color: #ffec99; }
-.est-pendiente { background-color: #f8f9fa; color: #6c757d; border-color: #dee2e6; }
+
 
 /* Control de vistas */
 .vista-grid .text-desc {

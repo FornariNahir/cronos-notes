@@ -286,8 +286,8 @@ function inicializarLogicaDOM() {
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
             <div>
-                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Calendario de Tareas</h1>
-                <p class="text-secondary small m-0 mt-1">Organiza y prioriza tus entregas académicas</p>
+                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -30px;">Calendario de Tareas</h1>
+                <p style="font-size: 15px; font-weight: 500; color: #a55e57;">Organiza y prioriza tus entregas académicas</p>
             </div>
             
             <div class="d-flex align-items-center gap-3">

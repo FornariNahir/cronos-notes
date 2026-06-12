@@ -17,15 +17,7 @@ class PomodoroController extends Controller
     {
         $perfilActivoId = session('perfilActivo');
         if (!$perfilActivoId) {
-            $perfiles = \App\Models\Perfil::where('idUsuario', Auth::user()->idUsuario)->get();
-            return Inertia::render('Pomodoro/SesionZen', [
-                'mustSelectProfile' => true,
-                'perfiles' => $perfiles,
-                'configs' => [],
-                'tareas' => [],
-                'perfilActivo' => null,
-                'sesionActiva' => null
-            ]);
+            return redirect()->route('dashboard')->with('error', 'Por favor, selecciona un perfil primero para acceder al espacio de concentración.');
         }
 
         $estadisticaService = new EstadisticaService();

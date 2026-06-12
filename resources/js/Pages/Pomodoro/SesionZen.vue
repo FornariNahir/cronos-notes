@@ -4,7 +4,6 @@ import { Link, usePage, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
-import ProfileSelectionModal from '@/Components/ProfileSelectionModal.vue';
 import AlertModal from '@/Components/AlertModal.vue';
 
 const props = defineProps({
@@ -18,8 +17,6 @@ const props = defineProps({
   },
   perfilActivo: Object,
   sesionActiva: Object,
-  mustSelectProfile: Boolean,
-  perfiles: Array,
   isGuest: {
     type: Boolean,
     default: false
@@ -450,10 +447,7 @@ const cerrarModalAvanzado = () => {
 
 <template>
   <component :is="isGuest ? 'div' : AppLayout" :class="{ 'min-vh-100': isGuest }">
-    <ProfileSelectionModal v-if="mustSelectProfile" :perfiles="perfiles || []" />
-
     <div 
-      v-else
       id="app-pomodoro" 
       class="pomodoro-zen-container" 
       :class="[

@@ -94,7 +94,8 @@
                 </CardHeader>
                 <CardContent>
                   <div class="flex items-center justify-center h-[180px]">
-                    <Doughnut v-if="chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
+                    <Doughnut v-if="animateProgress && chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
+                    <div v-else-if="!animateProgress" class="text-sm text-[#666]">Cargando gráfico...</div>
                     <div v-else class="text-sm text-[#666]">No hay sesiones de pomodoro registradas.</div>
                   </div>
                 </CardContent>
@@ -108,8 +109,11 @@
                 <CardDescription>Resumen de tu actividad en los últimos días</CardDescription>
               </CardHeader>
               <CardContent class="flex-1">
-                <div class="h-[280px] w-full" v-if="chartDataSemana && chartDataSemana.length > 0">
+                <div class="h-[280px] w-full" v-if="animateProgress && chartDataSemana && chartDataSemana.length > 0">
                   <Bar :data="barChartData" :options="barChartOptions" />
+                </div>
+                <div v-else-if="!animateProgress" class="flex items-center justify-center h-full text-sm text-[#666]">
+                  Cargando gráfico...
                 </div>
                 <div v-else class="flex items-center justify-center h-full text-sm text-[#666]">
                   No hay horas de estudio registradas esta semana.

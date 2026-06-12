@@ -93,7 +93,7 @@ const font = ref("Arial")
 const size = ref("11")
 
 const form = useForm({
-  tituloApunte: 'Acá va el nombre del perfil da',
+  tituloApunte: 'Titulo',
   contenidoApunte: ''
 })
 

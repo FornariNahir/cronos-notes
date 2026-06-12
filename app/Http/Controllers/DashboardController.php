@@ -19,6 +19,10 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // Verificar y resetear racha si corresponde antes de cargar estadísticas
+        $estadisticaService = new EstadisticaService();
+        $estadisticaService->verificarRachaPerdida($user->idUsuario);
+
         // Obtenemos todos los perfiles del usuario con el conteo de sus tareas para calcular el progreso
         $perfiles = Perfil::where('idUsuario', $user->idUsuario)
             ->withCount([
@@ -69,9 +73,7 @@ class DashboardController extends Controller
                 // Obtenemos solo las tareas pendientes de ese perfil sumando ciclos Pomodoro
                 $tareas = Tarea::where('idPerfil', $perfilActivo->idPerfil)
                                ->where('estadoTarea', 'Pendiente')
-                               ->withSum(['sesionesPomodoro' => function($query) {
-                                   $query->where('estadoSesion', 'Completada');
-                               }], 'ciclosCompletados')
+                               ->withSum('sesionesPomodoro', 'ciclosCompletados')
                                ->get();
             }
         }
@@ -95,8 +97,7 @@ class DashboardController extends Controller
             $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
                     $q->where('idUsuario', $user->idUsuario);
                 })
-                ->where('estadoSesion', 'Completada')
-                ->whereDate('updated_at', $fecha->toDateString())
+                ->whereDate('fechaCreacionSesion', $fecha->toDateString())
                 ->sum('tiempoTrabajoTotalMinutos');
                 
             $chartDataSemana[] = [
@@ -115,7 +116,6 @@ class DashboardController extends Controller
                 ->whereHas('tarea', function($q) use ($p) {
                     $q->where('idPerfil', $p->idPerfil);
                 })
-                ->where('estadoSesion', 'Completada')
                 ->sum('tiempoTrabajoTotalMinutos');
                 
             if ($minutos > 0) {

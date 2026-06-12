@@ -4,14 +4,9 @@ export const vDraggable = {
     let startX, startY, initialX, initialY;
     let hasDragged = false;
 
-    // Search for a specific handle, otherwise use the whole element
-    const dragHandle = el.querySelector('.drag-handle') || el;
-
     const onMouseDown = (e) => {
-      // Ignore if clicking on interactive elements like buttons, inputs or switches
-      if (e.target.closest('button, input, select, .toggle-switch, .settings-panel')) return;
-      // If we have a dedicated handle, ensure we clicked inside it
-      if (el.querySelector('.drag-handle') && !e.target.closest('.drag-handle')) return;
+      // Ignore if clicking on interactive elements like buttons, inputs, selects, switches, links, etc.
+      if (e.target.closest('button, input, select, textarea, a, .toggle-switch, .settings-panel, .control-btn, .btn-zen-primary, .btn-zen-secondary, .btn-cancel-session')) return;
 
       isDragging = true;
       hasDragged = false;
@@ -21,10 +16,6 @@ export const vDraggable = {
       startY = e.clientY;
       initialX = el.offsetLeft;
       initialY = el.offsetTop;
-
-      // Clear any right/bottom constraints to avoid CSS conflicting with left/top
-      el.style.bottom = 'auto';
-      el.style.right = 'auto';
 
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
@@ -36,7 +27,12 @@ export const vDraggable = {
       const dy = e.clientY - startY;
 
       if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-        hasDragged = true;
+        if (!hasDragged) {
+          hasDragged = true;
+          // Clear any right/bottom constraints to avoid CSS conflicting with left/top
+          el.style.bottom = 'auto';
+          el.style.right = 'auto';
+        }
       }
 
       if (hasDragged) {
@@ -57,12 +53,27 @@ export const vDraggable = {
         setTimeout(() => {
           delete el.dataset.preventClick;
         }, 50);
+
+        // Convert positioning dynamically to top or bottom based on screen half
+        const rect = el.getBoundingClientRect();
+        const elementMiddleY = rect.top + rect.height / 2;
+        const viewportHeight = window.innerHeight;
+
+        if (elementMiddleY < viewportHeight / 2) {
+          // Top half: anchor to top
+          el.style.top = `${el.offsetTop}px`;
+          el.style.bottom = 'auto';
+        } else {
+          // Bottom half: anchor to bottom
+          el.style.bottom = `${viewportHeight - (el.offsetTop + el.offsetHeight)}px`;
+          el.style.top = 'auto';
+        }
       }
     };
 
-    dragHandle.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('mousedown', onMouseDown);
     el._dragCleanup = () => {
-      dragHandle.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('mousedown', onMouseDown);
     };
   },
   unmounted(el) {

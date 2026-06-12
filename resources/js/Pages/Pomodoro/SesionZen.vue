@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
 import AlertModal from '@/Components/AlertModal.vue';
+import { Howl } from 'howler';
 
 const props = defineProps({
   configs: {
@@ -70,6 +71,7 @@ const selectedLandscape = ref('paisaje1');
 const isFullscreen = ref(false);
 const isMinimized = ref(true);
 const isDistractionFree = ref(false);
+const showFloatingMenu = ref(false);
 
 const toggleDistractionFree = () => {
   isDistractionFree.value = !isDistractionFree.value;
@@ -290,6 +292,19 @@ const getSoundEmoji = (key) => {
   }
 };
 
+const closeOnOutsideClick = (e) => {
+  if (!isMinimized.value && timerWidget.value && !timerWidget.value.contains(e.target)) {
+    if (e.target.closest('.modal-avanzado-backdrop, .zen-custom-modal-overlay, .floating-controls-wrapper, .settings-toggle-widget')) return;
+    isMinimized.value = true;
+  }
+  if (showFloatingMenu.value) {
+    const wrapper = document.querySelector('.floating-controls-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      showFloatingMenu.value = false;
+    }
+  }
+};
+
 onMounted(() => {
   if (!document.querySelector('link[href*="bootstrap-icons"]')) {
       const linkIcons = document.createElement('link');
@@ -299,26 +314,23 @@ onMounted(() => {
   }
 
   document.addEventListener('fullscreenchange', syncFullscreenState);
-
-  if (!window.Howl) {
-    const scriptHowl = document.createElement('script');
-    scriptHowl.src = 'https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js';
-    scriptHowl.onload = () => { console.log("Howler.js loaded."); };
-    document.head.appendChild(scriptHowl);
-  }
+  document.addEventListener('click', closeOnOutsideClick);
 
   window.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
   clearInterval(timerInterval);
-  if (sonidoHowlerActivo) {
-    sonidoHowlerActivo.stop();
-    sonidoHowlerActivo.unload();
+  for (const key in howlerInstances) {
+    if (howlerInstances[key]) {
+      howlerInstances[key].stop();
+      howlerInstances[key].unload();
+    }
   }
   document.body.classList.remove('distraction-free-mode');
   window.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('fullscreenchange', syncFullscreenState);
+  document.removeEventListener('click', closeOnOutsideClick);
 });
 
 const handleKeyDown = (e) => {
@@ -331,6 +343,17 @@ const updateMixerVolume = (soundKey) => {
   }
 };
 
+const getAssetUrl = (path) => {
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  const pathname = window.location.pathname;
+  const publicIndex = pathname.indexOf('/public');
+  if (publicIndex !== -1) {
+    const basePath = pathname.substring(0, publicIndex + 7);
+    return `${window.location.origin}${basePath}/${cleanPath}`;
+  }
+  return `${window.location.origin}/${cleanPath}`;
+};
+
 const toggleMixerSound = (soundKey) => {
   if (isSoundLocked(soundKey)) {
     mensajeRegistro.value = 'Este sonido es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
@@ -341,9 +364,10 @@ const toggleMixerSound = (soundKey) => {
   state.active = !state.active;
 
   if (state.active) {
-    if (!howlerInstances[soundKey] && window.Howl) {
-      howlerInstances[soundKey] = new window.Howl({
-        src: [`${bancoSonidos[soundKey]}.webm`, `${bancoSonidos[soundKey]}.mp3`],
+    if (!howlerInstances[soundKey]) {
+      const soundPath = bancoSonidos[soundKey];
+      howlerInstances[soundKey] = new Howl({
+        src: [getAssetUrl(`${soundPath}.webm`), getAssetUrl(`${soundPath}.mp3`)],
         html5: true,
         loop: true,
         volume: state.volume,
@@ -463,51 +487,57 @@ const cerrarModalAvanzado = () => {
         { 'fullscreen-zen': isFullscreen }
       ]"
     >
-      <!-- Floating Action Controls (Top Right) -->
-      <div class="floating-controls">
-        <Link 
-          v-if="isGuest"
-          href="/" 
-          class="floating-btn text-decoration-none d-flex align-items-center justify-content-center bg-danger text-white border-0" 
-          title="Volver al inicio"
-        >
-          <i class="bi bi-box-arrow-left"></i>
-        </Link>
+      <!-- Floating Action Controls Menu (Top Right) -->
+      <div class="floating-controls-wrapper">
         <button 
-          @click="toggleFullscreen" 
-          class="floating-btn" 
-          :title="isFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'"
+          @click="showFloatingMenu = !showFloatingMenu" 
+          class="floating-btn main-menu-btn" 
+          :class="{ 'menu-open': showFloatingMenu }"
+          title="Controles de Espacio"
         >
-          <i class="bi" :class="isFullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i>
+          <i class="bi" :class="showFloatingMenu ? 'bi-x-lg' : 'bi-grid-fill'"></i>
         </button>
-        <Link 
-          href="/dashboard" 
-          class="floating-btn" 
-          title="Volver al Dashboard"
-        >
-          <i class="bi bi-house-door-fill"></i>
-        </Link>
-        <button 
-          @click="aplicarCambioModo(!isDarkMode)" 
-          class="floating-btn" 
-          :title="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'"
-        >
-          <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
-        </button>
-        <button 
-          @click="toggleDistractionFree" 
-          class="floating-btn" 
-          :title="isDistractionFree ? 'Mostrar Interfaz' : 'Ocultar Interfaz (Modo Zen)'"
-        >
-          <i class="bi" :class="isDistractionFree ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
-        </button>
-        <button 
-          @click="abrirModalAvanzado" 
-          class="floating-btn" 
-          title="Configuración Avanzada"
-        >
-          <i class="bi bi-gear-fill"></i>
-        </button>
+        
+        <transition name="fade-slide">
+          <div v-show="showFloatingMenu" class="floating-menu-items">
+            <Link 
+              v-if="isGuest"
+              href="/" 
+              class="floating-btn text-decoration-none d-flex align-items-center justify-content-center bg-danger text-white border-0" 
+              title="Volver al inicio"
+            >
+              <i class="bi bi-box-arrow-left"></i>
+            </Link>
+            <button 
+              @click="toggleFullscreen" 
+              class="floating-btn" 
+              :title="isFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'"
+            >
+              <i class="bi" :class="isFullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i>
+            </button>
+            <Link 
+              href="/dashboard" 
+              class="floating-btn" 
+              title="Volver al Dashboard"
+            >
+              <i class="bi bi-house-door-fill"></i>
+            </Link>
+            <button 
+              @click="aplicarCambioModo(!isDarkMode)" 
+              class="floating-btn" 
+              :title="isDarkMode ? 'Modo Claro' : 'Modo Oscuro'"
+            >
+              <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'"></i>
+            </button>
+            <button 
+              @click="abrirModalAvanzado" 
+              class="floating-btn" 
+              title="Configuración Avanzada"
+            >
+              <i class="bi bi-gear-fill"></i>
+            </button>
+          </div>
+        </transition>
       </div>
       <!-- Background Video support -->
       <video 
@@ -530,14 +560,23 @@ const cerrarModalAvanzado = () => {
               <line x1="16" y1="6" x2="16" y2="18"></line>
             </svg>
           </div>
-          <button class="minimize-btn" @click="toggleMinimize($event)" :title="isMinimized ? 'Maximizar' : 'Minimizar'">
-            <svg v-if="!isMinimized" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="4 14 12 6 20 14"></polyline>
-            </svg>
-          </button>
+          <div class="d-flex align-items-center gap-1">
+            <button 
+              class="minimize-btn" 
+              @click="toggleDistractionFree" 
+              :title="isDistractionFree ? 'Mostrar Dashboard' : 'Ocultar Dashboard (Modo Zen)'"
+            >
+              <i class="bi" :class="isDistractionFree ? 'bi-eye-fill' : 'bi-eye-slash-fill'"></i>
+            </button>
+            <button class="minimize-btn" @click="toggleMinimize($event)" :title="isMinimized ? 'Maximizar' : 'Minimizar'">
+              <svg v-if="!isMinimized" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="4 14 12 6 20 14"></polyline>
+              </svg>
+            </button>
+          </div>
         </div>
         
         <div v-show="!isMinimized" class="timer-content" :class="{ 'with-setup': !localSesionActiva }">
@@ -868,14 +907,40 @@ const cerrarModalAvanzado = () => {
 }
 
 /* Floating controls and Fullscreen Zen Mode overrides */
-.floating-controls {
+.floating-controls-wrapper {
   position: absolute;
   top: 20px;
   right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
   z-index: 1005; /* Above widgets */
+}
+
+.floating-menu-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.main-menu-btn i {
+  transition: transform 0.3s ease;
+}
+
+.main-menu-btn.menu-open i {
+  transform: rotate(90deg);
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
 }
 
 .floating-btn {
@@ -1394,8 +1459,9 @@ const cerrarModalAvanzado = () => {
   opacity: 1;
 }
 
-.pomodoro-zen-container.dark-mode .minimize-btn {
-  color: #ffffff;
+.pomodoro-zen-container.dark-mode .minimize-btn,
+.pomodoro-zen-container.modo-zen-activo .minimize-btn {
+  color: #ffffff !important;
 }
 
 .timer-widget.minimized {

@@ -27,8 +27,10 @@ class CheckCustomSession
             $sesion = SesionUsuario::where('tokenSesionUsuario', $token)->first();
 
             if ($sesion && $sesion->isValid()) {
-                // Autenticar programáticamente al usuario para esta petición
-                Auth::loginUsingId($sesion->idUsuario);
+                // Autenticar programáticamente al usuario solo si no está autenticado como tal
+                if (!Auth::check() || Auth::id() !== $sesion->idUsuario) {
+                    Auth::loginUsingId($sesion->idUsuario);
+                }
 
                 return $next($request);
             }

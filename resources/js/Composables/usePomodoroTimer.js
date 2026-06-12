@@ -11,6 +11,7 @@ export function usePomodoroTimer(props) {
 
   const quickStartTaskId = ref('');
   const selectedConfigId = ref('');
+  const minutesRegisteredInCurrentPhase = ref(0);
 
   const form = useForm({
     duracionSesion: 25,
@@ -87,7 +88,8 @@ export function usePomodoroTimer(props) {
       currentCycle: currentCycle.value,
       totalSeconds: totalSeconds.value,
       currentSeconds: timeLeft.value,
-      isRunning: isRunning.value
+      isRunning: isRunning.value,
+      minutesRegisteredInCurrentPhase: minutesRegisteredInCurrentPhase.value
     };
     localStorage.setItem(key, JSON.stringify(state));
   };
@@ -103,6 +105,7 @@ export function usePomodoroTimer(props) {
       totalSeconds.value = state.totalSeconds;
       timeLeft.value = state.currentSeconds;
       isRunning.value = state.isRunning;
+      minutesRegisteredInCurrentPhase.value = state.minutesRegisteredInCurrentPhase || 0;
       return true;
     } catch (e) {
       return false;
@@ -123,12 +126,14 @@ export function usePomodoroTimer(props) {
         currentCycle.value = 1;
         currentPhase.value = 'work';
         isRunning.value = false;
+        minutesRegisteredInCurrentPhase.value = 0;
       }
     } else {
       timeLeft.value = 25 * 60;
       totalSeconds.value = 25 * 60;
       currentPhase.value = 'work';
       isRunning.value = false;
+      minutesRegisteredInCurrentPhase.value = 0;
     }
   };
 
@@ -148,6 +153,19 @@ export function usePomodoroTimer(props) {
       if (timeLeft.value > 0) {
         timeLeft.value--;
         saveStateToStorage();
+
+        if (currentPhase.value === 'work' && localSesionActiva.value && !props.isGuest) {
+          const elapsedSeconds = totalSeconds.value - timeLeft.value;
+          if (elapsedSeconds > 0 && elapsedSeconds % 60 === 0 && timeLeft.value > 0) {
+            window.axios.post(route('pomodoro.registrar'), {
+              minutosTrabajados: 1,
+              incrementarCiclo: false
+            });
+            minutesRegisteredInCurrentPhase.value++;
+            saveStateToStorage();
+          }
+        }
+
         if (onTick) onTick(timeLeft.value);
       } else {
         stopTimer();
@@ -168,6 +186,7 @@ export function usePomodoroTimer(props) {
   const resetTimer = () => {
     stopTimer();
     timeLeft.value = totalSeconds.value;
+    minutesRegisteredInCurrentPhase.value = 0;
     saveStateToStorage();
   };
 
@@ -177,7 +196,11 @@ export function usePomodoroTimer(props) {
     
     if (currentPhase.value === 'work') {
       if (!props.isGuest) {
-        window.axios.post(route('pomodoro.registrarTrabajo'), { minutosTrabajados: currentMinutos });
+        const minutosRestantes = currentMinutos - minutesRegisteredInCurrentPhase.value;
+        window.axios.post(route('pomodoro.registrar'), { 
+          minutosTrabajados: minutosRestantes > 0 ? minutosRestantes : 0,
+          incrementarCiclo: true
+        });
       }
       if (currentCycle.value >= localSesionActiva.value.sesionesPrevioDescansoLargo) {
         currentPhase.value = 'longBreak';
@@ -195,13 +218,12 @@ export function usePomodoroTimer(props) {
       totalSeconds.value = localSesionActiva.value.duracionSesion * 60;
     }
 
-    // El backend ya fue notificado con registrarTrabajo arriba si era necesario
-    
+    minutesRegisteredInCurrentPhase.value = 0;
     timeLeft.value = totalSeconds.value;
     saveStateToStorage();
   };
 
-  const endSession = () => {
+  const endSession = (marcarTareaCompletada = null) => {
     if (!localSesionActiva.value) return;
     
     stopTimer();
@@ -214,25 +236,26 @@ export function usePomodoroTimer(props) {
 
     let minutosIncompletos = 0;
     if (currentPhase.value === 'work') {
-      minutosIncompletos = Math.floor((totalSeconds.value - timeLeft.value) / 60);
+      const elapsedMinutes = Math.floor((totalSeconds.value - timeLeft.value) / 60);
+      minutosIncompletos = elapsedMinutes - minutesRegisteredInCurrentPhase.value;
+      if (minutosIncompletos < 0) minutosIncompletos = 0;
     }
     
-    const ciclosObjetivo = localSesionActiva.value.sesionesPrevioDescansoLargo || 4;
-    const ciclosCompletados = currentCycle.value - 1 + (currentPhase.value !== 'work' ? 1 : 0);
-    const finalEstado = ciclosCompletados >= ciclosObjetivo ? 'Completada' : 'Cancelada';
+    let finalEstado = 'Cancelada';
+    if (marcarTareaCompletada === true) {
+      finalEstado = 'Completada';
+    } else if (marcarTareaCompletada === false) {
+      finalEstado = 'Cancelada';
+    } else {
+      const ciclosObjetivo = localSesionActiva.value.sesionesPrevioDescansoLargo || 4;
+      const ciclosCompletados = currentCycle.value - 1 + (currentPhase.value !== 'work' ? 1 : 0);
+      finalEstado = ciclosCompletados >= ciclosObjetivo ? 'Completada' : 'Cancelada';
+    }
 
-    window.axios.post(route('pomodoro.finalizar'), {
+    router.post(route('pomodoro.finalizar'), {
       estado: finalEstado,
-      minutosTrabajados: minutosIncompletos
-    }).then(() => {
-      window.location.href = route('pomodoro.index');
-    }).catch(error => {
-      if (error.response && error.response.status === 419) {
-        // CSRF expirado o sesión expirada: forzamos recarga para refrescar
-        window.location.reload();
-      } else {
-        window.location.href = route('pomodoro.index');
-      }
+      minutosTrabajados: minutosIncompletos,
+      marcarTareaCompletada: marcarTareaCompletada
     });
   };
 

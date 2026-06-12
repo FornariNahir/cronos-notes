@@ -91,6 +91,9 @@ class PomodoroController extends Controller
         }
 
         $tarea = $request->idTarea ? Tarea::find($request->idTarea) : null;
+        if ($tarea && $tarea->estadoTarea === 'Pendiente') {
+            $tarea->update(['estadoTarea' => 'En Progreso']);
+        }
 
         $sesion = SesionPomodoro::create([
             'idConfiguracionPomodoro' => $config->idConfiguracionPomodoro,
@@ -126,22 +129,45 @@ class PomodoroController extends Controller
     public function registrarTrabajo(Request $request)
     {
         $request->validate([
-            'minutosTrabajados' => 'nullable|integer|min:1'
+            'minutosTrabajados' => 'nullable|integer|min:0',
+            'incrementarCiclo' => 'nullable|boolean'
         ]);
 
         $sesionActiva = session('sesionPomodoroActiva');
         if (!$sesionActiva) {
-            return redirect()->back()->withErrors(['error' => 'No hay sesión activa']);
+            return response()->json(['error' => 'No hay sesión activa'], 400);
         }
 
         $sesion = SesionPomodoro::find($sesionActiva['idSesion']);
         if ($sesion) {
-            $minutos = $request->minutosTrabajados ?? $sesionActiva['duracionSesion'];
-            $sesion->increment('tiempoTrabajoTotalMinutos', $minutos);
-            $sesion->increment('ciclosCompletados');
+            $minutos = $request->minutosTrabajados ?? 0;
+            if ($minutos > 0) {
+                $sesion->increment('tiempoTrabajoTotalMinutos', $minutos);
 
-            $estadisticaService = new EstadisticaService();
-            $estadisticaService->registrarTiempoTrabajo(Auth::user()->idUsuario, $minutos);
+                $estadisticaService = new EstadisticaService();
+                $estadisticaService->registrarTiempoTrabajo(Auth::user()->idUsuario, $minutos);
+            }
+
+            if ($request->boolean('incrementarCiclo')) {
+                $sesion->increment('ciclosCompletados');
+
+                // Si al incrementar los ciclos completados, llegamos o superamos los ciclos objetivo (Regla de negocio)
+                if ($sesion->ciclosCompletados >= $sesion->ciclosObjetivo) {
+                    $sesion->update([
+                        'estadoSesion' => 'Completada'
+                    ]);
+
+                    if ($sesion->idTarea) {
+                        $tarea = Tarea::find($sesion->idTarea);
+                        if ($tarea && $tarea->estadoTarea !== 'Completado') {
+                            $tarea->update(['estadoTarea' => 'Completado']);
+                        }
+                    }
+
+                    $estadisticaService = new EstadisticaService();
+                    $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                }
+            }
         }
 
         return response()->json(['success' => true]);
@@ -163,6 +189,13 @@ class PomodoroController extends Controller
             $sesion->update([
                 'estadoSesion' => $request->estado
             ]);
+
+            if ($request->estado === 'En Progreso' && $sesion->idTarea) {
+                $tarea = Tarea::find($sesion->idTarea);
+                if ($tarea && $tarea->estadoTarea === 'Pendiente') {
+                    $tarea->update(['estadoTarea' => 'En Progreso']);
+                }
+            }
         }
 
         return response()->json(['success' => true]);
@@ -172,10 +205,12 @@ class PomodoroController extends Controller
     {
         $request->validate([
             'estado' => 'required|in:Completada,Cancelada',
-            'minutosTrabajados' => 'nullable|integer|min:0'
+            'minutosTrabajados' => 'nullable|integer|min:0',
+            'marcarTareaCompletada' => 'nullable|boolean'
         ]);
 
         $sesionActiva = session('sesionPomodoroActiva');
+        $estadoFinal = 'Cancelada';
         if ($sesionActiva) {
             $sesion = SesionPomodoro::find($sesionActiva['idSesion']);
             if ($sesion) {
@@ -185,23 +220,68 @@ class PomodoroController extends Controller
                     $estadisticaService->registrarTiempoTrabajo(Auth::user()->idUsuario, $request->minutosTrabajados);
                 }
 
-                $sesion->update([
-                    'estadoSesion' => $request->estado
-                ]);
+                // Evaluar si se especificó explícitamente el estado de la tarea (Paso 2 del flujo)
+                if ($request->has('marcarTareaCompletada') && !is_null($request->marcarTareaCompletada)) {
+                    $estadoFinal = $request->boolean('marcarTareaCompletada') ? 'Completada' : 'Cancelada';
 
-                $estadisticaService = new EstadisticaService();
-                if ($request->estado === 'Cancelada') {
-                    $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
-                } elseif ($request->estado === 'Completada') {
-                    $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                    $sesion->update([
+                        'estadoSesion' => $estadoFinal
+                    ]);
+
+                    if ($sesion->idTarea) {
+                        $tarea = Tarea::find($sesion->idTarea);
+                        if ($tarea) {
+                            if ($estadoFinal === 'Completada') {
+                                $tarea->update(['estadoTarea' => 'Completado']);
+                            } else {
+                                if ($tarea->estadoTarea === 'Pendiente') {
+                                    $tarea->update(['estadoTarea' => 'En Progreso']);
+                                }
+                            }
+                        }
+                    }
+
+                    $estadisticaService = new EstadisticaService();
+                    if ($estadoFinal === 'Cancelada') {
+                        $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
+                    } elseif ($estadoFinal === 'Completada') {
+                        $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                    }
+                } else {
+                    // Si la sesión ya estaba marcada como 'Completada' en la base de datos,
+                    // mantenemos 'Completada' independientemente de cualquier otra cosa para evitar duplicar estadísticas
+                    if ($sesion->estadoSesion === 'Completada') {
+                        $estadoFinal = 'Completada';
+                    } else {
+                        // Determinar el estado final real basado en ciclosCompletados y ciclosObjetivo de la BD (Regla 2.1)
+                        $estadoFinal = $sesion->ciclosCompletados >= $sesion->ciclosObjetivo ? 'Completada' : 'Cancelada';
+
+                        $sesion->update([
+                            'estadoSesion' => $estadoFinal
+                        ]);
+
+                        if ($estadoFinal === 'Completada' && $sesion->idTarea) {
+                            $tarea = Tarea::find($sesion->idTarea);
+                            if ($tarea && $tarea->estadoTarea !== 'Completado') {
+                                $tarea->update(['estadoTarea' => 'Completado']);
+                            }
+                        }
+
+                        $estadisticaService = new EstadisticaService();
+                        if ($estadoFinal === 'Cancelada') {
+                            $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
+                        } elseif ($estadoFinal === 'Completada') {
+                            $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                        }
+                    }
                 }
             }
         }
 
         session()->forget('sesionPomodoroActiva');
 
-        return redirect()->back()
-            ->with('success', $request->estado === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión Pomodoro cancelada');
+        return redirect()->route('pomodoro.index')
+            ->with('success', $estadoFinal === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión Pomodoro cancelada');
     }
 
 

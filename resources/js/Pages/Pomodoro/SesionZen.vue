@@ -35,6 +35,34 @@ const showCustomAlert = (title, message) => {
   showAlertModal.value = true;
 };
 
+const showConfirmEndModal = ref(false);
+const showTaskCompletePrompt = ref(false);
+
+const cancelEndSession = () => {
+  showConfirmEndModal.value = false;
+};
+
+const confirmEndSession = () => {
+  showConfirmEndModal.value = false;
+  if (localSesionActiva.value && localSesionActiva.value.idTarea) {
+    showTaskCompletePrompt.value = true;
+  } else {
+    proceedEndSession(null);
+  }
+};
+
+const handleTaskCompletionPrompt = (completed) => {
+  showTaskCompletePrompt.value = false;
+  proceedEndSession(completed);
+};
+
+const proceedEndSession = (marcarTareaCompletada) => {
+  for (const key in howlerInstances) {
+    if (howlerInstances[key]) howlerInstances[key].stop();
+  }
+  endSession(marcarTareaCompletada);
+};
+
 const page = usePage();
 
 // State variables
@@ -378,10 +406,8 @@ const pageTitle = computed(() => {
 });
 
 const endSessionWrapper = () => {
-  endSession();
-  for (const key in howlerInstances) {
-    if (howlerInstances[key]) howlerInstances[key].stop();
-  }
+  stopTimerWrapper();
+  showConfirmEndModal.value = true;
 };
 
 const phaseText = computed(() => {
@@ -762,6 +788,40 @@ const cerrarModalAvanzado = () => {
         </div>
       </div>
     </Teleport>
+    <!-- Modal de Confirmación para Terminar Sesión -->
+    <Teleport to="body">
+      <div v-if="showConfirmEndModal" class="zen-custom-modal-overlay">
+        <div class="zen-custom-modal">
+          <div class="zen-modal-icon">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+          </div>
+          <h3 class="zen-modal-title">¿Terminar Sesión?</h3>
+          <p class="zen-modal-text">¿Estás seguro de que querés dar por terminada esta sesión de concentración? El cronómetro se pausará y tu progreso parcial será guardado.</p>
+          <div class="zen-modal-actions">
+            <button class="zen-btn-secondary" @click="cancelEndSession">No, continuar</button>
+            <button class="zen-btn-primary bg-danger text-white border-0" @click="confirmEndSession">Sí, terminar</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Modal de Pregunta sobre la Tarea Activa -->
+    <Teleport to="body">
+      <div v-if="showTaskCompletePrompt" class="zen-custom-modal-overlay">
+        <div class="zen-custom-modal">
+          <div class="zen-modal-icon">
+            <i class="bi bi-check-circle-fill text-success"></i>
+          </div>
+          <h3 class="zen-modal-title">¿Completaste la tarea?</h3>
+          <p class="zen-modal-text">¿Lograste terminar la tarea: <strong>"{{ localSesionActiva?.tituloTarea }}"</strong>?</p>
+          <div class="zen-modal-actions">
+            <button class="zen-btn-secondary" @click="handleTaskCompletionPrompt(false)">No, sigue pendiente</button>
+            <button class="zen-btn-primary" @click="handleTaskCompletionPrompt(true)">Sí, completada</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <AlertModal 
       :show="showAlertModal" 
       :title="alertTitle" 

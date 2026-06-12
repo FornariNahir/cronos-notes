@@ -26,6 +26,7 @@ class PomodoroController extends Controller
         $configs = ConfiguracionPomodoro::where('idUsuario', Auth::user()->idUsuario)->get();
         $tareas = Tarea::where('idPerfil', $perfilActivoId)
             ->where('estadoTarea', '!=', 'Completado')
+            ->withSum('sesionesPomodoro as sesiones_pomodoro_sum_ciclos_completados', 'ciclosCompletados')
             ->get();
 
         $sesionActiva = session('sesionPomodoroActiva');
@@ -143,6 +144,9 @@ class PomodoroController extends Controller
             if ($request->boolean('incrementarCiclo')) {
                 $sesion->increment('ciclosCompletados');
 
+                $estadisticaService = new EstadisticaService();
+                $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+
                 // Si al incrementar los ciclos completados, llegamos o superamos los ciclos objetivo (Regla de negocio)
                 if ($sesion->ciclosCompletados >= $sesion->ciclosObjetivo) {
                     $sesion->update([
@@ -155,9 +159,6 @@ class PomodoroController extends Controller
                             $tarea->update(['estadoTarea' => 'Completado']);
                         }
                     }
-
-                    $estadisticaService = new EstadisticaService();
-                    $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
                 }
             }
         }

@@ -113,6 +113,11 @@ Route::middleware('auth.custom')->group(function () {
 
     Route::get('/perfil-usuario', function () {
         $userId = Auth::user()->idUsuario;
+
+        // Verificar y de ser necesario resetear la racha del usuario
+        $estadisticaService = new \App\Services\EstadisticaService();
+        $estadisticaService->verificarRachaPerdida($userId);
+
         $estadisticas = \App\Models\Estadistica::where('idUsuario', $userId)->first();
         if (!$estadisticas) {
             $estadisticas = (object) [

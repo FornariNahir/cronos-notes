@@ -69,7 +69,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Settings, Bell, FileText } from '@lucide/vue'
+import { Settings, Bell, FileText } from 'lucide-vue-next'
 import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import EditorToolbar from './Components/EditorToolbar.vue'
@@ -104,7 +104,7 @@ const font = ref("Arial")
 const size = ref("11")
 
 const form = useForm({
-  tituloApunte: 'Acá va el nombre del perfil da',
+  tituloApunte: 'Titulo',
   contenidoApunte: ''
 })
 

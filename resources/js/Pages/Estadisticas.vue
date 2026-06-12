@@ -104,7 +104,7 @@ onMounted(() => {
         <!-- Donut Chart -->
         <div class="chart-card">
           <h3 class="chart-title">Horas de pomodoro por perfil</h3>
-          <div class="donut-content" v-if="chartDataPerfil && chartDataPerfil.length > 0">
+          <div class="donut-content" v-if="animateProgress && chartDataPerfil && chartDataPerfil.length > 0">
             <svg class="donut-chart" viewBox="0 0 36 36">
               <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e5d5d5" stroke-width="3"/>
               <circle 
@@ -123,6 +123,9 @@ onMounted(() => {
               </div>
             </div>
           </div>
+          <div class="donut-content" v-else-if="!animateProgress">
+            <p class="text-muted" style="font-size: 14px; text-align: center; width: 100%;">Cargando gráfico...</p>
+          </div>
           <div class="donut-content" v-else>
             <p class="text-muted" style="font-size: 14px; text-align: center; width: 100%;">No hay horas registradas aún</p>
           </div>
@@ -131,7 +134,7 @@ onMounted(() => {
         <!-- Bar Chart -->
         <div class="chart-card">
           <h3 class="chart-title">Horas de estudio por día</h3>
-          <div class="bar-chart" v-if="chartDataSemana && chartDataSemana.length > 0">
+          <div class="bar-chart" v-if="animateProgress && chartDataSemana && chartDataSemana.length > 0">
             <div class="bar-chart-y-axis">
               <span>{{ maxBarHours }}</span>
               <span>{{ (maxBarHours * 0.75).toFixed(1) }}</span>
@@ -148,6 +151,12 @@ onMounted(() => {
             >
               <div class="bar-date">{{ dia.fecha }}</div>
             </div>
+          </div>
+          <div v-else-if="!animateProgress" class="d-flex align-items-center justify-content-center h-100 text-muted small" style="min-height: 150px;">
+            Cargando gráfico...
+          </div>
+          <div v-else class="d-flex align-items-center justify-content-center h-100 text-muted small" style="min-height: 150px;">
+            No hay horas registradas esta semana
           </div>
         </div>
       </div>

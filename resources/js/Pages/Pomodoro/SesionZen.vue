@@ -68,7 +68,7 @@ const selectedSound = ref('Ninguno');
 const timeLeft = ref(25 * 60);
 const selectedLandscape = ref('paisaje1');
 const isFullscreen = ref(false);
-const isMinimized = ref(false);
+const isMinimized = ref(true);
 const isDistractionFree = ref(false);
 
 const toggleDistractionFree = () => {
@@ -80,7 +80,14 @@ const toggleDistractionFree = () => {
   }
 };
 
-const toggleMinimize = () => {
+const toggleMinimize = (e) => {
+  if (timerWidget.value && timerWidget.value.dataset.preventClick === "true") {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    return;
+  }
   isMinimized.value = !isMinimized.value;
 };
 
@@ -523,7 +530,7 @@ const cerrarModalAvanzado = () => {
               <line x1="16" y1="6" x2="16" y2="18"></line>
             </svg>
           </div>
-          <button class="minimize-btn" @click="toggleMinimize" :title="isMinimized ? 'Maximizar' : 'Minimizar'">
+          <button class="minimize-btn" @click="toggleMinimize($event)" :title="isMinimized ? 'Maximizar' : 'Minimizar'">
             <svg v-if="!isMinimized" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -608,15 +615,15 @@ const cerrarModalAvanzado = () => {
         </div>
 
         <!-- Minimized View -->
-        <div v-show="isMinimized" class="timer-minimized-view" @click="toggleMinimize">
+        <div v-show="isMinimized" class="timer-minimized-view" @click="toggleMinimize($event)">
           <span v-if="localSesionActiva" class="mini-time">{{ displayTime }}</span>
-          <span v-else class="mini-icon">⚙️ Setup</span>
+          <span v-else class="mini-icon">Setup</span>
         </div>
       </div>
 
       <!-- Draggable Sound Settings widget -->
       <div v-draggable ref="settingsToggle" class="widget settings-toggle-widget" style="left: 40px; top: 40px;">
-        <div class="widget-header-controls sound-drag-handle-container">
+        <div class="sound-drag-handle-container">
           <div class="drag-handle sound-drag-handle">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="8" y1="6" x2="8" y2="18"></line>
@@ -665,14 +672,6 @@ const cerrarModalAvanzado = () => {
                   </div>
                 </div>
               </div>
-              
-              <button type="button" class="sound-option opcion-tuerca-mas" @click="abrirModalAvanzado">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-                <strong>Más opciones...</strong>
-              </button>
             </div>
           </div>
         </div>

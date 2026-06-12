@@ -16,6 +16,10 @@ class EstadisticaController extends Controller
     {
         $user = Auth::user();
         
+        // Verificar y resetear racha si corresponde antes de cargar estadísticas
+        $estadisticaService = new \App\Services\EstadisticaService();
+        $estadisticaService->verificarRachaPerdida($user->idUsuario);
+
         // 1. Estadísticas Rápidas (Old Cronos)
         $estadistica = Estadistica::firstOrCreate(
             ['idUsuario' => $user->idUsuario],
@@ -52,8 +56,7 @@ class EstadisticaController extends Controller
             $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
                     $q->where('idUsuario', $user->idUsuario);
                 })
-                ->where('estadoSesion', 'Completada')
-                ->whereDate('updated_at', $fecha->toDateString())
+                ->whereDate('fechaCreacionSesion', $fecha->toDateString())
                 ->sum('tiempoTrabajoTotalMinutos');
                 
             $chartDataSemana[] = [
@@ -73,7 +76,6 @@ class EstadisticaController extends Controller
                 ->whereHas('tarea', function($q) use ($p) {
                     $q->where('idPerfil', $p->idPerfil);
                 })
-                ->where('estadoSesion', 'Completada')
                 ->sum('tiempoTrabajoTotalMinutos');
                 
             if ($minutos > 0) {

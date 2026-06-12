@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-    <div class="notes-page" v-if="!mustSelectProfile">
+    <div class="notes-page">
       <div class="header-section">
         <div>
           <h1 class="page-title">Mis apuntes</h1>
@@ -47,35 +47,6 @@
       </div>
     </div>
 
-    <!-- Modal de Selección de Perfil -->
-    <div v-if="mustSelectProfile" class="profile-selection-modal-overlay">
-      <div class="profile-selection-modal">
-        <div class="modal-header">
-          <h2>Selecciona un perfil</h2>
-          <p>Debes elegir un perfil para ver y crear apuntes.</p>
-        </div>
-        <div class="profiles-list">
-          <div v-if="perfiles.length === 0" class="no-profiles">
-            <p>No tienes ningún perfil creado.</p>
-            <Link :href="route('gestion-perfil')" class="btn-primary mt-3">Ir a crear uno</Link>
-          </div>
-          <button
-            v-else
-            v-for="perfil in perfiles"
-            :key="perfil.idPerfil"
-            @click="selectProfile(perfil.idPerfil)"
-            class="profile-option"
-          >
-            <div class="profile-icon">
-              <i :class="perfil.iconoPerfil || 'bi bi-folder'"></i>
-            </div>
-            <div class="profile-info">
-              <h4>{{ perfil.tituloPerfil }}</h4>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
   </AppLayout>
 </template>
 
@@ -85,19 +56,8 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
   apuntes: Array,
-  perfilActivo: Object,
-  mustSelectProfile: Boolean,
-  perfiles: Array
+  perfilActivo: Object
 });
-
-const selectProfile = (idPerfil) => {
-  router.post(route('perfiles.activar'), { idPerfil }, {
-    onSuccess: () => {
-      // Reload page to get active profile
-      window.location.reload();
-    }
-  });
-};
 
 const formatDate = (dateString) => {
   if (!dateString) return '';

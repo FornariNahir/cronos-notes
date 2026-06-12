@@ -126,6 +126,23 @@
           </div>
       </header>
 
+      <!-- Notificaciones Flash Globales -->
+      <div v-if="$page.props.flash?.error" class="global-toast error-toast">
+        <div class="toast-content">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ $page.props.flash.error }}</span>
+        </div>
+        <button class="toast-close" @click="$page.props.flash.error = null">&times;</button>
+      </div>
+
+      <div v-if="$page.props.flash?.success" class="global-toast success-toast">
+        <div class="toast-content">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>{{ $page.props.flash.success }}</span>
+        </div>
+        <button class="toast-close" @click="$page.props.flash.success = null">&times;</button>
+      </div>
+
       <slot />
     </main>
 
@@ -435,5 +452,65 @@ const toggleMode = () => {
 
 .dropdown-item:hover {
   background-color: #f5f5f5;
+}
+
+/* Notificaciones Flash Globales */
+.global-toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid transparent;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-content i {
+  font-size: 16px;
+}
+
+.error-toast {
+  background-color: #fdf2f2;
+  color: #9b1c1c;
+  border-color: #fbd5d5;
+}
+
+.success-toast {
+  background-color: #f3faf7;
+  color: #03543f;
+  border-color: #def7ec;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: inherit;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  margin-left: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 </style>

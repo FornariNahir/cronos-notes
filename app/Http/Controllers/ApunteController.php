@@ -32,12 +32,7 @@ class ApunteController extends Controller
     {
         $perfilActivoId = session('perfilActivo');
         if (!$perfilActivoId) {
-            $perfiles = \App\Models\Perfil::where('idUsuario', \Illuminate\Support\Facades\Auth::id())->get();
-            return \Inertia\Inertia::render('Apuntes/Index', [
-                'mustSelectProfile' => true,
-                'perfiles' => $perfiles,
-                'apuntes' => []
-            ]);
+            return redirect()->route('dashboard')->with('error', 'Por favor, selecciona un perfil primero para acceder a tus apuntes.');
         }
 
         $perfil = $this->verificarAccesoPerfil('ver');

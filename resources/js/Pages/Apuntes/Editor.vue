@@ -62,7 +62,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Settings, Bell, FileText } from '@lucide/vue'
+import { Settings, Bell, FileText } from 'lucide-vue-next'
 import { useForm } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import EditorToolbar from './Components/EditorToolbar.vue'

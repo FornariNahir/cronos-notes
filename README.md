@@ -117,7 +117,7 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
       1. Ve a los ajustes de la cuenta de Google que deseas usar para enviar correos.
       2. Dirígete a la pestaña **Seguridad** y asegúrate de tener activada la **Verificación en 2 pasos**.
       3. En la misma sección, busca **Contraseñas de aplicaciones** (App Passwords) y crea una nueva (ej. nombrada "Cronos Notes").
-      4. Google te generará una contraseña de 16 caracteres. Cópiala; no volverás a verla.
+      4. Google te generará una contraseña de 16 caracteres. Cópiala; no volverás a verla. **Asegúrate de quitarle los espacios o ponerla entre comillas** al pegarla en el `.env`.
     - **Paso B. Configurar el .env:**
       1. Ve a tu archivo `.env` y busca la sección `MAIL_`. Reemplaza los valores para usar el servidor SMTP de Gmail:
          ```env
@@ -125,7 +125,7 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
          MAIL_HOST=smtp.gmail.com
          MAIL_PORT=465
          MAIL_USERNAME=tu_correo_elegido@gmail.com
-         MAIL_PASSWORD=las_16_letras_de_tu_contraseña_de_aplicacion
+         MAIL_PASSWORD="las_16_letras_sin_espacios"
          MAIL_ENCRYPTION=smtps
          MAIL_FROM_ADDRESS=tu_correo_elegido@gmail.com
          MAIL_FROM_NAME="${APP_NAME}"

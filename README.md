@@ -112,28 +112,25 @@ Laravel utiliza un archivo de configuración llamado `.env` para conectarse a tu
          GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
          ```
 
-4. Si deseas probar el **flujo de recuperación de contraseñas**, debes configurar tus credenciales de **Mailtrap** (un servidor SMTP simulado para desarrollo). Sigue estos pasos para obtenerlas en su plataforma:
-    - **Paso A. Acceder a Mailtrap:**
-      1. Entra a [Mailtrap](https://mailtrap.io/) y regístrate o inicia sesión.
-    - **Paso B. Obtener Credenciales SMTP del Inbox:**
-      1. En el menú lateral izquierdo, ve a **Email Testing** o **Sandboxes** (según la interfaz actual de Mailtrap) y haz clic en **Inboxes** (Bandejas de entrada).
-      2. Haz clic en tu bandeja predeterminada (usualmente llamada **"My Inbox"**) o crea una nueva.
-      3. Una vez dentro de la bandeja de entrada (inbox), asegúrate de estar en la pestaña **"SMTP Settings"** (Configuración de SMTP).
-      4. En la sección **"Integrations"**, selecciona **"Laravel 9+"** en el menú desplegable para ver la configuración directa, o copia manualmente los valores individuales de la pestaña **"Show Credentials"**:
-         - **Host:** `sandbox.smtp.mailtrap.io`
-         - **Port:** `2525` (o `587` / `465`)
-         - **Username:** *(código alfanumérico provisto)*
-         - **Password:** *(código alfanumérico provisto)*
-      5. Copia esos valores y pégalos en tu archivo `.env`:
+4. Si deseas probar el **envío de correos reales** (como la recuperación de contraseñas o invitaciones a perfiles), debes configurar tus credenciales SMTP de **Gmail**. Sigue estos pasos:
+    - **Paso A. Generar Contraseña de Aplicación en Google:**
+      1. Ve a los ajustes de la cuenta de Google que deseas usar para enviar correos.
+      2. Dirígete a la pestaña **Seguridad** y asegúrate de tener activada la **Verificación en 2 pasos**.
+      3. En la misma sección, busca **Contraseñas de aplicaciones** (App Passwords) y crea una nueva (ej. nombrada "Cronos Notes").
+      4. Google te generará una contraseña de 16 caracteres. Cópiala; no volverás a verla.
+    - **Paso B. Configurar el .env:**
+      1. Ve a tu archivo `.env` y busca la sección `MAIL_`. Reemplaza los valores para usar el servidor SMTP de Gmail:
          ```env
          MAIL_MAILER=smtp
-         MAIL_HOST=sandbox.smtp.mailtrap.io
-         MAIL_PORT=2525
-         MAIL_USERNAME=tu_usuario_de_mailtrap
-         MAIL_PASSWORD=tu_contraseña_de_mailtrap
-         MAIL_FROM_ADDRESS="no-reply@cronosnotes.com"
+         MAIL_HOST=smtp.gmail.com
+         MAIL_PORT=465
+         MAIL_USERNAME=tu_correo_elegido@gmail.com
+         MAIL_PASSWORD=las_16_letras_de_tu_contraseña_de_aplicacion
+         MAIL_ENCRYPTION=smtps
+         MAIL_FROM_ADDRESS=tu_correo_elegido@gmail.com
          MAIL_FROM_NAME="${APP_NAME}"
          ```
+      2. Si tu sistema de colas está configurado como `QUEUE_CONNECTION=database`, recuerda que los correos se encolarán y no saldrán hasta que ejecutes en una terminal: `php artisan queue:work`. (Alternativamente puedes usar `QUEUE_CONNECTION=sync` para pruebas instantáneas sin colas).
 
 
 
@@ -178,17 +175,17 @@ Para verificar el correcto funcionamiento de la recuperación de contraseñas y 
 Este flujo simula el caso en que un usuario olvida sus credenciales y solicita un enlace para restablecer su contraseña mediante correo electrónico.
 
 #### Requisitos Previos:
-- Tener configuradas las credenciales de **Mailtrap** en el archivo `.env` (Paso 4 de la instalación).
+- Tener configuradas las credenciales de **Gmail SMTP** en el archivo `.env` (Paso 4 de la instalación).
 - Tener un usuario registrado previamente en la base de datos (puedes registrarte desde la pestaña `/register`).
-- Tener abierta una pestaña en tu navegador con tu panel de **Mailtrap** para visualizar los correos entrantes en el Inbox de pruebas.
+- Tener abierta la bandeja de entrada del correo destino para visualizar la notificación.
 
 #### Paso a Paso:
 1. **Acceder a la pantalla de login:** Abre tu navegador e ingresa a la URL local del proyecto: [http://127.0.0.1:8000/login](http://127.0.0.1:8000/login).
 2. **Iniciar la solicitud:** En la tarjeta de login, haz clic en el enlace **"¿Olvidaste tu contraseña?"** (ubicado debajo del campo de password).
 3. **Ingresar el correo:** Serás redirigido a la pestaña de solicitud (`/forgot-password`). Introduce el email del usuario registrado que deseas recuperar y haz clic en el botón **"Email Password Reset Link"**.
 4. **Verificar el envío:** Verás un mensaje en pantalla indicando que se ha enviado el enlace de restablecimiento (si el correo existe en la base de datos).
-5. **Revisar Mailtrap:** Ve a la pestaña del navegador donde tienes abierto **Mailtrap**, selecciona tu bandeja de entrada de pruebas (Inbox) y busca el correo nuevo con el asunto *"Reset Password Notification"* enviado por Cronos Notes.
-6. **Restablecer contraseña:** Abre el correo en Mailtrap y haz clic en el botón **"Reset Password"**. Esto abrirá una nueva pestaña en tu navegador apuntando al formulario de tu aplicación (`/reset-password/{token}`).
+5. **Revisar Bandeja de Entrada:** Ve a la bandeja de entrada del correo que intentas recuperar y busca el correo nuevo con el asunto *"Reset Password Notification"* enviado por Cronos Notes.
+6. **Restablecer contraseña:** Abre el correo y haz clic en el botón **"Reset Password"**. Esto abrirá una nueva pestaña en tu navegador apuntando al formulario de tu aplicación (`/reset-password/{token}`).
 7. **Ingresar las nuevas credenciales:**
    - El campo **Email** estará precargado con tu dirección y deshabilitado para evitar modificaciones.
    - En el campo **Password**, escribe la nueva contraseña.

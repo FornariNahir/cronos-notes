@@ -41,6 +41,6 @@ class CheckCustomSession
             Auth::logout();
         }
 
-        return redirect()->route('login')->withoutCookie('cronos_session_token');
+        return redirect()->guest(route('login'))->withoutCookie('cronos_session_token');
     }
 }

@@ -145,6 +145,9 @@ Route::middleware('auth.custom')->group(function () {
     Route::delete('/invitaciones/{idInvitacion}', [PerfilCompartidoController::class, 'cancelarInvitacion'])->name('perfil-compartido.cancelar-invitacion');
 
     // PERFIL COMPARTIDO — Flujo del invitado (requiere auth)
+    Route::get('/invitacion/{token}/entrar', function ($token) {
+        return redirect()->route('invitacion.ver', $token);
+    })->name('invitacion.entrar');
     Route::post('/invitacion/{token}/aceptar', [PerfilCompartidoController::class, 'aceptarInvitacion'])->name('invitacion.aceptar');
     Route::post('/invitacion/{token}/rechazar', [PerfilCompartidoController::class, 'rechazarInvitacion'])->name('invitacion.rechazar');
 });

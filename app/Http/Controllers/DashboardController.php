@@ -66,12 +66,23 @@ class DashboardController extends Controller
                                   ->first();
 
             if ($perfilActivo) {
+                // Determinar rol/permiso del usuario actual
+                if ($perfilActivo->idUsuario === $user->idUsuario) {
+                    $perfilActivo->esCompartido = false;
+                    $perfilActivo->permisoCompartido = 'Administrador';
+                } else {
+                    $perfilActivo->esCompartido = true;
+                    $perfilActivo->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
+                        ->where('idPerfil', $perfilActivoId)
+                        ->value('permiso');
+                }
+
                 // Obtenemos solo las tareas pendientes de ese perfil sumando ciclos Pomodoro
                 $tareas = Tarea::where('idPerfil', $perfilActivo->idPerfil)
                                ->where('estadoTarea', 'Pendiente')
                                ->withSum(['sesionesPomodoro' => function($query) {
                                    $query->where('estadoSesion', 'Completada');
-                               }], 'ciclosCompletados')
+                                }], 'ciclosCompletados')
                                ->get();
             }
         }

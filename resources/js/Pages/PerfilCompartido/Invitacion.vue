@@ -1,6 +1,6 @@
 <script setup>
-import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
 
 const props = defineProps({
     invitacion: {
@@ -9,7 +9,16 @@ const props = defineProps({
     }
 });
 
+const page = usePage();
+const isAuthenticated = computed(() => !!page.props.auth?.user);
+
 const procesando = ref(false);
+
+const iniciarSesion = () => {
+    // Redirigimos a una ruta protegida para que el middleware guarde el intento
+    // y luego del login nos devuelva a la invitación.
+    window.location.href = route('invitacion.entrar', props.invitacion.token);
+};
 
 const aceptar = () => {
     procesando.value = true;
@@ -68,7 +77,7 @@ const rechazar = () => {
                 </p>
             </div>
 
-            <div class="d-flex flex-column gap-2.5">
+            <div v-if="isAuthenticated" class="d-flex flex-column gap-2.5">
                 <button 
                     @click="aceptar" 
                     class="btn-accept" 
@@ -84,6 +93,19 @@ const rechazar = () => {
                 >
                     Rechazar
                 </button>
+            </div>
+            
+            <div v-else class="d-flex flex-column gap-2.5">
+                <button 
+                    @click="iniciarSesion" 
+                    class="btn-accept" 
+                >
+                    <i class="bi bi-box-arrow-in-right me-1.5"></i>
+                    Iniciar sesión para unirte
+                </button>
+                <p class="text-muted small mt-2 mb-0">
+                    Necesitás una cuenta activa para poder participar de este perfil.
+                </p>
             </div>
 
         </div>

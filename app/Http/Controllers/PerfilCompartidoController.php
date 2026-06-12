@@ -65,8 +65,10 @@ class PerfilCompartidoController extends Controller
     public function compartir(Request $request, $idPerfil)
     {
         $request->validate([
-            'email' => 'required|email|max:100',
+            'email' => 'required|email|max:100|exists:Usuario,email',
             'permiso' => 'required|in:Lector,Editor,Administrador',
+        ], [
+            'email.exists' => 'El correo electrónico no se encuentra registrado en el sistema.',
         ]);
 
         $perfil = Perfil::findOrFail($idPerfil);
@@ -154,11 +156,15 @@ class PerfilCompartidoController extends Controller
             abort(403, 'Solo el propietario puede cambiar permisos.');
         }
 
-        $compartido = PerfilCompartido::where('idUsuario', $idUsuario)
+        PerfilCompartido::where('idUsuario', $idUsuario)
             ->where('idPerfil', $idPerfil)
             ->firstOrFail();
 
-        $compartido->update(['permiso' => $request->permiso]);
+        // Utilizamos el Query Builder para actualizar en lugar del modelo Eloquent
+        // ya que la tabla pivote carece de una única clave primaria ("id").
+        PerfilCompartido::where('idUsuario', $idUsuario)
+            ->where('idPerfil', $idPerfil)
+            ->update(['permiso' => $request->permiso]);
 
         return redirect()->back()->with('success', 'Permiso actualizado correctamente.');
     }

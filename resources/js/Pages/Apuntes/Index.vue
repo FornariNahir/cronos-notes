@@ -4,9 +4,17 @@
       <div class="header-section">
         <div>
           <h1 class="page-title">Mis apuntes</h1>
-          <p class="page-subtitle">Revisá, editá o grabá tus apuntes de clase en <b>{{ perfilActivo.tituloPerfil }}</b></p>
+          <p class="page-subtitle d-flex align-items-center flex-wrap gap-1">
+            <span>Revisá, editá o grabá tus apuntes de clase en <b>{{ perfilActivo.tituloPerfil }}</b></span>
+            <span v-if="perfilActivo?.esCompartido" class="badge bg-light text-secondary border ms-2" style="font-size: 11px; font-weight: 500; text-transform: capitalize; padding: 2px 6px;">
+                {{ perfilActivo.permisoCompartido }}
+            </span>
+            <span v-if="perfilActivo?.permisoCompartido === 'Lector'" class="badge bg-warning-subtle text-warning-emphasis border ms-2" style="font-size: 11px; font-weight: 500; padding: 2px 6px;">
+                <i class="bi bi-lock-fill me-1"></i> Solo Lectura
+            </span>
+          </p>
         </div>
-        <Link :href="route('apuntes.create')" class="btn-create">
+        <Link v-if="perfilActivo?.permisoCompartido !== 'Lector'" :href="route('apuntes.create')" class="btn-create">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -24,25 +32,30 @@
             <p class="note-preview">{{ stripHtml(apunte.contenidoApunte) || 'Sin contenido en esta nota...' }}</p>
           </div>
           <div class="note-card-actions">
-            <button class="btn-action edit" @click="editNote(apunte.idApunte)" title="Editar">
-              Editar
+            <button v-if="perfilActivo?.permisoCompartido === 'Lector'" class="btn-action edit w-100" @click="editNote(apunte.idApunte)" title="Ver apunte">
+              Ver apunte
             </button>
-            <button class="btn-action delete" @click="deleteNote(apunte.idApunte)" title="Eliminar">
-              Eliminar
-            </button>
+            <template v-else>
+              <button class="btn-action edit" @click="editNote(apunte.idApunte)" title="Editar">
+                Editar
+              </button>
+              <button class="btn-action delete" @click="deleteNote(apunte.idApunte)" title="Eliminar">
+                Eliminar
+              </button>
+            </template>
           </div>
         </div>
 
         <!-- Estado Vacío -->
-        <div class="empty-state" v-if="apuntes.length === 0" @click="createNote">
+        <div class="empty-state" v-if="apuntes.length === 0" :class="{ 'cursor-default': perfilActivo?.permisoCompartido === 'Lector' }" @click="perfilActivo?.permisoCompartido !== 'Lector' ? createNote() : null">
           <div class="empty-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
           </div>
-          <h3>Crea tu primer apunte</h3>
-          <p>Graba audios de clase y escribe notas de estudio en este perfil.</p>
+          <h3>{{ perfilActivo?.permisoCompartido === 'Lector' ? 'Sin apuntes' : 'Crea tu primer apunte' }}</h3>
+          <p>{{ perfilActivo?.permisoCompartido === 'Lector' ? 'Este perfil no cuenta con apuntes creados.' : 'Graba audios de clase y escribe notas de estudio en este perfil.' }}</p>
         </div>
       </div>
     </div>
@@ -51,12 +64,22 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
   apuntes: Array,
   perfilActivo: Object
+});
+
+onMounted(() => {
+  if (!document.querySelector('link[href*="bootstrap-icons"]')) {
+    const linkIcons = document.createElement('link');
+    linkIcons.rel = 'stylesheet';
+    linkIcons.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css';
+    document.head.appendChild(linkIcons);
+  }
 });
 
 const formatDate = (dateString) => {

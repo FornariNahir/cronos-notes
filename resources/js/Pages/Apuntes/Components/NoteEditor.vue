@@ -5,7 +5,7 @@
         <div class="flex flex-col gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Palabras clave</span>
           <div
-            contenteditable="true"
+            :contenteditable="isReadOnly ? 'false' : 'true'"
             data-placeholder="Ideas y conceptos clave..."
             class="editor-area rounded-md border border-border bg-card p-3 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[200px] md:min-h-[480px]"
           ></div>
@@ -13,7 +13,7 @@
         <div class="flex flex-col gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Notas</span>
           <div
-            contenteditable="true"
+            :contenteditable="isReadOnly ? 'false' : 'true'"
             data-placeholder="Empieza a escribir aquí..."
             class="editor-area rounded-md border border-border bg-card p-3 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[200px] md:min-h-[480px]"
             @input="handleInput"
@@ -23,7 +23,7 @@
         <div class="md:col-span-2 flex flex-col gap-2">
           <span class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Resumen</span>
           <div
-            contenteditable="true"
+            :contenteditable="isReadOnly ? 'false' : 'true'"
             data-placeholder="Resumen de la sesión..."
             class="editor-area rounded-md border border-border bg-card p-3 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[120px]"
           ></div>
@@ -32,7 +32,7 @@
     </template>
     <template v-else>
       <div
-        contenteditable="true"
+        :contenteditable="isReadOnly ? 'false' : 'true'"
         data-placeholder="Empieza a escribir aquí..."
         class="editor-area mx-auto min-h-[60vh] max-w-4xl rounded-md text-sm leading-relaxed text-foreground outline-none p-4"
         @input="handleInput"
@@ -48,7 +48,11 @@ import { ref, onMounted, watch, nextTick } from 'vue'
 const props = defineProps({
   cornellMode: Boolean,
   font: String,
-  modelValue: String
+  modelValue: String,
+  isReadOnly: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits(['update:modelValue'])

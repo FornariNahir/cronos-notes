@@ -196,9 +196,15 @@ const textoEstado = (estado) => {
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4 mt-2">
             <div>
                 <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left;">Tareas por Perfil</h1>
-                <p class="text-marron-institucional small fw-semibold m-0 mt-1">
+                <p class="text-marron-institucional small fw-semibold d-flex align-items-center flex-wrap gap-1 m-0 mt-1">
                     <i :class="'bi ' + (perfilActivo?.iconoPerfil || 'bi-folder-fill') + ' me-1'"></i> 
                     <span class="text">Perfil actual: {{ perfilActivo ? perfilActivo.tituloPerfil : 'Sin perfil seleccionado' }}</span>
+                    <span v-if="perfilActivo?.esCompartido" class="badge bg-light text-secondary border ms-2" style="font-size: 11px; font-weight: 500; text-transform: capitalize;">
+                        {{ perfilActivo.permisoCompartido }}
+                    </span>
+                    <span v-if="perfilActivo?.permisoCompartido === 'Lector'" class="badge bg-warning-subtle text-warning-emphasis border ms-2" style="font-size: 11px; font-weight: 500;">
+                        <i class="bi bi-lock-fill me-1"></i> Solo Lectura
+                    </span>
                 </p>
             </div>
             
@@ -215,7 +221,7 @@ const textoEstado = (estado) => {
                         <i class="bi bi-list-task"></i>
                     </button>
                 </div>
-                <button v-if="perfilActivo" class="btn btn-marron d-flex align-items-center gap-2 px-3 py-2" @click="abrirCrearTarea">
+                <button v-if="perfilActivo && perfilActivo.permisoCompartido !== 'Lector'" class="btn btn-marron d-flex align-items-center gap-2 px-3 py-2" @click="abrirCrearTarea">
                     <i class="bi bi-plus-lg"></i> Agregar tarea
                 </button>
             </div>
@@ -284,7 +290,7 @@ const textoEstado = (estado) => {
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex gap-2 mt-3 botonera-card">
+                        <div v-if="perfilActivo?.permisoCompartido !== 'Lector'" class="d-flex gap-2 mt-3 botonera-card">
                             <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-tarea" @click="abrirEditarTarea(tarea)">
                                 <i class="bi bi-pencil me-1"></i> Editar
                             </button>
@@ -425,7 +431,7 @@ const textoEstado = (estado) => {
   </Teleport>
 
     <!-- Botón Flotante Agregar Tarea -->
-    <button v-if="perfilActivo" class="btn btn-marron btn-flotante-agregar shadow" @click="abrirCrearTarea" title="Agregar Tarea">
+    <button v-if="perfilActivo && perfilActivo.permisoCompartido !== 'Lector'" class="btn btn-marron btn-flotante-agregar shadow" @click="abrirCrearTarea" title="Agregar Tarea">
         <i class="bi bi-plus-lg fs-4"></i>
     </button>
   </AppLayout>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tarea;
 use App\Models\Perfil;
+use App\Models\PerfilCompartido;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -42,6 +43,17 @@ class TareaController extends Controller
             ->get();
 
         $perfilActivo = Perfil::find($perfilActivoId);
+
+        $userId = Auth::id();
+        if ($perfilActivo->idUsuario === $userId) {
+            $perfilActivo->esCompartido = false;
+            $perfilActivo->permisoCompartido = 'Administrador';
+        } else {
+            $perfilActivo->esCompartido = true;
+            $perfilActivo->permisoCompartido = PerfilCompartido::where('idUsuario', $userId)
+                ->where('idPerfil', $perfilActivoId)
+                ->value('permiso');
+        }
 
         return Inertia::render('GestionTareas', [
             'tareas' => $tareas,

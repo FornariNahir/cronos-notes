@@ -10,13 +10,18 @@
           <input
             type="text"
             v-model="form.tituloApunte"
+            :disabled="perfilActivo?.permisoCompartido === 'Lector'"
             class="truncate text-base font-semibold text-primary sm:text-lg bg-transparent border-none outline-none focus:ring-0 p-0 w-full"
             placeholder="Título del apunte..."
             required
           />
         </div>
         <div class="flex shrink-0 items-center gap-3 sm:gap-4">
+          <span v-if="perfilActivo?.permisoCompartido === 'Lector'" class="badge bg-warning-subtle text-warning-emphasis border px-3 py-2 rounded-md font-medium text-xs d-flex align-items-center gap-1">
+            <i class="bi bi-lock-fill"></i> Solo lectura
+          </span>
           <button
+            v-else
             type="button"
             @click="saveNote"
             :disabled="form.processing"
@@ -31,6 +36,7 @@
       <div class="flex flex-1 overflow-hidden">
         <div class="flex min-w-0 flex-1 flex-col">
           <EditorToolbar
+            v-if="perfilActivo?.permisoCompartido !== 'Lector'"
             :font="font"
             :size="size"
             :active-formats="activeFormats"
@@ -44,10 +50,11 @@
             :cornell-mode="cornellMode"
             :font="font"
             v-model="form.contenidoApunte"
+            :isReadOnly="perfilActivo?.permisoCompartido === 'Lector'"
           />
         </div>
 
-        <AudioPanel v-model:open="audioOpen" @recorded="onAudioRecorded" />
+        <AudioPanel v-if="perfilActivo?.permisoCompartido !== 'Lector'" v-model:open="audioOpen" @recorded="onAudioRecorded" />
       </div>
     </div>
 
@@ -83,11 +90,15 @@ const props = defineProps({
   apunte: {
     type: Object,
     default: null
+  },
+  perfilActivo: {
+    type: Object,
+    default: null
   }
 })
 
 const cornellMode = ref(false)
-const audioOpen = ref(true)
+const audioOpen = ref(props.perfilActivo?.permisoCompartido !== 'Lector')
 const activeFormats = ref({})
 const font = ref("Arial")
 const size = ref("11")

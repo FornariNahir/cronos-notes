@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Apunte;
 use App\Models\Perfil;
+use App\Models\PerfilCompartido;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -37,6 +38,17 @@ class ApunteController extends Controller
 
         $perfil = $this->verificarAccesoPerfil('ver');
 
+        $userId = Auth::id();
+        if ($perfil->idUsuario === $userId) {
+            $perfil->esCompartido = false;
+            $perfil->permisoCompartido = 'Administrador';
+        } else {
+            $perfil->esCompartido = true;
+            $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $userId)
+                ->where('idPerfil', $perfil->idPerfil)
+                ->value('permiso');
+        }
+
         $apuntes = Apunte::where('idPerfil', $perfil->idPerfil)
             ->orderBy('fechaCreacion', 'desc')
             ->get();
@@ -50,6 +62,17 @@ class ApunteController extends Controller
     public function create()
     {
         $perfil = $this->verificarAccesoPerfil('crear');
+
+        $userId = Auth::id();
+        if ($perfil->idUsuario === $userId) {
+            $perfil->esCompartido = false;
+            $perfil->permisoCompartido = 'Administrador';
+        } else {
+            $perfil->esCompartido = true;
+            $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $userId)
+                ->where('idPerfil', $perfil->idPerfil)
+                ->value('permiso');
+        }
 
         return Inertia::render('Apuntes/Editor', [
             'perfilActivo' => $perfil,
@@ -78,7 +101,18 @@ class ApunteController extends Controller
 
     public function edit($id)
     {
-        $perfil = $this->verificarAccesoPerfil('modificar');
+        $perfil = $this->verificarAccesoPerfil('ver');
+
+        $userId = Auth::id();
+        if ($perfil->idUsuario === $userId) {
+            $perfil->esCompartido = false;
+            $perfil->permisoCompartido = 'Administrador';
+        } else {
+            $perfil->esCompartido = true;
+            $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $userId)
+                ->where('idPerfil', $perfil->idPerfil)
+                ->value('permiso');
+        }
 
         $apunte = Apunte::where('idApunte', $id)
             ->where('idPerfil', $perfil->idPerfil)

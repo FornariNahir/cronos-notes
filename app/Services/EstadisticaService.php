@@ -42,6 +42,13 @@ class EstadisticaService
                     'rachaActual' => 0
                 ]);
             }
+        } else {
+            // Si no hay racha activa, asegurar que rachaActual en Estadistica sea 0
+            if ($estadistica->rachaActual > 0) {
+                $estadistica->update([
+                    'rachaActual' => 0
+                ]);
+            }
         }
     }
     /**

@@ -96,7 +96,7 @@
 
 <script setup>
 import { ref, computed, onUnmounted } from 'vue'
-import { Mic, X, ChevronDown, Square } from 'lucide-vue-next'
+import { Mic, X, ChevronDown, Square } from '@lucide/vue'
 
 const props = defineProps({
   open: Boolean

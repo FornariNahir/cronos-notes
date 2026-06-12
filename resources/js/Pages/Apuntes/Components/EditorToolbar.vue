@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Printer, Copy, ChevronDown } from 'lucide-vue-next'
+import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Printer, Copy, ChevronDown } from '@lucide/vue'
 
 const props = defineProps({
   font: String,

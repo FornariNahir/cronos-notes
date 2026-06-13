@@ -77,15 +77,32 @@ class EstadisticaController extends Controller
                     $q->where('idPerfil', $p->idPerfil);
                 })
                 ->sum('tiempoTrabajoTotalMinutos');
+
+            $sesionesCount = SesionPomodoro::whereHas('tarea', function($q) use ($p) {
+                    $q->where('idPerfil', $p->idPerfil);
+                })->count();
                 
-            if ($minutos > 0) {
+            if ($minutos > 0 || $sesionesCount > 0) {
                 $chartDataPerfil[] = [
                     'perfil' => $p->tituloPerfil,
                     'color' => $p->colorPerfil ?? $coloresDisponibles[$index % count($coloresDisponibles)],
-                    'horas' => round($minutos / 60, 2)
+                    'horas' => round($minutos / 60, 2),
+                    'sesiones' => $sesionesCount
                 ];
             }
         }
+
+        // 4. Horas de concentración diaria (hoy)
+        $minutosHoy = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
+                $q->where('idUsuario', $user->idUsuario);
+            })
+            ->whereDate('fechaCreacionSesion', Carbon::today()->toDateString())
+            ->sum('tiempoTrabajoTotalMinutos');
+        $horasConcentracionDiaria = round($minutosHoy / 60, 2);
+
+        $estadistica->update([
+            'horasConcentracionDiaria' => $horasConcentracionDiaria
+        ]);
 
         return Inertia::render('Estadisticas', [
             'rachaMasLarga' => $estadistica->rachaMasLarga,
@@ -96,7 +113,8 @@ class EstadisticaController extends Controller
             'tareasRetrasadas' => $tareasRetrasadas,
             'eficiencia' => $eficiencia,
             'chartDataSemana' => $chartDataSemana,
-            'chartDataPerfil' => $chartDataPerfil
+            'chartDataPerfil' => $chartDataPerfil,
+            'horasConcentracionDiaria' => $horasConcentracionDiaria
         ]);
     }
 }

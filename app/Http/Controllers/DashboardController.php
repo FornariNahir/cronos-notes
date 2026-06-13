@@ -93,14 +93,28 @@ class DashboardController extends Controller
 
         // Obtenemos las estadísticas del usuario o creamos valores por defecto
         $estadisticas = Estadistica::where('idUsuario', $user->idUsuario)->first();
+
+        // Calcular dinámicamente las horas de concentración diarias para HOY
+        $minutosHoy = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
+                $q->where('idUsuario', $user->idUsuario);
+            })
+            ->whereDate('fechaCreacionSesion', Carbon::today()->toDateString())
+            ->sum('tiempoTrabajoTotalMinutos');
+        $horasConcentracionDiaria = round($minutosHoy / 60, 2);
+
         if (!$estadisticas) {
-            $estadisticas = (object) [
+            $estadisticas = Estadistica::create([
+                'idUsuario' => $user->idUsuario,
                 'rachaActual' => 0,
                 'rachaMasLarga' => 0,
                 'tareasTotales' => 0,
                 'tiempoTotalPomodoro' => 0,
-                'horasConcentracionDiaria' => 0
-            ];
+                'horasConcentracionDiaria' => $horasConcentracionDiaria
+            ]);
+        } else {
+            $estadisticas->update([
+                'horasConcentracionDiaria' => $horasConcentracionDiaria
+            ]);
         }
 
         // Datos para el Gráfico de Barras (Semana)

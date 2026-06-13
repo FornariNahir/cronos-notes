@@ -145,7 +145,7 @@ class PomodoroController extends Controller
                 $sesion->increment('ciclosCompletados');
 
                 $estadisticaService = new EstadisticaService();
-                $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario, $sesion->configuracionPomodoro->duracionSesion);
 
                 // Si al incrementar los ciclos completados, llegamos o superamos los ciclos objetivo (Regla de negocio)
                 if ($sesion->ciclosCompletados >= $sesion->ciclosObjetivo) {
@@ -238,7 +238,7 @@ class PomodoroController extends Controller
                     if ($estadoFinal === 'Cancelada') {
                         $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
                     } elseif ($estadoFinal === 'Completada') {
-                        $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                        $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario, $sesion->configuracionPomodoro->duracionSesion);
                     }
                 } else {
                     // Si la sesión ya estaba marcada como 'Completada' en la base de datos,
@@ -264,7 +264,7 @@ class PomodoroController extends Controller
                         if ($estadoFinal === 'Cancelada') {
                             $estadisticaService->registrarCancelacion(Auth::user()->idUsuario);
                         } elseif ($estadoFinal === 'Completada') {
-                            $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario);
+                            $estadisticaService->evaluarRachaAlCompletarSesion(Auth::user()->idUsuario, $sesion->configuracionPomodoro->duracionSesion);
                         }
                     }
                 }
@@ -274,7 +274,7 @@ class PomodoroController extends Controller
         session()->forget('sesionPomodoroActiva');
 
         return redirect()->route('pomodoro.index')
-            ->with('success', $estadoFinal === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión Pomodoro cancelada');
+            ->with('success', $estadoFinal === 'Completada' ? 'Sesión Pomodoro finalizada' : 'Sesión cancelada. ¡No te preocupes! Cada pequeño paso cuenta, vuelve a intentarlo cuando estés listo. 💪');
     }
 
 

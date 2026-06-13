@@ -70,11 +70,16 @@ class EstadisticaService
 
         $estadistica->increment('tiempoTotalPomodoro', $minutos);
 
-        // La hora diaria actual se puede calcular basada en el día actual o ser acumulativa
-        // Aquí mantenemos la lógica actual de sumar las horas
-        $nuevasHoras = $estadistica->horasConcentracionDiaria + ($minutos / 60);
+        // Calcular dinámicamente las horas de concentración diarias para HOY
+        $minutosHoy = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($idUsuario) {
+                $q->where('idUsuario', $idUsuario);
+            })
+            ->whereDate('fechaCreacionSesion', Carbon::today()->toDateString())
+            ->sum('tiempoTrabajoTotalMinutos');
+        $horasConcentracionDiaria = round($minutosHoy / 60, 2);
+
         $estadistica->update([
-            'horasConcentracionDiaria' => round($nuevasHoras, 2)
+            'horasConcentracionDiaria' => $horasConcentracionDiaria
         ]);
     }
 
@@ -101,9 +106,19 @@ class EstadisticaService
     /**
      * Evalúa y actualiza la racha al completar una sesión.
      * Utiliza tanto la tabla Estadistica como la tabla Racha.
+     * La racha solo aumenta cuando se completa una sesión de 25 minutos.
      */
-    public function evaluarRachaAlCompletarSesion($idUsuario)
+    public function evaluarRachaAlCompletarSesion($idUsuario, $duracionSesion = null)
     {
+        if ($duracionSesion === null) {
+            $sesionActiva = session('sesionPomodoroActiva');
+            $duracionSesion = $sesionActiva['duracionSesion'] ?? null;
+        }
+
+        if ($duracionSesion !== null && (int)$duracionSesion !== 25) {
+            return;
+        }
+
         $hoy = Carbon::today();
         $ayer = Carbon::yesterday();
 

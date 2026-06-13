@@ -25,6 +25,7 @@
         "@lucide/vue": "^1.17.0",
         "chart.js": "^4.5.1",
         "howler": "^2.2.4",
+        "lucide-vue-next": "^1.0.0",
         "vue-chartjs": "^5.3.3"
     }
 }

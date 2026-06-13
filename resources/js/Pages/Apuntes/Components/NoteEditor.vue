@@ -8,6 +8,8 @@
             :contenteditable="isReadOnly ? 'false' : 'true'"
             data-placeholder="Ideas y conceptos clave..."
             class="editor-area rounded-md border border-border bg-card p-3 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[200px] md:min-h-[480px]"
+            @input="handleIdeasInput"
+            ref="ideasEditor"
           ></div>
         </div>
         <div class="flex flex-col gap-2">
@@ -26,6 +28,8 @@
             :contenteditable="isReadOnly ? 'false' : 'true'"
             data-placeholder="Resumen de la sesión..."
             class="editor-area rounded-md border border-border bg-card p-3 text-sm leading-relaxed text-foreground outline-none focus:ring-2 focus:ring-ring min-h-[120px]"
+            @input="handleResumenInput"
+            ref="resumenEditor"
           ></div>
         </div>
       </div>
@@ -49,18 +53,30 @@ const props = defineProps({
   cornellMode: Boolean,
   font: String,
   modelValue: String,
+  ideas: String,
+  resumen: String,
   isReadOnly: {
     type: Boolean,
     default: false
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:ideas', 'update:resumen'])
 
 const mainEditor = ref(null)
+const ideasEditor = ref(null)
+const resumenEditor = ref(null)
 
 const handleInput = (e) => {
   emit('update:modelValue', e.target.innerHTML)
+}
+
+const handleIdeasInput = (e) => {
+  emit('update:ideas', e.target.innerHTML)
+}
+
+const handleResumenInput = (e) => {
+  emit('update:resumen', e.target.innerHTML)
 }
 
 watch(() => props.modelValue, (newVal) => {
@@ -69,10 +85,28 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
+watch(() => props.ideas, (newVal) => {
+  if (ideasEditor.value && ideasEditor.value.innerHTML !== newVal) {
+    ideasEditor.value.innerHTML = newVal || ''
+  }
+})
+
+watch(() => props.resumen, (newVal) => {
+  if (resumenEditor.value && resumenEditor.value.innerHTML !== newVal) {
+    resumenEditor.value.innerHTML = newVal || ''
+  }
+})
+
 watch(() => props.cornellMode, () => {
   nextTick(() => {
     if (mainEditor.value) {
       mainEditor.value.innerHTML = props.modelValue || ''
+    }
+    if (ideasEditor.value) {
+      ideasEditor.value.innerHTML = props.ideas || ''
+    }
+    if (resumenEditor.value) {
+      resumenEditor.value.innerHTML = props.resumen || ''
     }
   })
 })
@@ -80,6 +114,12 @@ watch(() => props.cornellMode, () => {
 onMounted(() => {
   if (mainEditor.value) {
     mainEditor.value.innerHTML = props.modelValue || ''
+  }
+  if (ideasEditor.value) {
+    ideasEditor.value.innerHTML = props.ideas || ''
+  }
+  if (resumenEditor.value) {
+    resumenEditor.value.innerHTML = props.resumen || ''
   }
 })
 </script>

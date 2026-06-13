@@ -26,68 +26,94 @@
         open ? 'translate-x-0' : 'translate-x-full lg:hidden'
       ]"
     >
-      <button
-        type="button"
-        aria-label="Cerrar panel de audio"
-        @click="$emit('update:open', false)"
-        class="mb-5 flex size-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/10"
-      >
-        <X class="size-5" />
-      </button>
-
-      <div class="space-y-2 rounded-lg bg-card p-2.5 text-card-foreground">
-        <div class="relative">
-          <select
-            aria-label="Micrófono"
-            class="w-full appearance-none rounded-md border border-border bg-card px-2.5 py-1.5 pr-8 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option>Micrófono</option>
-            <option>Micrófono integrado</option>
-            <option>Auriculares</option>
-          </select>
-          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-        </div>
-        
-        <div class="relative">
-          <select
-            aria-label="Guardar en"
-            class="w-full appearance-none rounded-md border border-border bg-card px-2.5 py-1.5 pr-8 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option>Guardar en</option>
-            <option>Mis notas</option>
-            <option>Carpeta de audio</option>
-          </select>
-          <ChevronDown class="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-        </div>
-      </div>
-
-      <br>
-      <div class="flex flex-1 flex-col items-center justify-center gap-4">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-primary-foreground/90">Panel de Audio</h3>
         <button
           type="button"
-          @click="toggleRecording"
-          :aria-label="recording ? 'Detener grabación' : 'Grabar audio'"
-          class="relative flex size-28 sm:size-32 items-center justify-center rounded-full bg-card text-primary transition-transform hover:scale-105"
+          aria-label="Cerrar panel de audio"
+          @click="$emit('update:open', false)"
+          class="flex size-8 items-center justify-center rounded-md text-primary-foreground/90 transition-colors hover:bg-primary-foreground/10"
         >
-          <span v-if="recording" class="absolute inset-0 animate-ping rounded-full bg-card/40" aria-hidden="true"></span>
-          <Square v-if="recording" class="size-8 sm:size-10 fill-current" />
-          <Mic v-else class="size-10 sm:size-12" />
+          <X class="size-5" />
         </button>
+      </div>
 
-        <div class="text-center">
-          <p class="text-xl sm:text-2xl font-bold">{{ recording ? formattedTimer : "Grabar audio" }}</p>
-          <p v-if="recording" class="mt-0.5 text-xs sm:text-sm text-primary-foreground/80">Grabando...</p>
+      <!-- If new note (no apunteId) -->
+      <div v-if="!apunteId" class="flex flex-1 flex-col items-center justify-center text-center p-5 border border-dashed border-primary-foreground/20 rounded-lg">
+        <div class="mb-4 rounded-full bg-primary-foreground/10 p-4">
+          <Mic class="size-8 text-primary-foreground/80" />
+        </div>
+        <p class="text-sm font-semibold">Grabación deshabilitada</p>
+        <p class="mt-2 text-xs text-primary-foreground/70 leading-relaxed">Guardá este apunte por primera vez para poder empezar a grabar y guardar audios de clase.</p>
+      </div>
+
+      <!-- If existing note -->
+      <div v-else class="flex flex-1 flex-col overflow-hidden">
+        <!-- Recording controls (only if !isReadOnly) -->
+        <div v-if="!isReadOnly" class="flex flex-col items-center justify-center py-4 border-b border-primary-foreground/10 shrink-0">
+          <button
+            type="button"
+            @click="audios.length < 5 ? toggleRecording() : null"
+            :disabled="audios.length >= 5"
+            :aria-label="recording ? 'Detener grabación' : 'Grabar audio'"
+            :class="[
+              'relative flex size-24 items-center justify-center rounded-full transition-transform border-0',
+              audios.length >= 5 ? 'bg-card/50 text-muted-foreground cursor-not-allowed' : 'bg-card text-primary hover:scale-105'
+            ]"
+          >
+            <span v-if="recording" class="absolute inset-0 animate-ping rounded-full bg-card/40" aria-hidden="true"></span>
+            <Square v-if="recording" class="size-6 fill-current" />
+            <Mic v-else class="size-8" />
+          </button>
+
+          <div class="text-center mt-3">
+            <template v-if="audios.length >= 5">
+              <span class="badge bg-warning-subtle text-warning-emphasis border px-2 py-1 rounded text-xs font-semibold">
+                Límite de 5 audios alcanzado
+              </span>
+            </template>
+            <template v-else>
+              <p class="text-lg font-bold">{{ recording ? formattedTimer : "Grabar audio" }}</p>
+              <p v-if="recording" class="text-xs text-primary-foreground/80">Grabando...</p>
+            </template>
+          </div>
         </div>
 
-        <div v-if="audioUrl && !recording" class="w-full space-y-2">
-          <audio controls :src="audioUrl" class="w-full"></audio>
-          <a
-            :href="audioUrl"
-            download="grabacion.webm"
-            class="block rounded-md bg-card py-2 text-center text-sm font-medium text-primary transition-colors hover:bg-card/90"
-          >
-            Descargar audio
-          </a>
+        <div v-else-if="isReadOnly && (!audios || audios.length === 0)" class="flex flex-1 flex-col items-center justify-center text-center p-4">
+          <p class="text-xs text-primary-foreground/60">Este apunte no contiene audios.</p>
+        </div>
+
+        <!-- List of audios -->
+        <div v-if="audios && audios.length > 0" class="mt-4 flex-1 overflow-y-auto space-y-3 pr-1">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70 mb-2">Grabaciones ({{ audios.length }}/5)</h4>
+          
+          <div v-for="audio in audios" :key="audio.idApunteAudio" class="rounded-lg bg-card p-3 text-card-foreground space-y-2">
+            <div class="flex items-center justify-between text-xs font-medium text-muted-foreground">
+              <span>{{ formatDate(audio.fechaCreacion) }}</span>
+              <button
+                v-if="!isReadOnly"
+                type="button"
+                @click="$emit('delete', audio.idApunteAudio)"
+                class="text-red-500 hover:text-red-700 bg-transparent border-0 cursor-pointer p-0"
+                title="Eliminar audio"
+              >
+                <i class="bi bi-trash3-fill" style="font-size: 13px;"></i>
+              </button>
+            </div>
+            
+            <audio controls :src="`/storage/${audio.rutaAudio}`" class="w-full" style="height: 32px;"></audio>
+            
+            <a
+              :href="`/storage/${audio.rutaAudio}`"
+              download="grabacion.webm"
+              class="block text-center text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 py-1.5 rounded-md transition-colors text-decoration-none"
+            >
+              Descargar archivo
+            </a>
+          </div>
+        </div>
+        <div v-else-if="apunteId && !recording" class="mt-6 text-center text-xs text-primary-foreground/60 border border-dashed border-primary-foreground/30 p-4 rounded-lg">
+          No hay grabaciones de audio en este apunte.
         </div>
       </div>
     </aside>
@@ -95,21 +121,38 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { Mic, X, ChevronDown, Square } from 'lucide-vue-next'
+import { ref, computed, onUnmounted, onMounted, watch } from 'vue'
+import { Mic, X, Square } from 'lucide-vue-next'
 
 const props = defineProps({
-  open: Boolean
+  open: Boolean,
+  audios: {
+    type: Array,
+    default: () => []
+  },
+  isReadOnly: {
+    type: Boolean,
+    default: false
+  },
+  apunteId: {
+    type: [Number, String],
+    default: null
+  }
 })
 
-const emit = defineEmits(['update:open', 'recorded'])
+const emit = defineEmits(['update:open', 'recorded', 'delete'])
 
 const recording = ref(false)
 const seconds = ref(0)
-const audioUrl = ref(null)
 let mediaRecorder = null
 let chunks = []
 let timerInterval = null
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
 const startTimer = () => {
   seconds.value = 0
@@ -141,19 +184,16 @@ const toggleRecording = async () => {
     
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'audio/webm' })
-      audioUrl.value = URL.createObjectURL(blob)
       stream.getTracks().forEach((t) => t.stop())
       emit('recorded', blob)
     }
     
     mediaRecorder.start()
-    audioUrl.value = null
     startTimer()
     recording.value = true
   } catch (err) {
-    // Simulate recording if no mic
-    startTimer()
-    recording.value = true
+    console.error("Error al acceder al micrófono:", err)
+    alert("No se pudo acceder al micrófono. Por favor, verificá que tengas un micrófono conectado y que el navegador tenga permisos para usarlo.")
   }
 }
 

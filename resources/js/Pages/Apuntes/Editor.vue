@@ -17,6 +17,9 @@
           />
         </div>
         <div class="flex shrink-0 items-center gap-3 sm:gap-4">
+          <span v-if="form.audio" class="badge bg-success-subtle text-success-emphasis border px-3 py-2 rounded-md font-medium text-xs d-flex align-items-center gap-1">
+            <i class="bi bi-file-earmark-music-fill"></i> Grabación lista para guardar
+          </span>
           <span v-if="perfilActivo?.permisoCompartido === 'Lector'" class="badge bg-warning-subtle text-warning-emphasis border px-3 py-2 rounded-md font-medium text-xs d-flex align-items-center gap-1">
             <i class="bi bi-lock-fill"></i> Solo lectura
           </span>
@@ -50,11 +53,20 @@
             :cornell-mode="cornellMode"
             :font="font"
             v-model="form.contenidoApunte"
+            v-model:ideas="form.ideasApunte"
+            v-model:resumen="form.resumenApunte"
             :isReadOnly="perfilActivo?.permisoCompartido === 'Lector'"
           />
         </div>
 
-        <AudioPanel v-if="perfilActivo?.permisoCompartido !== 'Lector'" v-model:open="audioOpen" @recorded="onAudioRecorded" />
+        <AudioPanel
+          v-model:open="audioOpen"
+          :audios="props.apunte?.audios || []"
+          :apunte-id="props.apunte?.idApunte"
+          :is-read-only="perfilActivo?.permisoCompartido === 'Lector'"
+          @recorded="onAudioRecorded"
+          @delete="onAudioDeleted"
+        />
       </div>
     </div>
 
@@ -68,9 +80,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Settings, Bell, FileText } from 'lucide-vue-next'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import EditorToolbar from './Components/EditorToolbar.vue'
 import NoteEditor from './Components/NoteEditor.vue'
@@ -104,15 +116,26 @@ const font = ref("Arial")
 const size = ref("11")
 
 const form = useForm({
-  tituloApunte: 'Titulo',
-  contenidoApunte: ''
+  tituloApunte: '',
+  tipoApunte: 'normal',
+  contenidoApunte: '',
+  ideasApunte: '',
+  resumenApunte: ''
 })
 
 onMounted(() => {
   if (props.apunte) {
-    form.tituloApunte = props.apunte.tituloApunte || 'Acá va el nombre del perfil da'
+    form.tituloApunte = props.apunte.tituloApunte || ''
     form.contenidoApunte = props.apunte.contenidoApunte || ''
+    form.tipoApunte = props.apunte.tipoApunte || 'normal'
+    form.ideasApunte = props.apunte.ideasApunte || ''
+    form.resumenApunte = props.apunte.resumenApunte || ''
+    cornellMode.value = form.tipoApunte === 'cornell'
   }
+})
+
+watch(cornellMode, (newVal) => {
+  form.tipoApunte = newVal ? 'cornell' : 'normal'
 })
 
 const sizeToHtml = (s) => {
@@ -154,8 +177,35 @@ const refreshFormats = () => {
 }
 
 const onAudioRecorded = (blob) => {
-  console.log("Audio recorded", blob)
-  // Logic to upload or save audio blob could be implemented here
+  if (!props.apunte?.idApunte) return
+
+  console.log("Audio recorded, uploading...", blob)
+  const file = new File([blob], 'grabacion.webm', { type: blob.type })
+  
+  const formData = new FormData()
+  formData.append('audio', file)
+
+  router.post(route('apuntes.audio.upload', props.apunte.idApunte), formData, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showCustomAlert('Éxito', 'Grabación de audio guardada correctamente.')
+    },
+    onError: (errors) => {
+      const msg = errors.audio || 'No se pudo guardar la grabación de audio.'
+      showCustomAlert('Error', msg)
+    }
+  })
+}
+
+const onAudioDeleted = (audioId) => {
+  if (confirm('¿Estás seguro de que deseas eliminar esta grabación de audio?')) {
+    router.delete(route('apuntes.audio.destroy', audioId), {
+      preserveScroll: true,
+      onSuccess: () => {
+        showCustomAlert('Éxito', 'Grabación de audio eliminada correctamente.')
+      }
+    })
+  }
 }
 
 const saveNote = () => {

@@ -12,8 +12,11 @@ class Apunte extends Model
 
     protected $fillable = [
         'idPerfil',
+        'tipoApunte',
         'tituloApunte',
         'contenidoApunte',
+        'ideasApunte',
+        'resumenApunte',
         'fechaCreacion'
     ];
 
@@ -24,5 +27,10 @@ class Apunte extends Model
     public function perfil()
     {
         return $this->belongsTo(Perfil::class, 'idPerfil', 'idPerfil');
+    }
+
+    public function audios()
+    {
+        return $this->hasMany(ApunteAudio::class, 'idApunte', 'idApunte');
     }
 }

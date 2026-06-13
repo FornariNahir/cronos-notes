@@ -28,7 +28,13 @@
         <div v-for="apunte in apuntes" :key="apunte.idApunte" class="note-card">
           <div class="note-card-content" @click="editNote(apunte.idApunte)">
             <h3 class="note-title">{{ apunte.tituloApunte }}</h3>
-            <span class="note-date"> {{ formatDate(apunte.fechaCreacion) }}</span>
+            <span class="note-date d-flex align-items-center flex-wrap gap-2">
+              <span>{{ formatDate(apunte.fechaCreacion) }}</span>
+              <span v-if="apunte.tipoApunte === 'cornell'" class="badge bg-secondary-subtle text-secondary-emphasis border" style="font-size: 9px; font-weight: 500; padding: 1px 4px; border-radius: 4px;">Cornell</span>
+              <span v-if="apunte.audios_count > 0" class="badge bg-danger-subtle text-danger-emphasis border" style="font-size: 9px; font-weight: 500; padding: 1px 4px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;">
+                <i class="bi bi-mic-fill" style="font-size: 9px;"></i> Audio ({{ apunte.audios_count }})
+              </span>
+            </span>
             <p class="note-preview">{{ stripHtml(apunte.contenidoApunte) || 'Sin contenido en esta nota...' }}</p>
           </div>
           <div class="note-card-actions">
@@ -170,7 +176,6 @@ const confirmDelete = () => {
   font-weight: 700;
   color: #69342e;
   text-align: left;
-  margin-left: -215px;
 }
 
 .page-subtitle {

@@ -66,6 +66,7 @@
           :is-read-only="perfilActivo?.permisoCompartido === 'Lector'"
           @recorded="onAudioRecorded"
           @delete="onAudioDeleted"
+          @error="(msg) => showCustomAlert('Error de Micrófono', msg)"
         />
       </div>
     </div>
@@ -76,6 +77,23 @@
       :message="alertMessage" 
       @close="showAlertModal = false" 
     />
+
+    <!-- Modal de Confirmación para Eliminar Audio -->
+    <Teleport to="body">
+      <div v-if="showConfirmDeleteAudioModal" class="zen-custom-modal-overlay" @click.self="cancelDeleteAudio">
+        <div class="zen-custom-modal">
+          <div class="zen-modal-icon">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+          </div>
+          <h3 class="zen-modal-title">¿Eliminar Grabación?</h3>
+          <p class="zen-modal-text">¿Estás seguro de que deseas eliminar esta grabación de audio? Esta acción no se puede deshacer.</p>
+          <div class="zen-modal-actions">
+            <button class="zen-btn-secondary" @click="cancelDeleteAudio">Cancelar</button>
+            <button class="zen-btn-primary bg-danger text-white border-0" @click="confirmDeleteAudio">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </AppLayout>
 </template>
 
@@ -197,11 +215,26 @@ const onAudioRecorded = (blob) => {
   })
 }
 
+const showConfirmDeleteAudioModal = ref(false)
+const audioToDeleteId = ref(null)
+
 const onAudioDeleted = (audioId) => {
-  if (confirm('¿Estás seguro de que deseas eliminar esta grabación de audio?')) {
-    router.delete(route('apuntes.audio.destroy', audioId), {
+  audioToDeleteId.value = audioId
+  showConfirmDeleteAudioModal.value = true
+}
+
+const cancelDeleteAudio = () => {
+  showConfirmDeleteAudioModal.value = false
+  audioToDeleteId.value = null
+}
+
+const confirmDeleteAudio = () => {
+  if (audioToDeleteId.value) {
+    router.delete(route('apuntes.audio.destroy', audioToDeleteId.value), {
       preserveScroll: true,
       onSuccess: () => {
+        showConfirmDeleteAudioModal.value = false
+        audioToDeleteId.value = null
         showCustomAlert('Éxito', 'Grabación de audio eliminada correctamente.')
       }
     })
@@ -247,5 +280,78 @@ const saveNote = () => {
 }
 .focus\:ring-ring:focus {
   --tw-ring-color: #612c2d !important;
+}
+
+/* Modal de Confirmación Estilo Zen */
+.zen-custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.zen-custom-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.zen-modal-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+.zen-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #333;
+}
+.zen-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 25px;
+}
+.zen-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.zen-btn-secondary {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #666;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn-secondary:hover {
+  background: #f0f0f0;
+}
+.zen-btn-primary {
+  flex: 1;
+  padding: 10px;
+  background: #dc3545 !important;
+  color: white !important;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn-primary:hover {
+  background: #c82333 !important;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.9) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 </style>

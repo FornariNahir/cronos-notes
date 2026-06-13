@@ -140,7 +140,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:open', 'recorded', 'delete'])
+const emit = defineEmits(['update:open', 'recorded', 'delete', 'error'])
 
 const recording = ref(false)
 const seconds = ref(0)
@@ -193,7 +193,7 @@ const toggleRecording = async () => {
     recording.value = true
   } catch (err) {
     console.error("Error al acceder al micrófono:", err)
-    alert("No se pudo acceder al micrófono. Por favor, verificá que tengas un micrófono conectado y que el navegador tenga permisos para usarlo.")
+    emit('error', "No se pudo acceder al micrófono. Por favor, verificá que tengas un micrófono conectado y que el navegador tenga permisos para usarlo.")
   }
 }
 

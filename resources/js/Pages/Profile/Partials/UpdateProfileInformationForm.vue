@@ -4,6 +4,7 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { computed, watch } from 'vue';
 
 defineProps({
     mustVerifyEmail: {
@@ -21,6 +22,16 @@ const form = useForm({
     apellido: user.apellido,
     email: user.email,
     password: '',
+});
+
+const isNameOrSurnameChanged = computed(() => {
+    return form.nombre !== user.nombre || form.apellido !== user.apellido;
+});
+
+watch(isNameOrSurnameChanged, (changed) => {
+    if (!changed) {
+        form.password = '';
+    }
 });
 </script>
 
@@ -86,20 +97,30 @@ const form = useForm({
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div>
-                <InputLabel for="password" value="Contraseña Actual para Guardar Cambios" />
+            <Transition
+                enter-active-class="transition duration-300 ease-out"
+                enter-from-class="transform -translate-y-2 opacity-0"
+                enter-to-class="transform translate-y-0 opacity-100"
+                leave-active-class="transition duration-200 ease-in"
+                leave-from-class="transform translate-y-0 opacity-100"
+                leave-to-class="transform -translate-y-2 opacity-0"
+            >
+                <div v-if="isNameOrSurnameChanged">
+                    <InputLabel for="password" value="Confirmar con contraseña para cambiar nombre o apellido" />
 
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
+                    <TextInput
+                        id="password"
+                        type="password"
+                        class="mt-1 block w-full"
+                        v-model="form.password"
+                        :required="isNameOrSurnameChanged"
+                        autocomplete="current-password"
+                        placeholder="Ingresá tu contraseña para confirmar el cambio"
+                    />
 
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+                    <InputError class="mt-2" :message="form.errors.password" />
+                </div>
+            </Transition>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
                 <p class="mt-2 text-sm text-gray-800">

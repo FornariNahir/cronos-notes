@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { ref, onMounted, computed, watch } from 'vue';
+import { usePage, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AlertModal from '@/Components/AlertModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
@@ -56,15 +56,41 @@ const props = defineProps({
     }
 });
 
-// Pull user properties dynamically if available, otherwise fallback to mock values
-const nombre = ref(page.props.auth?.user?.nombre || 'José Andrés');
-const apellido = ref(page.props.auth?.user?.apellido || 'Ayala');
-const email = ref(page.props.auth?.user?.email || 'j.ayala@ucp.edu.ar');
+const form = useForm({
+    nombre: page.props.auth?.user?.nombre || '',
+    apellido: page.props.auth?.user?.apellido || '',
+    email: page.props.auth?.user?.email || '',
+    password: '',
+});
 
-const displayName = ref(`${nombre.value} ${apellido.value}`);
+const displayName = computed(() => {
+    const u = page.props.auth?.user;
+    return u ? `${u.nombre} ${u.apellido}` : 'José Andrés Ayala';
+});
 
-const inputNombre = ref(nombre.value);
-const inputApellido = ref(apellido.value);
+const email = computed(() => {
+    return page.props.auth?.user?.email || 'j.ayala@ucp.edu.ar';
+});
+
+const isNameOrSurnameChanged = computed(() => {
+    const originalNombre = page.props.auth?.user?.nombre || '';
+    const originalApellido = page.props.auth?.user?.apellido || '';
+    return form.nombre !== originalNombre || form.apellido !== originalApellido;
+});
+
+watch(isNameOrSurnameChanged, (changed) => {
+    if (!changed) {
+        form.password = '';
+    }
+});
+
+watch(() => page.props.auth?.user, (newUser) => {
+    if (newUser) {
+        form.nombre = newUser.nombre || '';
+        form.apellido = newUser.apellido || '';
+        form.email = newUser.email || '';
+    }
+}, { deep: true });
 
 const inputNewEmail = ref('');
 const inputOldPass = ref('');
@@ -125,10 +151,17 @@ const onAvatarChange = (e) => {
 };
 
 const guardarDatosPersonales = () => {
-    nombre.value = inputNombre.value;
-    apellido.value = inputApellido.value;
-    displayName.value = `${nombre.value} ${apellido.value}`;
-    showCustomAlert("Perfil Actualizado", "¡Información del perfil actualizada con éxito!");
+    form.patch(route('profile.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showCustomAlert("Perfil Actualizado", "¡Información del perfil actualizada con éxito!");
+            form.reset('password');
+        },
+        onError: (errors) => {
+            const errorMsg = errors.password || errors.nombre || errors.apellido || "Hubo un problema al actualizar la información del perfil.";
+            showCustomAlert("Error de Validación", errorMsg);
+        }
+    });
 };
 
 const cambiarCorreo = () => {
@@ -217,14 +250,41 @@ const eliminarCuenta = () => {
                             <div class="row g-3">
                                 <div class="col-12 col-sm-6">
                                     <label class="form-label text-secondary small fw-medium">Nombre(s)</label>
-                                    <input type="text" class="form-control input-custom" v-model="inputNombre" required>
+                                    <input type="text" class="form-control input-custom" v-model="form.nombre" required>
+                                    <div v-if="form.errors.nombre" class="text-danger small mt-1">{{ form.errors.nombre }}</div>
                                 </div>
                                 <div class="col-12 col-sm-6">
                                     <label class="form-label text-secondary small fw-medium">Apellido(s)</label>
-                                    <input type="text" class="form-control input-custom" v-model="inputApellido" required>
+                                    <input type="text" class="form-control input-custom" v-model="form.apellido" required>
+                                    <div v-if="form.errors.apellido" class="text-danger small mt-1">{{ form.errors.apellido }}</div>
                                 </div>
+
+                                <!-- Password Confirmation Field (visible only if name/surname is changed) -->
+                                <Transition
+                                    enter-active-class="transition duration-300 ease-out"
+                                    enter-from-class="transform -translate-y-2 opacity-0"
+                                    enter-to-class="transform translate-y-0 opacity-100"
+                                    leave-active-class="transition duration-200 ease-in"
+                                    leave-from-class="transform translate-y-0 opacity-100"
+                                    leave-to-class="transform -translate-y-2 opacity-0"
+                                >
+                                    <div v-if="isNameOrSurnameChanged" class="col-12">
+                                        <label class="form-label text-secondary small fw-medium">Confirmar con contraseña para cambiar nombre o apellido</label>
+                                        <input
+                                            type="password"
+                                            class="form-control input-custom"
+                                            v-model="form.password"
+                                            :required="isNameOrSurnameChanged"
+                                            placeholder="Ingresá tu contraseña actual"
+                                        />
+                                        <div v-if="form.errors.password" class="text-danger small mt-1">{{ form.errors.password }}</div>
+                                    </div>
+                                </Transition>
+
                                 <div class="col-12 d-flex justify-content-end">
-                                    <button type="submit" class="btn btn-marron px-4 py-2"><i class="bi bi-check-lg me-1"></i> Guardar Cambios</button>
+                                    <button type="submit" class="btn btn-marron px-4 py-2" :disabled="form.processing">
+                                        <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+                                    </button>
                                 </div>
                             </div>
                         </form>

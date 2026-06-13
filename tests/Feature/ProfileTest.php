@@ -27,6 +27,7 @@ class ProfileTest extends TestCase
 
         $response = $this
             ->actingAs($user)
+            ->from('/profile')
             ->patch('/profile', [
                 'nombre' => 'Test',
                 'apellido' => 'User',
@@ -52,6 +53,7 @@ class ProfileTest extends TestCase
 
         $response = $this
             ->actingAs($user)
+            ->from('/profile')
             ->patch('/profile', [
                 'nombre' => 'Test',
                 'apellido' => 'User',
@@ -64,6 +66,69 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->refresh()->email_verified_at);
+    }
+
+    public function test_profile_name_or_surname_cannot_be_updated_without_password(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile', [
+                'nombre' => 'Newname',
+                'apellido' => $user->apellido,
+                'email' => $user->email,
+            ]);
+
+        $response
+            ->assertSessionHasErrors('password')
+            ->assertRedirect('/profile');
+
+        $this->assertSame($user->nombre, $user->fresh()->nombre);
+    }
+
+    public function test_profile_name_or_surname_cannot_be_updated_with_wrong_password(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile', [
+                'nombre' => $user->nombre,
+                'apellido' => 'Newlastname',
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+
+        $response
+            ->assertSessionHasErrors('password')
+            ->assertRedirect('/profile');
+
+        $this->assertSame($user->apellido, $user->fresh()->apellido);
+    }
+
+    public function test_profile_email_can_be_updated_without_password(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/profile')
+            ->patch('/profile', [
+                'nombre' => $user->nombre,
+                'apellido' => $user->apellido,
+                'email' => 'newemail@example.com',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+        $this->assertSame('newemail@example.com', $user->email);
+        $this->assertNull($user->email_verified_at);
     }
 
     public function test_user_can_delete_their_account(): void
@@ -100,5 +165,23 @@ class ProfileTest extends TestCase
             ->assertRedirect('/profile');
 
         $this->assertNotNull($user->fresh());
+    }
+
+    public function test_profile_update_redirects_back_to_perfil_usuario_when_referred_from_there(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->from('/perfil-usuario')
+            ->patch('/profile', [
+                'nombre' => $user->nombre,
+                'apellido' => $user->apellido,
+                'email' => 'newemail@example.com',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/perfil-usuario');
     }
 }

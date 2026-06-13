@@ -111,18 +111,14 @@
                   </svg>
               </button>
               <div class="settings-dropdown-container">
-                  <button class="icon-button" @click="isSettingsDropdownOpen = !isSettingsDropdownOpen" @blur="closeDropdown">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <circle cx="12" cy="12" r="3"/>
-                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                      </svg>
+                  <button class="avatar" @click="isSettingsDropdownOpen = !isSettingsDropdownOpen" @blur="closeDropdown" aria-label="Menú de usuario">
+                      {{ $page.props.auth.user?.nombre?.charAt(0).toUpperCase() || $page.props.auth.user?.name?.charAt(0).toUpperCase() || 'A' }}
                   </button>
                   <div v-if="isSettingsDropdownOpen" class="settings-dropdown">
                       <Link :href="route('perfil-usuario')" class="dropdown-item">Mis Datos</Link>
                       <Link :href="route('logout')" method="post" as="button" class="dropdown-item">Cerrar Sesión</Link>
                   </div>
               </div>
-              <div class="avatar">{{ $page.props.auth.user?.nombre?.charAt(0).toUpperCase() || $page.props.auth.user?.name?.charAt(0).toUpperCase() || 'A' }}</div>
           </div>
       </header>
 
@@ -416,6 +412,8 @@ const toggleMode = () => {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  border: none;
+  padding: 0;
 }
 
 .settings-dropdown-container {

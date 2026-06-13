@@ -16,6 +16,15 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $user = $this->user();
+        $nombreChanged = $this->input('nombre') !== $user->nombre;
+        $apellidoChanged = $this->input('apellido') !== $user->apellido;
+
+        $passwordRules = ['nullable'];
+        if ($nombreChanged || $apellidoChanged) {
+            $passwordRules = ['required', 'current_password'];
+        }
+
         return [
             'nombre' => ['required', 'string', 'max:50'],
             'apellido' => ['required', 'string', 'max:50'],
@@ -25,9 +34,9 @@ class ProfileUpdateRequest extends FormRequest
                 'lowercase',
                 'email',
                 'max:100',
-                Rule::unique(User::class, 'email')->ignore($this->user()->idUsuario, 'idUsuario'),
+                Rule::unique(User::class, 'email')->ignore($user->idUsuario, 'idUsuario'),
             ],
-            'password' => ['required', 'current_password'],
+            'password' => $passwordRules,
         ];
     }
 }

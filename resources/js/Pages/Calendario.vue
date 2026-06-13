@@ -1,10 +1,11 @@
 <script setup>
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import AlertModal from '@/Components/AlertModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
-import { ref } from 'vue';
+let tareaSeleccionadaId = null;
 const showAlertModal = ref(false);
 const alertTitle = ref('');
 const alertMessage = ref('');
@@ -12,6 +13,35 @@ const showCustomAlert = (title, message) => {
   alertTitle.value = title;
   alertMessage.value = message;
   showAlertModal.value = true;
+};
+
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
 };
 
 const props = defineProps({
@@ -54,8 +84,7 @@ function inicializarLogicaDOM() {
     let tareasDB = [...props.tareasCargadas];
 
     // Variables de control cronológico
-    let fechaActual = new Date(); 
-    let tareaSeleccionadaId = null;
+    let fechaActual = new Date();
 
     // Componentes del DOM
     const grillaDiasContainer = document.getElementById("grilla-dias-container");
@@ -246,11 +275,19 @@ function inicializarLogicaDOM() {
     const btnEliminarTarea = document.getElementById("btn-eliminar-tarea");
     if (btnEliminarTarea) {
         btnEliminarTarea.addEventListener("click", function () {
-            if (tareaSeleccionadaId && confirm("¿Estás seguro de eliminar esta tarea del calendario de Cronos?")) {
-                router.delete(route('tareas.destroy', tareaSeleccionadaId), {
-                    onSuccess: () => {
-                        modalDetalle.hide();
-                        tareaSeleccionadaId = null;
+            if (tareaSeleccionadaId) {
+                triggerConfirm({
+                    title: 'Eliminar Tarea',
+                    message: '¿Estás seguro de eliminar esta tarea del calendario de Cronos?',
+                    confirmText: 'Eliminar',
+                    isDanger: true,
+                    onConfirm: () => {
+                        router.delete(route('tareas.destroy', tareaSeleccionadaId), {
+                            onSuccess: () => {
+                                modalDetalle.hide();
+                                tareaSeleccionadaId = null;
+                            }
+                        });
                     }
                 });
             }
@@ -405,14 +442,25 @@ function inicializarLogicaDOM() {
                 </div>
             </div>
         </div>
-  </Teleport>
 
-    <AlertModal 
-      :show="showAlertModal" 
-      :title="alertTitle" 
-      :message="alertMessage" 
-      @close="showAlertModal = false" 
-    />
+        <AlertModal 
+          :show="showAlertModal" 
+          :title="alertTitle" 
+          :message="alertMessage" 
+          @close="showAlertModal = false" 
+        />
+
+        <ConfirmModal
+          :show="showConfirmModal"
+          :title="confirmConfig.title"
+          :message="confirmConfig.message"
+          :confirm-text="confirmConfig.confirmText"
+          :cancel-text="confirmConfig.cancelText"
+          :is-danger="confirmConfig.isDanger"
+          @close="showConfirmModal = false"
+          @confirm="handleConfirm"
+        />
+  </Teleport>
   </AppLayout>
 </template>
 

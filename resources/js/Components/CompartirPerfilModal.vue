@@ -177,12 +177,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      :show="showConfirmModal"
+      :title="confirmConfig.title"
+      :message="confirmConfig.message"
+      :confirm-text="confirmConfig.confirmText"
+      :cancel-text="confirmConfig.cancelText"
+      :is-danger="confirmConfig.isDanger"
+      @close="showConfirmModal = false"
+      @confirm="handleConfirm"
+    />
   </div>
 </template>
 
 <script setup>
 import { useForm, usePage, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
+
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
+};
 
 const props = defineProps({
   isOpen: Boolean,
@@ -257,19 +299,31 @@ const actualizarPermiso = (idUsuario, nuevoPermiso) => {
 };
 
 const revocarAcceso = (idUsuario) => {
-  if (confirm('¿Estás seguro de quitarle el acceso a este usuario?')) {
-    router.delete(route('perfil-compartido.revocar', { idPerfil: props.perfil.idPerfil, idUsuario: idUsuario }), {
-      preserveScroll: true
-    });
-  }
+  triggerConfirm({
+    title: 'Quitar Acceso',
+    message: '¿Estás seguro de quitarle el acceso a este usuario?',
+    confirmText: 'Quitar acceso',
+    isDanger: true,
+    onConfirm: () => {
+      router.delete(route('perfil-compartido.revocar', { idPerfil: props.perfil.idPerfil, idUsuario: idUsuario }), {
+        preserveScroll: true
+      });
+    }
+  });
 };
 
 const cancelarInvitacion = (idInvitacion) => {
-  if (confirm('¿Estás seguro de cancelar esta invitación?')) {
-    router.delete(route('perfil-compartido.cancelar-invitacion', idInvitacion), {
-      preserveScroll: true
-    });
-  }
+  triggerConfirm({
+    title: 'Cancelar Invitación',
+    message: '¿Estás seguro de cancelar esta invitación?',
+    confirmText: 'Cancelar invitación',
+    isDanger: true,
+    onConfirm: () => {
+      router.delete(route('perfil-compartido.cancelar-invitacion', idInvitacion), {
+        preserveScroll: true
+      });
+    }
+  });
 };
 </script>
 

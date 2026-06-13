@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AlertModal from '@/Components/AlertModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const showAlertModal = ref(false);
 const alertTitle = ref('');
@@ -11,6 +12,35 @@ const showCustomAlert = (title, message) => {
   alertTitle.value = title;
   alertMessage.value = message;
   showAlertModal.value = true;
+};
+
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
 };
 
 const page = usePage();
@@ -130,14 +160,28 @@ const cambiarPassword = () => {
 };
 
 const eliminarCuenta = () => {
-    if (confirm("¿Estás seguro de que deseas eliminar permanentemente tu cuenta de Cronos Notes?")) {
-        if (confirm("Esta acción es irreversible y borrará tus estadísticas de racha, apuntes y perfiles. ¿Proceder?")) {
-            showCustomAlert("Cuenta Eliminada", "Cuenta dada de baja simuladamente.");
+    triggerConfirm({
+        title: 'Eliminar Cuenta',
+        message: '¿Estás seguro de que deseas eliminar permanentemente tu cuenta de Cronos Notes?',
+        confirmText: 'Continuar',
+        isDanger: true,
+        onConfirm: () => {
             setTimeout(() => {
-              window.location.reload(); 
-            }, 2000);
+                triggerConfirm({
+                    title: 'Confirmación Final',
+                    message: 'Esta acción es irreversible y borrará tus estadísticas de racha, apuntes y perfiles. ¿Proceder?',
+                    confirmText: 'Confirmar Eliminación',
+                    isDanger: true,
+                    onConfirm: () => {
+                        showCustomAlert("Cuenta Eliminada", "Cuenta dada de baja simuladamente.");
+                        setTimeout(() => {
+                          window.location.reload(); 
+                        }, 2000);
+                    }
+                });
+            }, 300);
         }
-    }
+    });
 };
 </script>
 
@@ -280,6 +324,16 @@ const eliminarCuenta = () => {
           :title="alertTitle" 
           :message="alertMessage" 
           @close="showAlertModal = false" 
+        />
+        <ConfirmModal
+          :show="showConfirmModal"
+          :title="confirmConfig.title"
+          :message="confirmConfig.message"
+          :confirm-text="confirmConfig.confirmText"
+          :cancel-text="confirmConfig.cancelText"
+          :is-danger="confirmConfig.isDanger"
+          @close="showConfirmModal = false"
+          @confirm="handleConfirm"
         />
     </Teleport>
   </AppLayout>

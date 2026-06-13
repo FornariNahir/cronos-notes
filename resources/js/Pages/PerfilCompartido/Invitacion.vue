@@ -1,6 +1,7 @@
 <script setup>
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     invitacion: {
@@ -27,13 +28,48 @@ const aceptar = () => {
     });
 };
 
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
+};
+
 const rechazar = () => {
-    if (confirm('¿Estás seguro de rechazar esta invitación?')) {
-        procesando.value = true;
-        router.post(route('invitacion.rechazar', props.invitacion.token), {}, {
-            onFinish: () => procesando.value = false
-        });
-    }
+    triggerConfirm({
+        title: 'Rechazar Invitación',
+        message: '¿Estás seguro de rechazar esta invitación?',
+        confirmText: 'Rechazar',
+        isDanger: true,
+        onConfirm: () => {
+            procesando.value = true;
+            router.post(route('invitacion.rechazar', props.invitacion.token), {}, {
+                onFinish: () => procesando.value = false
+            });
+        }
+    });
 };
 </script>
 
@@ -110,6 +146,17 @@ const rechazar = () => {
 
         </div>
     </div>
+
+    <ConfirmModal
+      :show="showConfirmModal"
+      :title="confirmConfig.title"
+      :message="confirmConfig.message"
+      :confirm-text="confirmConfig.confirmText"
+      :cancel-text="confirmConfig.cancelText"
+      :is-danger="confirmConfig.isDanger"
+      @close="showConfirmModal = false"
+      @confirm="handleConfirm"
+    />
 </template>
 
 <style>

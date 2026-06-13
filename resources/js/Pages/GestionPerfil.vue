@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CompartirPerfilModal from '@/Components/CompartirPerfilModal.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     perfiles: {
@@ -78,6 +79,35 @@ let modalPerfilInstance = null;
 let modalTareaInstance = null;
 const esModoEdicion = ref(false);
 let perfilEditandoId = null;
+
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
+};
 
 onMounted(() => {
     // 1. Cargar dinámicamente los iconos de Bootstrap si no están en el head
@@ -162,9 +192,15 @@ const guardarPerfil = () => {
 };
 
 const eliminarPerfil = (perfil) => {
-    if (confirm(`¿Estás seguro de eliminar el perfil/espacio "${perfil.tituloPerfil}"? Se borrarán todas las tareas asociadas.`)) {
-        router.delete(route('perfiles.destroy', perfil.idPerfil));
-    }
+    triggerConfirm({
+        title: 'Eliminar Perfil',
+        message: `¿Estás seguro de eliminar el perfil/espacio "${perfil.tituloPerfil}"? Se borrarán todas las tareas asociadas.`,
+        confirmText: 'Eliminar',
+        isDanger: true,
+        onConfirm: () => {
+            router.delete(route('perfiles.destroy', perfil.idPerfil));
+        }
+    });
 };
 
 const seleccionarPerfil = (idPerfil) => {
@@ -443,6 +479,17 @@ const obtenerIniciales = (nombreCompleto) => {
             :isOpen="isShareModalOpen" 
             :perfil="perfilParaCompartir" 
             @close="isShareModalOpen = false" 
+        />
+
+        <ConfirmModal
+            :show="showConfirmModal"
+            :title="confirmConfig.title"
+            :message="confirmConfig.message"
+            :confirm-text="confirmConfig.confirmText"
+            :cancel-text="confirmConfig.cancelText"
+            :is-danger="confirmConfig.isDanger"
+            @close="showConfirmModal = false"
+            @confirm="handleConfirm"
         />
     </Teleport>
   </AppLayout>

@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import ConfirmModal from '@/Components/ConfirmModal.vue';
 
 const props = defineProps({
     tareas: {
@@ -31,6 +32,35 @@ let modalDetalleInstance = null;
 const esModoEdicion = ref(false);
 let tareaEditandoId = null;
 const tareaDetalle = ref({});
+
+const showConfirmModal = ref(false);
+const confirmConfig = ref({
+  title: '',
+  message: '',
+  confirmText: 'Aceptar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: null
+});
+
+const triggerConfirm = (config) => {
+  confirmConfig.value = {
+    title: config.title || 'Confirmación',
+    message: config.message || '',
+    confirmText: config.confirmText || 'Aceptar',
+    cancelText: config.cancelText || 'Cancelar',
+    isDanger: config.isDanger || false,
+    onConfirm: config.onConfirm
+  };
+  showConfirmModal.value = true;
+};
+
+const handleConfirm = () => {
+  if (confirmConfig.value.onConfirm) {
+    confirmConfig.value.onConfirm();
+  }
+  showConfirmModal.value = false;
+};
 
 const tareasList = ref([...props.tareas]);
 watch(() => props.tareas, (newVal) => {
@@ -154,9 +184,15 @@ const guardarTarea = () => {
 };
 
 const eliminarTarea = (tarea) => {
-    if (confirm(`¿Deseas eliminar de forma permanente la tarea "${tarea.tituloTarea}"?`)) {
-        router.delete(route('tareas.destroy', tarea.idTarea));
-    }
+    triggerConfirm({
+        title: 'Eliminar Tarea',
+        message: `¿Deseas eliminar de forma permanente la tarea "${tarea.tituloTarea}"?`,
+        confirmText: 'Eliminar',
+        isDanger: true,
+        onConfirm: () => {
+            router.delete(route('tareas.destroy', tarea.idTarea));
+        }
+    });
 };
 
 const abrirDetalle = (tarea) => {
@@ -428,6 +464,16 @@ const textoEstado = (estado) => {
             </div>
         </div>
     </div>
+    <ConfirmModal
+      :show="showConfirmModal"
+      :title="confirmConfig.title"
+      :message="confirmConfig.message"
+      :confirm-text="confirmConfig.confirmText"
+      :cancel-text="confirmConfig.cancelText"
+      :is-danger="confirmConfig.isDanger"
+      @close="showConfirmModal = false"
+      @confirm="handleConfirm"
+    />
   </Teleport>
 
     <!-- Botón Flotante Agregar Tarea -->

@@ -78,7 +78,10 @@ class EstadisticaController extends Controller
                 })
                 ->sum('tiempoTrabajoTotalMinutos');
 
-            $sesionesCount = SesionPomodoro::whereHas('tarea', function($q) use ($p) {
+            $sesionesCount = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
+                    $q->where('idUsuario', $user->idUsuario);
+                })
+                ->whereHas('tarea', function($q) use ($p) {
                     $q->where('idPerfil', $p->idPerfil);
                 })->count();
                 

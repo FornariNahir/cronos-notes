@@ -119,7 +119,7 @@ onMounted(() => {
             <div class="donut-legend">
               <div class="legend-item" v-for="(perfil, index) in chartDataPerfil" :key="'leg-'+index">
                 <span class="legend-dot" :style="{ backgroundColor: perfil.color }"></span>
-                {{ perfil.perfil }} ({{ perfil.horas }}h)
+                {{ perfil.perfil }}: {{ perfil.horas }}h ({{ perfil.sesiones }} sesiones)
               </div>
             </div>
           </div>

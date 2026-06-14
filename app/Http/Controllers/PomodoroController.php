@@ -162,6 +162,7 @@ class PomodoroController extends Controller
                         $tarea = Tarea::find($sesion->idTarea);
                         if ($tarea && $tarea->estadoTarea !== 'Completado') {
                             $tarea->update(['estadoTarea' => 'Completado']);
+                            $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
                         }
                     }
                 }
@@ -230,7 +231,11 @@ class PomodoroController extends Controller
                         $tarea = Tarea::find($sesion->idTarea);
                         if ($tarea) {
                             if ($estadoFinal === 'Completada') {
-                                $tarea->update(['estadoTarea' => 'Completado']);
+                                if ($tarea->estadoTarea !== 'Completado') {
+                                    $tarea->update(['estadoTarea' => 'Completado']);
+                                    $estadisticaService = new EstadisticaService();
+                                    $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
+                                }
                             } else {
                                 if ($tarea->estadoTarea === 'Pendiente') {
                                     $tarea->update(['estadoTarea' => 'En Progreso']);
@@ -262,6 +267,8 @@ class PomodoroController extends Controller
                             $tarea = Tarea::find($sesion->idTarea);
                             if ($tarea && $tarea->estadoTarea !== 'Completado') {
                                 $tarea->update(['estadoTarea' => 'Completado']);
+                                $estadisticaService = new EstadisticaService();
+                                $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
                             }
                         }
 

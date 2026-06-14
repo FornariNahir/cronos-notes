@@ -10,7 +10,7 @@ Este requerimiento define la integración de Inteligencia Artificial para automa
 ## 2. Tecnologías, Herramientas y Librerías
 Este requerimiento requiere una integración segura mediante APIs externas y control de flujo de datos estructurados:
 
-- **Google Gemini API**: Modelo fundacional (`gemini-2.0-flash` o similar) utilizado para realizar el análisis cognitivo y devolver el orden jerárquico.
+- **Google Gemini API**: Modelo fundacional (`gemini-2.0-flash` o similar) utilizado para realizar el análisis y devolver el orden jerárquico.
 - **Laravel Services / HTTP Client**: Llamadas HTTP seguras autenticadas mediante `GEMINI_API_KEY` definido en el archivo de entorno `.env` del servidor.
 - **Inertia.js & Vue 3**: Botón disparador interactivo en la pantalla de gestión de tareas con estados de carga (spinners) para evitar envíos dobles.
 - **Eloquent ORM / MySQL**: Actualización de la columna `prioridadTarea` (`Alta`, `Media`, `Baja`) en la tabla `Tarea`.

@@ -24,7 +24,7 @@ Route::get('/', function () {
 
 // POMODORO INVITADO (Público)
 Route::get('/pomodoro/invitado', function () {
-    return Inertia::render('Pomodoro/SesionZen', [
+    return Inertia::render('pomodoro/SesionZen', [
         'isGuest' => true,
         'configs' => [],
         'tareas' => [],

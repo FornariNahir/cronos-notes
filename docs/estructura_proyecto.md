@@ -30,6 +30,7 @@ Cronos-Notes/
 │   └── Providers/            # Service Providers de Laravel
 ├── bootstrap/                # Configuración de inicio del Framework
 ├── config/                   # Archivos de configuración de Laravel
+├── contexto/                 # Documentación inicial y archivos SQL (PDFs, esquemas)
 ├── database/                 # Persistencia y Esquemas
 │   ├── migrations/           # Definición de tablas de la Base de Datos
 │   └── seeders/              # Datos de prueba para desarrollo
@@ -44,6 +45,7 @@ Cronos-Notes/
 │   └── css/                  # Estilos globales y configuración de Tailwind CSS
 ├── routes/                   # Rutas de la Aplicación
 │   └── web.php               # Rutas web del sistema (manejadas por Inertia)
+├── temp-audio-page/          # Prototipo/Maqueta temporal para la vista de audio
 ├── tests/                    # Pruebas automatizadas (PHPUnit)
 └── vite.config.js            # Configuración del empaquetador Vite
 ```
@@ -58,7 +60,7 @@ Cronos-Notes/
 - **[app/Models/](file:///C:/Users/della/Cronos-Notes/app/Models/):** Representa nuestro modelo de dominio. Utiliza Eloquent ORM para que la interacción con la base de datos sea mediante objetos, abstrayendo las consultas SQL crudas.
 
 ### Capa Frontend: [resources/js/](file:///C:/Users/della/Cronos-Notes/resources/js/)
-- **[resources/js/Pages/](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/):** Contiene las vistas completas (ej. Dashboard, Calendario, Apuntes). Cada archivo aquí mapea 1-a-1 con un retorno del controlador Laravel mediante `Inertia::render('Pages/NombrePagina')`.
+- **[resources/js/Pages/](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/):** Contiene las vistas completas (ej. Dashboard, Calendario, apunte). Cada archivo aquí mapea 1-a-1 con un retorno del controlador Laravel mediante `Inertia::render('Pages/NombrePagina')`.
 - **[resources/js/Components/](file:///C:/Users/della/Cronos-Notes/resources/js/Components/):** Sigue principios de diseño atómico. Componentes pequeños y reutilizables en múltiples páginas para asegurar la consistencia visual y reducir la duplicación de código.
 - **[resources/js/Layouts/](file:///C:/Users/della/Cronos-Notes/resources/js/Layouts/):** Define la estructura exterior de la aplicación (ej. la barra lateral de navegación y la racha del usuario). Las páginas se inyectan dentro de estos layouts, lo que evita renderizar la barra lateral individualmente en cada vista.
 - **[resources/js/Composables/](file:///C:/Users/della/Cronos-Notes/resources/js/Composables/):** Abstrae la lógica reactiva del frontend (ej. el conteo del temporizador Pomodoro o el control del reproductor de sonido) para que pueda ser importado en cualquier componente que lo requiera.
@@ -66,3 +68,21 @@ Cronos-Notes/
 ### Base de Datos y Configuración
 - **[database/migrations/](file:///C:/Users/della/Cronos-Notes/database/migrations/):** Control de versiones para nuestra base de datos. En lugar de compartir archivos SQL crudos que se desincronizan rápidamente entre desarrolladores, las migraciones permiten que cualquiera configure la estructura de la base de datos local ejecutando `php artisan migrate`.
 - **`vite.config.js` y Tailwind:** Se utiliza **Vite** para compilar los recursos de Vue de forma extremadamente veloz en desarrollo gracias a su Hot Module Replacement (HMR). **Tailwind CSS** permite escribir estilos directamente sobre el HTML/Vue, eliminando la necesidad de mantener hojas de estilo gigantes y asegurando que el diseño sea consistente a nivel de componentes.
+
+---
+
+## 4. Estándar de Nomenclatura del Proyecto
+
+Para mantener una base de código prolija, consistente y evitar problemas de *case-sensitivity* en distintos sistemas operativos (especialmente en entornos de producción y CI/CD), se estableció el siguiente estándar de nomenclatura:
+
+### 4.1 Nombres de Carpetas (Directorios)
+* **Lógica del Dominio / Frontend:** Todas las carpetas dentro de [resources/js/Pages/](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/) y subcarpetas lógicas en `Components/` deben nombrarse en **`kebab-case`**, en **singular** y en **español** (ej. `apunte/`, `perfil-compartido/`, `configuracion-pomodoro/`, `tarea/`, `perfil/`).
+* **Defaults del Framework / Estructuras Técnicas:** Las carpetas nativas de Laravel/Inertia o sus componentes base se mantienen en **inglés** y en **minúsculas** (ej. `auth/`, `profile/`, `partials/`, `ui/`).
+* **Carpetas del Proyecto (Raíz):** Todo directorio auxiliar o de documentación debe seguir el estilo de minúsculas y `kebab-case` (ej. `contexto/`, `temp-audio-page/`).
+
+### 4.2 Nombres de Archivos
+* **Componentes Vue (.vue):** Todos los archivos de componentes y páginas Vue deben nombrarse en **`PascalCase`** (ej. `SesionZen.vue`, `Editor.vue`, `ConfirmModal.vue`).
+* **Idioma en Componentes:**
+  * **Español:** Para componentes que representen entidades o acciones del dominio de negocio (ej. `AgregarTareaModal.vue`, `EliminarPerfilModal.vue`, `VerTareaModal.vue`, `CompartirPerfilModal.vue`).
+  * **Inglés:** Únicamente para componentes genéricos o de UI base reutilizables (ej. `PrimaryButton.vue`, `TextInput.vue`, `Dropdown.vue`, `Modal.vue`).
+* **Archivos Backend (PHP):** Siguen las convenciones estándar de Laravel y PSR-12 en **`PascalCase`** (ej. `ApunteController.php`, `Tarea.php`, `EstadisticaService.php`).

@@ -35,7 +35,7 @@ class PomodoroController extends Controller
             ->orderBy('fechaCreacion', 'desc')
             ->get();
 
-        return Inertia::render('Pomodoro/SesionZen', [
+        return Inertia::render('pomodoro/SesionZen', [
             'configs' => $configs,
             'tareas' => $tareas,
             'perfilActivo' => Perfil::find($perfilActivoId),
@@ -297,7 +297,7 @@ class PomodoroController extends Controller
             ->orderBy('fechaCreacionConfiguracion', 'desc')
             ->get();
 
-        return Inertia::render('PomodoroConfig/Index', [
+        return Inertia::render('configuracion-pomodoro/Index', [
             'configs' => $configs
         ]);
     }

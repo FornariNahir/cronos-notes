@@ -55,7 +55,7 @@ class ApunteController extends Controller
             ->orderBy('fechaCreacion', 'desc')
             ->get();
 
-        return \Inertia\Inertia::render('Apuntes/Index', [
+        return \Inertia\Inertia::render('apunte/Index', [
             'apuntes' => $apuntes,
             'perfilActivo' => $perfil
         ]);
@@ -76,7 +76,7 @@ class ApunteController extends Controller
                 ->value('permiso');
         }
 
-        return Inertia::render('Apuntes/Editor', [
+        return Inertia::render('apunte/Editor', [
             'perfilActivo' => $perfil,
             'apunte' => null
         ]);
@@ -135,7 +135,7 @@ class ApunteController extends Controller
             ->with('audios')
             ->firstOrFail();
 
-        return Inertia::render('Apuntes/Editor', [
+        return Inertia::render('apunte/Editor', [
             'perfilActivo' => $perfil,
             'apunte' => $apunte
         ]);

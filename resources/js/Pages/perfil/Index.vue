@@ -47,9 +47,9 @@
 
     </div>
 
-    <AddProfileModal :isOpen="modalAddOpen" @close="modalAddOpen = false" />
-    <EditProfileModal :isOpen="modalEditOpen" :perfil="selectedPerfil" @close="modalEditOpen = false" />
-    <DeleteProfileModal :isOpen="modalDeleteOpen" :perfil="selectedPerfil" @close="modalDeleteOpen = false" />
+    <AgregarPerfilModal :isOpen="modalAddOpen" @close="modalAddOpen = false" />
+    <EditarPerfilModal :isOpen="modalEditOpen" :perfil="selectedPerfil" @close="modalEditOpen = false" />
+    <EliminarPerfilModal :isOpen="modalDeleteOpen" :perfil="selectedPerfil" @close="modalDeleteOpen = false" />
 
   </AppLayout>
 </template>
@@ -58,9 +58,9 @@
 import { ref } from 'vue';
 import { Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import AddProfileModal from '@/Components/AddProfileModal.vue';
-import EditProfileModal from '@/Components/EditProfileModal.vue';
-import DeleteProfileModal from '@/Components/DeleteProfileModal.vue';
+import AgregarPerfilModal from '@/Components/AgregarPerfilModal.vue';
+import EditarPerfilModal from '@/Components/EditarPerfilModal.vue';
+import EliminarPerfilModal from '@/Components/EliminarPerfilModal.vue';
 
 defineProps({
   perfiles: Array

@@ -49,9 +49,9 @@
       </div>
     </div>
 
-    <AddConfigModal :isOpen="showAddModal" @close="showAddModal = false" />
-    <EditConfigModal :isOpen="showEditModal" :config="selectedConfig" @close="showEditModal = false" />
-    <DeleteConfigModal :isOpen="showDeleteModal" :config="selectedConfig" @close="showDeleteModal = false" />
+    <AgregarConfiguracionModal :isOpen="showAddModal" @close="showAddModal = false" />
+    <EditarConfiguracionModal :isOpen="showEditModal" :config="selectedConfig" @close="showEditModal = false" />
+    <EliminarConfiguracionModal :isOpen="showDeleteModal" :config="selectedConfig" @close="showDeleteModal = false" />
   </AppLayout>
 </template>
 
@@ -59,9 +59,9 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import AddConfigModal from '@/Components/AddConfigModal.vue';
-import EditConfigModal from '@/Components/EditConfigModal.vue';
-import DeleteConfigModal from '@/Components/DeleteConfigModal.vue';
+import AgregarConfiguracionModal from '@/Components/AgregarConfiguracionModal.vue';
+import EditarConfiguracionModal from '@/Components/EditarConfiguracionModal.vue';
+import EliminarConfiguracionModal from '@/Components/EliminarConfiguracionModal.vue';
 
 const props = defineProps({
   configs: Array

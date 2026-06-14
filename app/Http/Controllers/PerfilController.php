@@ -92,7 +92,7 @@ class PerfilController extends Controller
         $perfil = Perfil::findOrFail($id);
         $this->authorize('ver', $perfil);
 
-        return Inertia::render('Profiles/Show', [
+        return Inertia::render('perfil/Show', [
             'perfil' => $perfil
         ]);
     }

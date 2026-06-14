@@ -82,10 +82,10 @@
       </div>
     </div>
 
-    <AddTaskModal :isOpen="showAddModal" @close="showAddModal = false" />
-    <EditTaskModal :isOpen="showEditModal" :tarea="selectedTarea" @close="showEditModal = false" />
-    <ViewTaskModal :isOpen="showViewModal" :tarea="selectedTarea" @close="showViewModal = false" />
-    <DeleteTaskModal :isOpen="showDeleteModal" :tarea="selectedTarea" @close="showDeleteModal = false" />
+    <AgregarTareaModal :isOpen="showAddModal" @close="showAddModal = false" />
+    <EditarTareaModal :isOpen="showEditModal" :tarea="selectedTarea" @close="showEditModal = false" />
+    <VerTareaModal :isOpen="showViewModal" :tarea="selectedTarea" @close="showViewModal = false" />
+    <EliminarTareaModal :isOpen="showDeleteModal" :tarea="selectedTarea" @close="showDeleteModal = false" />
   </AppLayout>
 </template>
 
@@ -93,10 +93,10 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Link, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import AddTaskModal from '@/Components/AddTaskModal.vue';
-import EditTaskModal from '@/Components/EditTaskModal.vue';
-import ViewTaskModal from '@/Components/ViewTaskModal.vue';
-import DeleteTaskModal from '@/Components/DeleteTaskModal.vue';
+import AgregarTareaModal from '@/Components/AgregarTareaModal.vue';
+import EditarTareaModal from '@/Components/EditarTareaModal.vue';
+import VerTareaModal from '@/Components/VerTareaModal.vue';
+import EliminarTareaModal from '@/Components/EliminarTareaModal.vue';
 
 const props = defineProps({
   tareas: Array,

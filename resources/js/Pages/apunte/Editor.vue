@@ -103,9 +103,9 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { Settings, Bell, FileText } from 'lucide-vue-next'
 import { useForm, router, Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
-import EditorToolbar from './Components/EditorToolbar.vue'
-import NoteEditor from './Components/NoteEditor.vue'
-import AudioPanel from './Components/AudioPanel.vue'
+import EditorToolbar from './components/EditorToolbar.vue'
+import NoteEditor from './components/NoteEditor.vue'
+import AudioPanel from './components/AudioPanel.vue'
 import AlertModal from '@/Components/AlertModal.vue'
 
 const showAlertModal = ref(false)

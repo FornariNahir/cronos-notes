@@ -4,8 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite",
-        "db-setup": "php setup-db.php"
+        "dev": "vite"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.3.25",

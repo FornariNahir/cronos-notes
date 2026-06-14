@@ -225,12 +225,12 @@ class PerfilCompartidoController extends Controller
             ->firstOrFail();
 
         if (!$invitacion->estaDisponible()) {
-            return Inertia::render('PerfilCompartido/InvitacionExpirada', [
+            return Inertia::render('perfil-compartido/InvitacionExpirada', [
                 'motivo' => $invitacion->tokenUtilizado ? 'utilizada' : 'expirada',
             ]);
         }
 
-        return Inertia::render('PerfilCompartido/Invitacion', [
+        return Inertia::render('perfil-compartido/Invitacion', [
             'invitacion' => [
                 'token' => $invitacion->token,
                 'perfil' => $invitacion->perfil->tituloPerfil,

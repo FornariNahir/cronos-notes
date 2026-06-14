@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { usePage, useForm } from '@inertiajs/vue3';
+import { usePage, useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AlertModal from '@/Components/AlertModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
@@ -219,6 +219,7 @@ const eliminarCuenta = () => {
 </script>
 
 <template>
+  <Head title="Mi Perfil" />
   <AppLayout>
     <div class="main-layout-container p-3 p-md-4">
         

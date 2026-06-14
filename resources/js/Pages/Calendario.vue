@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, watch, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { router, Head } from '@inertiajs/vue3';
 import AlertModal from '@/Components/AlertModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 
@@ -318,6 +318,7 @@ function inicializarLogicaDOM() {
 </script>
 
 <template>
+  <Head title="Calendario" />
   <AppLayout>
     <div class="main-layout-calendario p-3 p-md-4">
         

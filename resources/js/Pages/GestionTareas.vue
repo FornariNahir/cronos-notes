@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useForm, router } from '@inertiajs/vue3';
+import { useForm, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 
@@ -226,6 +226,7 @@ const textoEstado = (estado) => {
 </script>
 
 <template>
+  <Head title="Gestión de Tareas" />
   <AppLayout>
     <div class="main-layout-container p-3 p-md-4">
         

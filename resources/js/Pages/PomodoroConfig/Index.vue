@@ -1,4 +1,5 @@
 <template>
+  <Head title="Configuración Pomodoro" />
   <AppLayout>
     <div class="config-page">
       <div class="d-flex justify-content-between align-items-center mb-4" style="max-width: 900px; margin: auto;">
@@ -56,6 +57,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AddConfigModal from '@/Components/AddConfigModal.vue';
 import EditConfigModal from '@/Components/EditConfigModal.vue';

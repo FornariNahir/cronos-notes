@@ -1,4 +1,5 @@
 <template>
+  <Head title="Dashboard" />
   <AppLayout>
     <div class="dashboard-page">
       <!-- Top Bar -->
@@ -129,7 +130,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/ui/Card.vue';
 import CardHeader from '@/Components/ui/CardHeader.vue';

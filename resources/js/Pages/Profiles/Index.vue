@@ -1,4 +1,5 @@
 <template>
+  <Head title="Selección de Perfil" />
   <AppLayout>
     <div class="container pt-4">
       
@@ -55,7 +56,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AddProfileModal from '@/Components/AddProfileModal.vue';
 import EditProfileModal from '@/Components/EditProfileModal.vue';

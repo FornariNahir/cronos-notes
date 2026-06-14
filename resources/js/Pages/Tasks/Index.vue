@@ -1,4 +1,5 @@
 <template>
+  <Head title="Tareas" />
   <AppLayout>
     <div v-if="perfilActivo" class="container pt-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -90,7 +91,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AddTaskModal from '@/Components/AddTaskModal.vue';
 import EditTaskModal from '@/Components/EditTaskModal.vue';

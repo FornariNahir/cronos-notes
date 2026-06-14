@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useForm, router, usePage } from '@inertiajs/vue3';
+import { useForm, router, usePage, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CompartirPerfilModal from '@/Components/CompartirPerfilModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
@@ -249,6 +249,7 @@ const obtenerIniciales = (nombreCompleto) => {
 </script>
 
 <template>
+  <Head title="Gestión de Perfiles" />
   <AppLayout>
     <div class="main-layout-container p-3 p-md-4">
         

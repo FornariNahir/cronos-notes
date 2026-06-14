@@ -31,11 +31,16 @@ class PomodoroController extends Controller
 
         $sesionActiva = session('sesionPomodoroActiva');
 
+        $apuntes = \App\Models\Apunte::where('idPerfil', $perfilActivoId)
+            ->orderBy('fechaCreacion', 'desc')
+            ->get();
+
         return Inertia::render('Pomodoro/SesionZen', [
             'configs' => $configs,
             'tareas' => $tareas,
             'perfilActivo' => Perfil::find($perfilActivoId),
-            'sesionActiva' => $sesionActiva
+            'sesionActiva' => $sesionActiva,
+            'apuntes' => $apuntes
         ]);
     }
 

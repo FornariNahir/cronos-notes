@@ -104,6 +104,14 @@ class ApunteController extends Controller
             'fechaCreacion' => now()
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'apunte' => $apunte,
+                'message' => 'Apunte creado correctamente.'
+            ]);
+        }
+
         return redirect()->route('apuntes.edit', $apunte->idApunte)->with('success', 'Apunte creado correctamente. ¡Ya podés empezar a grabar audios!');
     }
 
@@ -156,6 +164,14 @@ class ApunteController extends Controller
             'ideasApunte' => $request->ideasApunte,
             'resumenApunte' => $request->resumenApunte
         ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'apunte' => $apunte,
+                'message' => 'Apunte actualizado correctamente.'
+            ]);
+        }
 
         return redirect()->route('apuntes.index')->with('success', 'Apunte actualizado correctamente');
     }

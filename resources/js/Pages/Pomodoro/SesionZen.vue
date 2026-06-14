@@ -21,6 +21,10 @@ const props = defineProps({
   isGuest: {
     type: Boolean,
     default: false
+  },
+  apuntes: {
+    type: Array,
+    default: () => []
   }
 });
 
@@ -294,7 +298,7 @@ const getSoundEmoji = (key) => {
 
 const closeOnOutsideClick = (e) => {
   if (!isMinimized.value && timerWidget.value && !timerWidget.value.contains(e.target)) {
-    if (e.target.closest('.modal-avanzado-backdrop, .zen-custom-modal-overlay, .floating-controls-wrapper, .settings-toggle-widget')) return;
+    if (e.target.closest('.modal-avanzado-backdrop, .zen-custom-modal-overlay, .floating-controls-wrapper, .settings-toggle-widget, .notes-widget')) return;
     isMinimized.value = true;
   }
   if (showFloatingMenu.value) {
@@ -473,6 +477,201 @@ const cerrarModalAvanzado = () => {
   modalAvanzadoOpen.value = false;
 };
 
+// --- WIDGET DE APUNTES LOGIC ---
+const localApuntes = ref([...props.apuntes]);
+const showNotesWidget = ref(false);
+const isNotesMinimized = ref(false);
+const selectedApunteId = ref('');
+const cornellTab = ref('notas'); // 'notas', 'ideas', 'resumen'
+const saveStatus = ref('saved'); // 'saved', 'saving', 'error', 'local'
+const notesWidget = ref(null);
+
+const noteForm = reactive({
+  idApunte: null,
+  tituloApunte: '',
+  tipoApunte: 'normal',
+  contenidoApunte: '',
+  ideasApunte: '',
+  resumenApunte: ''
+});
+
+// Reference for debouncing autosave
+let autosaveTimeout = null;
+const isSwappingNote = ref(false);
+
+const toggleNotesWidget = () => {
+  showNotesWidget.value = !showNotesWidget.value;
+  if (showNotesWidget.value && !selectedApunteId.value) {
+    if (props.isGuest) {
+      loadGuestNote();
+    } else if (localApuntes.value.length > 0) {
+      selectedApunteId.value = localApuntes.value[0].idApunte;
+      loadNote(selectedApunteId.value);
+    } else {
+      initNewNote();
+    }
+  }
+};
+
+const loadGuestNote = () => {
+  isSwappingNote.value = true;
+  const storedNote = localStorage.getItem('pomodoro_zen_guest_note');
+  if (storedNote) {
+    try {
+      const parsed = JSON.parse(storedNote);
+      noteForm.idApunte = 'guest';
+      noteForm.tituloApunte = parsed.tituloApunte || 'Nota de Invitado';
+      noteForm.tipoApunte = parsed.tipoApunte || 'normal';
+      noteForm.contenidoApunte = parsed.contenidoApunte || '';
+      noteForm.ideasApunte = parsed.ideasApunte || '';
+      noteForm.resumenApunte = parsed.resumenApunte || '';
+    } catch (e) {
+      resetNoteFormToDefaultGuest();
+    }
+  } else {
+    resetNoteFormToDefaultGuest();
+  }
+  selectedApunteId.value = 'guest';
+  saveStatus.value = 'local';
+  setTimeout(() => { isSwappingNote.value = false; }, 100);
+};
+
+const resetNoteFormToDefaultGuest = () => {
+  noteForm.idApunte = 'guest';
+  noteForm.tituloApunte = 'Nota de Invitado';
+  noteForm.tipoApunte = 'normal';
+  noteForm.contenidoApunte = '';
+  noteForm.ideasApunte = '';
+  noteForm.resumenApunte = '';
+};
+
+const initNewNote = () => {
+  isSwappingNote.value = true;
+  
+  const todayStr = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  noteForm.idApunte = null;
+  noteForm.tituloApunte = `Apunte Zen - ${todayStr}`;
+  noteForm.tipoApunte = 'normal';
+  noteForm.contenidoApunte = '';
+  noteForm.ideasApunte = '';
+  noteForm.resumenApunte = '';
+  
+  selectedApunteId.value = 'new';
+  saveStatus.value = 'saved';
+  
+  setTimeout(() => { isSwappingNote.value = false; }, 100);
+};
+
+const loadNote = (id) => {
+  if (!id || id === 'new') {
+    initNewNote();
+    return;
+  }
+  if (id === 'guest') {
+    loadGuestNote();
+    return;
+  }
+  
+  isSwappingNote.value = true;
+  const note = localApuntes.value.find(n => n.idApunte === id);
+  if (note) {
+    noteForm.idApunte = note.idApunte;
+    noteForm.tituloApunte = note.tituloApunte;
+    noteForm.tipoApunte = note.tipoApunte || 'normal';
+    noteForm.contenidoApunte = note.contenidoApunte || '';
+    noteForm.ideasApunte = note.ideasApunte || '';
+    noteForm.resumenApunte = note.resumenApunte || '';
+    saveStatus.value = 'saved';
+  }
+  setTimeout(() => { isSwappingNote.value = false; }, 100);
+};
+
+const triggerAutosave = () => {
+  if (isSwappingNote.value) return;
+  
+  if (props.isGuest) {
+    saveStatus.value = 'saving';
+    if (autosaveTimeout) clearTimeout(autosaveTimeout);
+    autosaveTimeout = setTimeout(() => {
+      localStorage.setItem('pomodoro_zen_guest_note', JSON.stringify({
+        tituloApunte: noteForm.tituloApunte,
+        tipoApunte: noteForm.tipoApunte,
+        contenidoApunte: noteForm.contenidoApunte,
+        ideasApunte: noteForm.ideasApunte,
+        resumenApunte: noteForm.resumenApunte
+      }));
+      saveStatus.value = 'local';
+    }, 1000);
+    return;
+  }
+  
+  saveStatus.value = 'saving';
+  if (autosaveTimeout) clearTimeout(autosaveTimeout);
+  
+  autosaveTimeout = setTimeout(async () => {
+    try {
+      const data = {
+        tituloApunte: noteForm.tituloApunte,
+        tipoApunte: noteForm.tipoApunte,
+        contenidoApunte: noteForm.contenidoApunte,
+        ideasApunte: noteForm.ideasApunte,
+        resumenApunte: noteForm.resumenApunte
+      };
+      
+      if (noteForm.idApunte) {
+        // Update existing note
+        const response = await window.axios.put(route('apuntes.update', noteForm.idApunte), data);
+        if (response.data && response.data.success) {
+          // Update note in local array
+          const idx = localApuntes.value.findIndex(n => n.idApunte === noteForm.idApunte);
+          if (idx !== -1) {
+            localApuntes.value[idx].tituloApunte = noteForm.tituloApunte;
+            localApuntes.value[idx].tipoApunte = noteForm.tipoApunte;
+            localApuntes.value[idx].contenidoApunte = noteForm.contenidoApunte;
+            localApuntes.value[idx].ideasApunte = noteForm.ideasApunte;
+            localApuntes.value[idx].resumenApunte = noteForm.resumenApunte;
+          }
+          saveStatus.value = 'saved';
+        } else {
+          saveStatus.value = 'error';
+        }
+      } else {
+        // Create new note
+        const response = await window.axios.post(route('apuntes.store'), data);
+        if (response.data && response.data.success && response.data.apunte) {
+          const newNote = response.data.apunte;
+          noteForm.idApunte = newNote.idApunte;
+          localApuntes.value.unshift(newNote);
+          selectedApunteId.value = newNote.idApunte;
+          saveStatus.value = 'saved';
+        } else {
+          saveStatus.value = 'error';
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      saveStatus.value = 'error';
+    }
+  }, 1200);
+};
+
+// Autosave watcher
+watch(() => [
+  noteForm.tituloApunte,
+  noteForm.tipoApunte,
+  noteForm.contenidoApunte,
+  noteForm.ideasApunte,
+  noteForm.resumenApunte
+], () => {
+  triggerAutosave();
+}, { deep: true });
+
+watch(selectedApunteId, (newVal) => {
+  if (newVal) {
+    loadNote(newVal);
+  }
+});
+
 // Directives handle dragging now
 </script>
 
@@ -514,6 +713,14 @@ const cerrarModalAvanzado = () => {
               :title="isFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'"
             >
               <i class="bi" :class="isFullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i>
+            </button>
+            <button 
+              @click="toggleNotesWidget" 
+              class="floating-btn" 
+              :class="{ 'notes-active-btn': showNotesWidget }"
+              :title="showNotesWidget ? 'Ocultar Bloc de Apuntes' : 'Mostrar Bloc de Apuntes'"
+            >
+              <i class="bi" :class="showNotesWidget ? 'bi-journal-richtext' : 'bi-journal'"></i>
             </button>
             <Link 
               href="/dashboard" 
@@ -566,13 +773,6 @@ const cerrarModalAvanzado = () => {
             </svg>
           </div>
           <div class="d-flex align-items-center gap-1 ms-auto">
-            <button 
-              class="minimize-btn" 
-              @click="toggleDistractionFree" 
-              :title="isDistractionFree ? 'Mostrar Dashboard' : 'Ocultar Dashboard (Modo Zen)'"
-            >
-              <i class="bi" :class="isDistractionFree ? 'bi-eye-fill' : 'bi-eye-slash-fill'"></i>
-            </button>
             <button class="minimize-btn" @click="toggleMinimize($event)" :title="isMinimized ? 'Maximizar' : 'Minimizar'">
               <svg v-if="!isMinimized" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -723,6 +923,159 @@ const cerrarModalAvanzado = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Draggable Notes Widget -->
+      <div 
+        v-if="showNotesWidget" 
+        v-draggable 
+        ref="notesWidget" 
+        class="widget notes-widget" 
+        :class="{ 'minimized': isNotesMinimized, 'dark-mode': isDarkMode }"
+        style="right: 40px; top: 120px; width: 340px;"
+      >
+        <div class="notes-header">
+          <div class="notes-header-left">
+            <div class="notes-drag-handle">
+              <svg width="12" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="9" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="9" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="9" cy="18" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="18" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </div>
+            <span class="notes-header-title">Bloc de Notas</span>
+          </div>
+          <div class="notes-header-actions">
+            <button type="button" class="notes-header-btn" @click="isNotesMinimized = !isNotesMinimized" :title="isNotesMinimized ? 'Maximizar' : 'Minimizar'">
+              <i class="bi" :class="isNotesMinimized ? 'bi-plus-lg' : 'bi-dash'"></i>
+            </button>
+            <button type="button" class="notes-header-btn close-btn" @click="showNotesWidget = false" title="Cerrar">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Minimized View -->
+        <div v-show="isNotesMinimized" class="notes-minimized-view" @click="isNotesMinimized = false" style="cursor: pointer;">
+          <span class="mini-icon"><i class="bi bi-journal-text"></i> Editar Apuntes</span>
+        </div>
+
+        <!-- Expanded View -->
+        <div v-show="!isNotesMinimized" class="notes-content">
+          <!-- Dropdown and controls -->
+          <div class="notes-controls d-flex gap-2 mb-2 align-items-center">
+            <select v-model="selectedApunteId" class="form-select-zen notes-select flex-grow-1" style="font-size: 12px; height: 32px; padding: 4px 8px;" :disabled="isGuest">
+              <option v-if="isGuest" value="guest">Nota de Invitado (Temporal)</option>
+              <template v-else>
+                <option value="" disabled>-- Seleccionar Apunte --</option>
+                <option value="new">+ Nueva Nota</option>
+                <option v-for="n in localApuntes" :key="n.idApunte" :value="n.idApunte">
+                  {{ n.tituloApunte }}
+                </option>
+              </template>
+            </select>
+            <button v-if="!isGuest" @click="initNewNote" class="btn-new-note" title="Crear nueva nota">
+              <i class="bi bi-plus-lg"></i>
+            </button>
+          </div>
+
+          <!-- Note Title -->
+          <div class="note-title-container mb-2">
+            <input 
+              type="text" 
+              v-model="noteForm.tituloApunte" 
+              class="note-title-input" 
+              placeholder="Título del apunte..."
+              maxlength="100"
+            />
+          </div>
+
+          <!-- Method Switcher (Cornell vs Normal) -->
+          <div class="note-method-tabs d-flex gap-1 mb-2" v-if="!isGuest">
+            <button 
+              type="button"
+              class="method-tab-btn" 
+              :class="{ active: noteForm.tipoApunte === 'normal' }"
+              @click="noteForm.tipoApunte = 'normal'"
+            >Normal</button>
+            <button 
+              type="button"
+              class="method-tab-btn" 
+              :class="{ active: noteForm.tipoApunte === 'cornell' }"
+              @click="noteForm.tipoApunte = 'cornell'"
+            >Cornell</button>
+          </div>
+
+          <!-- Cornell Tabs -->
+          <div class="cornell-tabs d-flex gap-1 mb-2" v-if="noteForm.tipoApunte === 'cornell'">
+            <button 
+              type="button"
+              class="cornell-tab-btn" 
+              :class="{ active: cornellTab === 'notas' }"
+              @click="cornellTab = 'notas'"
+            >Notas</button>
+            <button 
+              type="button"
+              class="cornell-tab-btn" 
+              :class="{ active: cornellTab === 'ideas' }"
+              @click="cornellTab = 'ideas'"
+            >Ideas</button>
+            <button 
+              type="button"
+              class="cornell-tab-btn" 
+              :class="{ active: cornellTab === 'resumen' }"
+              @click="cornellTab = 'resumen'"
+            >Resumen</button>
+          </div>
+
+          <!-- Textarea Editors -->
+          <div class="notes-editor-container">
+            <!-- Normal Note / Cornell Notes Tab -->
+            <textarea 
+              v-show="noteForm.tipoApunte === 'normal' || (noteForm.tipoApunte === 'cornell' && cornellTab === 'notas')"
+              v-model="noteForm.contenidoApunte" 
+              class="notes-textarea" 
+              placeholder="Escribí acá tus apuntes..."
+            ></textarea>
+
+            <!-- Cornell Ideas Tab -->
+            <textarea 
+              v-show="noteForm.tipoApunte === 'cornell' && cornellTab === 'ideas'"
+              v-model="noteForm.ideasApunte" 
+              class="notes-textarea" 
+              placeholder="Ideas y conceptos clave..."
+            ></textarea>
+
+            <!-- Cornell Resumen Tab -->
+            <textarea 
+              v-show="noteForm.tipoApunte === 'cornell' && cornellTab === 'resumen'"
+              v-model="noteForm.resumenApunte" 
+              class="notes-textarea" 
+              placeholder="Resumen de la sesión..."
+            ></textarea>
+          </div>
+
+          <!-- Footer Status -->
+          <div class="notes-footer mt-2 d-flex justify-content-between align-items-center">
+            <span class="save-status-text" style="font-size: 11px;">
+              <span v-if="saveStatus === 'saving'" class="text-secondary">
+                <i class="bi bi-arrow-repeat spin-icon me-1"></i>Guardando...
+              </span>
+              <span v-else-if="saveStatus === 'saved'" class="text-success fw-medium">
+                <i class="bi bi-check-circle-fill me-1"></i>En la nube
+              </span>
+              <span v-else-if="saveStatus === 'local'" class="text-info fw-medium">
+                <i class="bi bi-hdd-fill me-1"></i>En navegador
+              </span>
+              <span v-else-if="saveStatus === 'error'" class="text-danger fw-medium">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>Error al guardar
+              </span>
+            </span>
           </div>
         </div>
       </div>
@@ -2079,5 +2432,329 @@ body.dark-mode .zen-custom-modal {
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.9) translateY(20px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Notes Widget Glassmorphic Styles */
+.notes-widget {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px 20px 20px; /* slightly less padding top for custom header balance */
+  transition: all 0.3s ease;
+  color: #6b4c3f;
+}
+
+.pomodoro-zen-container.dark-mode .notes-widget {
+  background: rgba(97, 44, 45, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Custom Notes Header */
+.notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(107, 76, 63, 0.12);
+}
+
+.pomodoro-zen-container.dark-mode .notes-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.notes-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: rgba(107, 76, 63, 0.45);
+}
+
+.pomodoro-zen-container.dark-mode .notes-drag-handle {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.notes-header-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b4c3f;
+  user-select: none;
+}
+
+.pomodoro-zen-container.dark-mode .notes-header-title {
+  color: #ffffff;
+}
+
+.notes-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notes-header-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: rgba(107, 76, 63, 0.6);
+  cursor: pointer;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  transition: all 0.2s ease;
+}
+
+.notes-header-btn:hover {
+  background: rgba(107, 76, 63, 0.08);
+  color: #6b4c3f;
+}
+
+.pomodoro-zen-container.dark-mode .notes-header-btn {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pomodoro-zen-container.dark-mode .notes-header-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.notes-header-btn.close-btn {
+  color: rgba(220, 53, 69, 0.7);
+}
+
+.notes-header-btn.close-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.pomodoro-zen-container.dark-mode .notes-header-btn.close-btn {
+  color: rgba(255, 181, 181, 0.7);
+}
+
+.pomodoro-zen-container.dark-mode .notes-header-btn.close-btn:hover {
+  background: rgba(255, 181, 181, 0.15);
+  color: #ffb5b5;
+}
+
+.notes-minimized-view {
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b4c3f;
+}
+
+.pomodoro-zen-container.dark-mode .notes-minimized-view {
+  color: #ffffff;
+}
+
+.notes-select {
+  border: 1px solid rgba(107, 76, 63, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+  color: #6b4c3f;
+  outline: none;
+  font-size: 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.notes-select:focus {
+  border-color: #69342e;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.pomodoro-zen-container.dark-mode .notes-select {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.pomodoro-zen-container.dark-mode .notes-select:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffb5b5;
+}
+
+.btn-new-note {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(107, 76, 63, 0.2);
+  background: rgba(255, 255, 255, 0.6);
+  color: #6b4c3f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-new-note:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #6b4c3f;
+}
+
+.pomodoro-zen-container.dark-mode .btn-new-note {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.pomodoro-zen-container.dark-mode .btn-new-note:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffb5b5;
+}
+
+.note-title-container {
+  border-bottom: 2px solid rgba(107, 76, 63, 0.1);
+  margin-bottom: 12px !important;
+}
+
+.pomodoro-zen-container.dark-mode .note-title-container {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.note-title-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: #6b4c3f;
+  outline: none;
+  padding: 4px 0;
+}
+
+.pomodoro-zen-container.dark-mode .note-title-input {
+  color: #ffffff;
+}
+
+/* Segmented Control Tabs (iOS style) */
+.note-method-tabs, .cornell-tabs {
+  background: rgba(107, 76, 63, 0.06);
+  padding: 3px;
+  border-radius: 10px;
+  display: flex;
+  gap: 2px;
+}
+
+.pomodoro-zen-container.dark-mode .note-method-tabs,
+.pomodoro-zen-container.dark-mode .cornell-tabs {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.method-tab-btn, .cornell-tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  color: rgba(107, 76, 63, 0.7);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.pomodoro-zen-container.dark-mode .method-tab-btn,
+.pomodoro-zen-container.dark-mode .cornell-tab-btn {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.method-tab-btn.active, .cornell-tab-btn.active {
+  background: #ffffff;
+  color: #6b4c3f;
+  box-shadow: 0 2px 8px rgba(107, 76, 63, 0.15);
+}
+
+.pomodoro-zen-container.dark-mode .method-tab-btn.active,
+.pomodoro-zen-container.dark-mode .cornell-tab-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.notes-editor-container {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(107, 76, 63, 0.15);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
+.pomodoro-zen-container.dark-mode .notes-editor-container {
+  background: rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.notes-textarea {
+  width: 100%;
+  height: 180px;
+  background: transparent;
+  border: none;
+  resize: none;
+  outline: none;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b4c3f;
+  padding: 4px 6px;
+}
+
+.pomodoro-zen-container.dark-mode .notes-textarea {
+  color: #ffffff;
+}
+
+.notes-textarea::placeholder {
+  color: rgba(107, 76, 63, 0.5);
+}
+
+.pomodoro-zen-container.dark-mode .notes-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.notes-footer {
+  border-top: 1px solid rgba(107, 76, 63, 0.1);
+  padding-top: 10px;
+}
+
+.pomodoro-zen-container.dark-mode .notes-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Spinner animation */
+.spin-icon {
+  display: inline-block;
+  animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.notes-active-btn {
+  background: #f7a072 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(247, 160, 114, 0.4) !important;
+}
+
+.pomodoro-zen-container.dark-mode .notes-active-btn {
+  background: #ffb5b5 !important;
+  color: #612c2d !important;
+  box-shadow: 0 4px 15px rgba(255, 181, 181, 0.3) !important;
 }
 </style>

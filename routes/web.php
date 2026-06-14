@@ -27,7 +27,8 @@ Route::get('/pomodoro/invitado', function () {
     return Inertia::render('Pomodoro/SesionZen', [
         'isGuest' => true,
         'configs' => [],
-        'tareas' => []
+        'tareas' => [],
+        'apuntes' => []
     ]);
 })->name('pomodoro.invitado');
 

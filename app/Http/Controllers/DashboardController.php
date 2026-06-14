@@ -38,6 +38,9 @@ class DashboardController extends Controller
         $perfilesCompartidos = Perfil::whereHas('usuariosCompartidos', function ($query) use ($user) {
                 $query->where('PerfilCompartido.idUsuario', $user->idUsuario);
             })
+            ->with([
+                'usuario:idUsuario,nombre,apellido'
+            ])
             ->withCount([
                 'tareas',
                 'tareas as tareas_completadas_count' => function ($query) {
@@ -51,6 +54,7 @@ class DashboardController extends Controller
                 $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
                     ->where('idPerfil', $perfil->idPerfil)
                     ->value('permiso');
+                $perfil->propietario = $perfil->usuario ? ($perfil->usuario->nombre . ' ' . $perfil->usuario->apellido) : 'Desconocido';
                 return $perfil;
             });
 
@@ -67,6 +71,7 @@ class DashboardController extends Controller
                                                 $q->where('PerfilCompartido.idUsuario', $user->idUsuario);
                                             });
                                   })
+                                  ->with('usuario:idUsuario,nombre,apellido')
                                   ->first();
 
             if ($perfilActivo) {
@@ -74,11 +79,13 @@ class DashboardController extends Controller
                 if ($perfilActivo->idUsuario === $user->idUsuario) {
                     $perfilActivo->esCompartido = false;
                     $perfilActivo->permisoCompartido = 'Administrador';
+                    $perfilActivo->propietario = $user->nombre . ' ' . $user->apellido;
                 } else {
                     $perfilActivo->esCompartido = true;
                     $perfilActivo->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
                         ->where('idPerfil', $perfilActivoId)
                         ->value('permiso');
+                    $perfilActivo->propietario = $perfilActivo->usuario ? ($perfilActivo->usuario->nombre . ' ' . $perfilActivo->usuario->apellido) : 'Desconocido';
                 }
 
                 // Obtenemos solo las tareas pendientes de ese perfil sumando ciclos Pomodoro

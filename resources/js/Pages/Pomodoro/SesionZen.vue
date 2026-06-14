@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
-import { Link, usePage, router, useForm } from '@inertiajs/vue3';
+import { Link, usePage, router, useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
@@ -676,6 +676,7 @@ watch(selectedApunteId, (newVal) => {
 </script>
 
 <template>
+  <Head title="Modo Zen" />
   <component :is="isGuest ? 'div' : AppLayout" :class="{ 'min-vh-100': isGuest }">
     <div 
       id="app-pomodoro" 
@@ -1414,7 +1415,7 @@ watch(selectedApunteId, (newVal) => {
 /* Widgets */
 .widget { position: absolute; cursor: grab; user-select: none; z-index: 10; }
 .widget:active { cursor: grabbing; }
-.widget.dragging { transform: scale(1.01); z-index: 1000; }
+.widget.dragging { transform: scale(1.01); z-index: 1000; transition: none !important; }
 .drag-handle { position: absolute; top: 8px; left: 8px; opacity: 0.4; cursor: grab; padding: 4px; z-index: 12; }
 .drag-handle:hover { opacity: 1; }
 

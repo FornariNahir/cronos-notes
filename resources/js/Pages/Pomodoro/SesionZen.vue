@@ -551,16 +551,21 @@ const cerrarModalAvanzado = () => {
         playsinline
       ></video>
       
+      <!-- Dark Glassmorphic Overlay for Zen Mode -->
+      <transition name="fade">
+        <div v-if="isDistractionFree" class="zen-overlay"></div>
+      </transition>
+      
       <!-- Draggable Timer Widget -->
       <div v-draggable ref="timerWidget" class="widget timer-widget" :class="{ 'minimized': isMinimized }" style="left: 40px; bottom: 40px;">
-        <div class="widget-header-controls">
+        <div v-if="!isDistractionFree" class="widget-header-controls">
           <div class="drag-handle">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="8" y1="6" x2="8" y2="18"></line>
               <line x1="16" y1="6" x2="16" y2="18"></line>
             </svg>
           </div>
-          <div class="d-flex align-items-center gap-1">
+          <div class="d-flex align-items-center gap-1 ms-auto">
             <button 
               class="minimize-btn" 
               @click="toggleDistractionFree" 
@@ -605,7 +610,13 @@ const cerrarModalAvanzado = () => {
             </div>
             <div id="timer-display" class="timer-display">{{ displayTime }}</div>
             
-            <button @click="endSessionWrapper" class="btn-cancel-session mt-2">Terminar Sesión</button>
+            <div class="d-flex gap-2 mt-3 w-100 justify-content-center align-items-center">
+              <button @click="toggleDistractionFree" class="btn-zen-mode-toggle">
+                <i class="bi" :class="isDistractionFree ? 'bi-eye-fill' : 'bi-eye-slash-fill'"></i>
+                {{ isDistractionFree ? 'Salir Modo Zen' : 'Modo Zen' }}
+              </button>
+              <button @click="endSessionWrapper" class="btn-cancel-session">Terminar Sesión</button>
+            </div>
           </template>
 
           <template v-else>
@@ -661,7 +672,7 @@ const cerrarModalAvanzado = () => {
       </div>
 
       <!-- Draggable Sound Settings widget -->
-      <div v-draggable ref="settingsToggle" class="widget settings-toggle-widget" style="left: 40px; top: 40px;">
+      <div v-if="!isDistractionFree" v-draggable ref="settingsToggle" class="widget settings-toggle-widget" style="left: 40px; top: 40px;">
         <div class="sound-drag-handle-container">
           <div class="drag-handle sound-drag-handle">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -715,6 +726,38 @@ const cerrarModalAvanzado = () => {
           </div>
         </div>
       </div>
+
+      <!-- Bottom Audio Dock for Zen Mode -->
+      <transition name="slide-up">
+        <div v-if="isDistractionFree" class="zen-bottom-audio-dock">
+          <div class="dock-title">Ambiente Zen</div>
+          <div class="dock-scroll-container">
+            <div 
+              v-for="(state, soundKey) in mixerState" 
+              :key="soundKey" 
+              class="dock-audio-pill"
+              :class="{ 'active': state.active, 'locked': isSoundLocked(soundKey) }"
+              @click="toggleMixerSound(soundKey)"
+            >
+              <span class="dock-audio-emoji">{{ getSoundEmoji(soundKey) }}</span>
+              <span class="dock-audio-name">{{ soundKey }}</span>
+              <span v-if="isSoundLocked(soundKey)" class="dock-audio-lock">🔒</span>
+              
+              <!-- Inline volume slider (only when active) -->
+              <div v-if="state.active" class="dock-volume-inline" @click.stop>
+                <input 
+                  type="range" 
+                  class="dock-volume-slider-inline" 
+                  v-model.number="state.volume" 
+                  min="0" max="1" step="0.05"
+                  @input="updateMixerVolume(soundKey)"
+                />
+                <span class="dock-volume-percentage-inline">{{ Math.round(state.volume * 100) }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
     </div>
 
     <!-- Advanced Settings Modal (Teleported to avoid layout clipping) -->
@@ -1607,6 +1650,24 @@ const cerrarModalAvanzado = () => {
   font-weight: 600;
   margin-top: 4px;
 }
+.btn-zen-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #6b4c3f;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-zen-mode-toggle:hover {
+  background: #543a2f;
+  transform: translateY(-1px);
+}
 .btn-cancel-session {
   background: transparent;
   color: #e63946;
@@ -1664,6 +1725,13 @@ const cerrarModalAvanzado = () => {
   background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
+.pomodoro-zen-container.dark-mode .btn-zen-mode-toggle {
+  background: #ffffff;
+  color: #612c2d;
+}
+.pomodoro-zen-container.dark-mode .btn-zen-mode-toggle:hover {
+  background: #f1f3f5;
+}
 .pomodoro-zen-container.dark-mode .btn-cancel-session {
   color: #ffb5b5;
   border-color: rgba(255, 181, 181, 0.3);
@@ -1688,6 +1756,243 @@ body.distraction-free-mode #content {
 body.distraction-free-mode .pomodoro-zen-container {
   height: 100vh !important;
   border-radius: 0 !important;
+}
+
+/* Dark Zen Overlay */
+.zen-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Override Timer position in Zen Mode */
+body.distraction-free-mode .timer-widget {
+  position: absolute !important;
+  left: 50% !important;
+  top: 45% !important; /* Slightly higher than 50% to make room for bottom dock */
+  bottom: auto !important;
+  right: auto !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1005 !important;
+  width: 90% !important;
+  max-width: 480px !important;
+  padding: 35px 35px 40px 35px !important;
+  border-radius: 24px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+  cursor: default !important;
+  transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+}
+
+body.distraction-free-mode.dark-mode .timer-widget {
+  background: rgba(97, 44, 45, 0.95) !important; /* matches current wine red dark mode */
+}
+
+/* Enlarge Timer inside Zen Mode */
+body.distraction-free-mode .timer-display {
+  font-size: 4.5rem !important; /* much larger display */
+  font-weight: 700 !important;
+  margin: 15px 0 !important;
+  letter-spacing: -1px;
+}
+
+body.distraction-free-mode .timer-controls .control-btn {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+body.distraction-free-mode .timer-controls .control-btn svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+body.distraction-free-mode .phase-indicator {
+  font-size: 1rem !important;
+  letter-spacing: 2px !important;
+}
+
+body.distraction-free-mode .task-badge {
+  font-size: 1.05rem !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+}
+
+/* Bottom audio dock styles */
+.zen-bottom-audio-dock {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 16px 24px;
+  z-index: 1004;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.pomodoro-zen-container.dark-mode .zen-bottom-audio-dock {
+  background: rgba(97, 44, 45, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.zen-bottom-audio-dock .dock-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-align: center;
+  user-select: none;
+}
+
+.dock-scroll-container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dock-scroll-container::-webkit-scrollbar {
+  height: 5px;
+}
+.dock-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+.dock-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+/* Audio pill inside dock */
+.dock-audio-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  user-select: none;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.dock-audio-pill:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.dock-audio-pill.active {
+  background: #6b4c3f; /* Wine red or brown matching active theme */
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(107, 76, 63, 0.4);
+}
+
+.pomodoro-zen-container.dark-mode .dock-audio-pill.active {
+  background: #ffb5b5; /* accent for dark mode */
+  color: #612c2d;
+  box-shadow: 0 4px 15px rgba(255, 181, 181, 0.3);
+}
+
+.dock-audio-emoji {
+  font-size: 1.1rem;
+}
+
+.dock-audio-lock {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Inline Volume Slider */
+.dock-volume-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 4px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  padding-left: 8px;
+  animation: fadeInWidth 0.3s forwards;
+  overflow: hidden;
+}
+
+.pomodoro-zen-container.dark-mode .dock-volume-inline {
+  border-left-color: rgba(97, 44, 45, 0.3);
+}
+
+.dock-volume-slider-inline {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.dock-audio-pill.active .dock-volume-slider-inline::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.pomodoro-zen-container.dark-mode .dock-audio-pill.active .dock-volume-slider-inline::-webkit-slider-thumb {
+  background: #612c2d;
+}
+
+.dock-volume-percentage-inline {
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+  opacity: 0.9;
+}
+
+/* Animations */
+@keyframes fadeInWidth {
+  from { width: 0; opacity: 0; }
+  to { width: 125px; opacity: 1; }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.slide-up-enter-from, .slide-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 30px);
 }
 
 /* Modal Personalizado */

@@ -1,4 +1,5 @@
 <template>
+  <Head :title="pageTitle" />
   <AppLayout>
     <div class="flex flex-col bg-background text-foreground rounded-lg border border-border overflow-hidden" style="height: calc(100vh - 140px)">
       <!-- Header -->
@@ -98,9 +99,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { Settings, Bell, FileText } from 'lucide-vue-next'
-import { useForm, router } from '@inertiajs/vue3'
+import { useForm, router, Head } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import EditorToolbar from './Components/EditorToolbar.vue'
 import NoteEditor from './Components/NoteEditor.vue'
@@ -140,6 +141,8 @@ const form = useForm({
   ideasApunte: '',
   resumenApunte: ''
 })
+
+const pageTitle = computed(() => form.tituloApunte || 'Nuevo Apunte')
 
 onMounted(() => {
   if (props.apunte) {

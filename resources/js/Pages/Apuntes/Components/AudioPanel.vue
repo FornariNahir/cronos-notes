@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div :class="{ 'h-full flex flex-col shrink-0': open }">
     <!-- Floating toggle when closed -->
     <button
       v-if="!open"
@@ -22,7 +22,7 @@
 
     <aside
       :class="[
-        'fixed inset-y-0 right-0 z-40 flex w-80 max-w-[85vw] flex-col bg-primary p-5 text-primary-foreground transition-transform duration-300 lg:static lg:z-auto lg:max-w-none lg:translate-x-0',
+        'fixed inset-y-0 right-0 z-40 flex w-80 max-w-[85vw] flex-col bg-primary p-5 text-primary-foreground transition-transform duration-300 lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:h-full',
         open ? 'translate-x-0' : 'translate-x-full lg:hidden'
       ]"
     >

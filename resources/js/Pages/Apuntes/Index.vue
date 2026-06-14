@@ -1,4 +1,5 @@
 <template>
+  <Head title="Mis Apuntes" />
   <AppLayout>
     <div class="notes-page">
       <div class="header-section">
@@ -87,7 +88,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({

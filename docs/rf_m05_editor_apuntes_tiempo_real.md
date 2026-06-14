@@ -21,10 +21,10 @@ El editor enriquecido y la grabadora de voz combinan APIs nativas del navegador 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Editor.vue](/Cronos-Note/resources/js/Pages/Apuntes/Editor.vue) - Vista del formulario de toma de apuntes, enlazado de texto y estructura Cornell.
-- [AudioPanel.vue](/Cronos-Note/resources/js/Pages/Apuntes/Components/AudioPanel.vue) - Componente encargado de manejar la interacción con el micrófono mediante `MediaRecorder`, gestionar estados de grabación y reproducir el audio guardado.
-- [EditorToolbar.vue](/Cronos-Note/resources/js/Pages/Apuntes/Components/EditorToolbar.vue) - Barra de herramientas de formateo de texto del editor.
-- [NoteEditor.vue](/Cronos-Note/resources/js/Pages/Apuntes/Components/NoteEditor.vue) - Área editable del apunte con soporte Cornell o estándar.
+- [Editor.vue](/Cronos-Note/resources/js/Pages/apunte/Editor.vue) - Vista del formulario de toma de apuntes, enlazado de texto y estructura Cornell.
+- [AudioPanel.vue](/Cronos-Note/resources/js/Pages/apunte/components/AudioPanel.vue) - Componente encargado de manejar la interacción con el micrófono mediante `MediaRecorder`, gestionar estados de grabación y reproducir el audio guardado.
+- [EditorToolbar.vue](/Cronos-Note/resources/js/Pages/apunte/components/EditorToolbar.vue) - Barra de herramientas de formateo de texto del editor.
+- [NoteEditor.vue](/Cronos-Note/resources/js/Pages/apunte/components/NoteEditor.vue) - Área editable del apunte con soporte Cornell o estándar.
 
 ### Backend & Controladores (Laravel)
 - [ApunteController.php](/Cronos-Note/app/Http/Controllers/ApunteController.php) - Recibe las peticiones HTTP, almacena el audio físico en disco y persiste las referencias en base de datos.

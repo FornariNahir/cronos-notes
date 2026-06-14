@@ -20,9 +20,9 @@ Para esta integración se emplean protocolos estándar de seguridad y librerías
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Login.vue](/Cronos-Note/resources/js/Pages/Auth/Login.vue) - Contiene el botón de "Continuar con Google".
-- [Register.vue](/Cronos-Note/resources/js/Pages/Auth/Register.vue) - Contiene el botón de "Registrarse con Google".
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/Pomodoro/SesionZen.vue) - Panel de control e interfaz de reproducción para Spotify (reproductor integrado).
+- [Login.vue](/Cronos-Note/resources/js/Pages/auth/Login.vue) - Contiene el botón de "Continuar con Google".
+- [Register.vue](/Cronos-Note/resources/js/Pages/auth/Register.vue) - Contiene el botón de "Registrarse con Google".
+- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Panel de control e interfaz de reproducción para Spotify (reproductor integrado).
 
 ### Backend & Controladores (Laravel)
 - [GoogleAuthController.php](/Cronos-Note/app/Http/Controllers/Auth/GoogleAuthController.php) - Administra la redirección y el retorno (callback) del flujo de autenticación de Google.

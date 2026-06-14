@@ -22,7 +22,7 @@ La sesión de invitado utiliza rutas públicas y condicionales lógicos en el fr
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/Pomodoro/SesionZen.vue) - Oculta la selección de tareas en el configurador, bloquea los paisajes y sonidos premium para visitantes, y abre el modal promocional de registro.
+- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Oculta la selección de tareas en el configurador, bloquea los paisajes y sonidos premium para visitantes, y abre el modal promocional de registro.
 - [Welcome.vue](/Cronos-Note/resources/js/Pages/Welcome.vue) - Landing page que provee el botón de acceso directo "Probar como Invitado".
 
 ### Backend & Controladores (Laravel)

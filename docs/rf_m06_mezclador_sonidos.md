@@ -20,7 +20,7 @@ El mezclador de sonidos aprovecha una combinación de recursos de audio locales 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/Pomodoro/SesionZen.vue) - Administra la lógica del mezclador, controla la instanciación de objetos `Howl`, maneja los sliders de volumen individuales y los estados activos.
+- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Administra la lógica del mezclador, controla la instanciación de objetos `Howl`, maneja los sliders de volumen individuales y los estados activos.
 
 ### Recursos Estáticos (Audios)
 - `public/audios/` - Directorio que aloja las pistas de audio locales comprimidas (ej. `storm.mp3`, `campfire.webm`, `cafe.mp3`, etc.).

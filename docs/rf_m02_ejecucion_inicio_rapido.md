@@ -18,7 +18,7 @@ Este requerimiento interactúa con la lógica de sesiones e interfaz mediante:
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/Pomodoro/SesionZen.vue) - Contiene la interfaz del panel de configurador y el botón "Inicio Rápido (25 min)" en la pantalla de Setup.
+- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Contiene la interfaz del panel de configurador y el botón "Inicio Rápido (25 min)" en la pantalla de Setup.
 - [usePomodoroTimer.js](/Cronos-Note/resources/js/Composables/usePomodoroTimer.js) - Composable reactivo que inicializa los valores por defecto (25m de trabajo, 5m de descanso corto, 15m de descanso largo) y coordina el disparo del endpoint en el backend.
 
 ### Backend & Controladores (Laravel)

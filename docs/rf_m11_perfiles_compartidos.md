@@ -25,9 +25,9 @@ Este conjunto de requerimientos define la capacidad de trabajo colaborativo dent
 ### Frontend (Vue 3)
 - [CompartirPerfilModal.vue](/Cronos-Note/resources/js/Components/CompartirPerfilModal.vue) - Modal de administración de colaboradores, envío de invitaciones, edición de roles y revocación de accesos.
 - [GestionPerfil.vue](/Cronos-Note/resources/js/Pages/GestionPerfil.vue) - Integra el modal de compartir y gestiona la activación del perfil activo.
-- [Invitacion.vue](/Cronos-Note/resources/js/Pages/PerfilCompartido/Invitacion.vue) - Vista para aceptar/rechazar invitaciones.
-- [InvitacionExpirada.vue](/Cronos-Note/resources/js/Pages/PerfilCompartido/InvitacionExpirada.vue) - Vista en caso de token expirado o utilizado.
-- [Index.vue (Apuntes)](/Cronos-Note/resources/js/Pages/Apuntes/Index.vue) y [Editor.vue (Apuntes)](/Cronos-Note/resources/js/Pages/Apuntes/Editor.vue) - Controlan que la interfaz oculte botones de edición/creación o bloquee el editor en modo solo lectura (`isReadOnly`) para el rol `Lector`.
+- [Invitacion.vue](/Cronos-Note/resources/js/Pages/perfil-compartido/Invitacion.vue) - Vista para aceptar/rechazar invitaciones.
+- [InvitacionExpirada.vue](/Cronos-Note/resources/js/Pages/perfil-compartido/InvitacionExpirada.vue) - Vista en caso de token expirado o utilizado.
+- [Index.vue (Apuntes)](/Cronos-Note/resources/js/Pages/apunte/Index.vue) y [Editor.vue (Apuntes)](/Cronos-Note/resources/js/Pages/apunte/Editor.vue) - Controlan que la interfaz oculte botones de edición/creación o bloquee el editor en modo solo lectura (`isReadOnly`) para el rol `Lector`.
 - [GestionTareas.vue](/Cronos-Note/resources/js/Pages/GestionTareas.vue) - Bloquea o permite la interacción en tareas según los permisos de perfil.
 
 ### Backend & Controladores (Laravel)

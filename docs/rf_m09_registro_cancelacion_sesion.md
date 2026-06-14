@@ -19,7 +19,7 @@ Este requerimiento utiliza la infraestructura estándar de sesiones e interfaz d
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/Pomodoro/SesionZen.vue) - Administra el inicio del flujo de cancelación de sesión y renderiza los modales de confirmación (`showConfirmEndModal`).
+- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Administra el inicio del flujo de cancelación de sesión y renderiza los modales de confirmación (`showConfirmEndModal`).
 - [AppLayout.vue](/Cronos-Note/resources/js/Layouts/AppLayout.vue) - Captura el mensaje flash de éxito e introduce un toast emergente flotante en el lateral derecho superior de la pantalla.
 
 ### Backend & Controladores (Laravel)

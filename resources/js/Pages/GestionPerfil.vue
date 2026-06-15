@@ -318,7 +318,6 @@ const obtenerIniciales = (nombreCompleto) => {
                         <div v-if="perfil.esCompartido" class="owner-avatar-badge-card" :title="'Propietario: ' + perfil.propietario">
                             {{ obtenerIniciales(perfil.propietario) }}
                         </div>
-                        <i v-else class="bi bi-three-dots-vertical text-secondary cursor-pointer" @click.stop></i>
                     </div>
                     <p class="text-secondary small text-desc flex-grow-1">{{ perfil.descripcionPerfil || 'Sin descripción' }}</p>
                     

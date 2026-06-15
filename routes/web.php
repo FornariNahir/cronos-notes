@@ -164,7 +164,15 @@ Route::middleware('auth.custom')->group(function () {
 Route::get('/invitacion/{token}', [PerfilCompartidoController::class, 'verInvitacion'])->name('invitacion.ver');
 
 Route::get('/uso', function () {
-    return Inertia::render('Uso');
+    return Inertia::render('ModoUso');
 })->name('uso');
+
+Route::get('/caracteristicas', function () {
+    return Inertia::render('Caracteristicas');
+})->name('caracteristicas');
+
+Route::get('/quienes-somos', function () {
+    return Inertia::render('QuienesSomos');
+})->name('quienes-somos');
 
 require __DIR__.'/auth.php';

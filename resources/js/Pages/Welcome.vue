@@ -143,10 +143,10 @@ onUnmounted(() => {
 
             <div class="collapse navbar-collapse" id="cnNav">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-1">
-                    <li class="nav-item"><a class="nav-link cn-link" href="#como-funciona">Modo de Uso</a></li>
-                    <li class="nav-item"><a class="nav-link cn-link" href="#caracteristicas">Características</a></li>
-                    <li class="nav-item"><a class="nav-link cn-link" href="#nosotros">Quiénes Somos</a></li>
-                    
+                    <li class="nav-item"><a class="nav-link cn-link" href="#hero">Inicio</a></li>
+                    <li class="nav-item"><Link :href="route('uso') + '#top'" class="nav-link cn-link">Modo de Uso</Link></li>
+                    <li class="nav-item"><Link :href="route('caracteristicas') + '#top'" class="nav-link cn-link">Características</Link></li>
+                    <li class="nav-item"><Link :href="route('quienes-somos') + '#top'" class="nav-link cn-link">Quiénes Somos</Link></li>
                 </ul>
                 <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2">
                     <Link :href="route('dashboard')" class="btn cn-btn-primary px-4">
@@ -189,9 +189,9 @@ onUnmounted(() => {
                         <Link v-else :href="route('dashboard')" class="btn cn-btn-primary btn-lg px-4 cn-cta">
                             Ir al Dashboard <i class="bi bi-arrow-right ms-1"></i>
                         </Link>
-                        <a href="#como-funciona" class="btn cn-btn-ghost btn-lg px-4">
+                        <Link :href="route('uso')" class="btn cn-btn-ghost btn-lg px-4">
                             <i class="bi bi-play-circle me-1"></i> Ver Modo de Uso
-                        </a>
+                        </Link>
                     </div>
                     <div class="cn-hero-meta mt-4">
                         <div class="cn-avatars">
@@ -428,8 +428,8 @@ onUnmounted(() => {
                 <div class="col-lg-3">
                     <h4 class="cn-footer-head">Producto</h4>
                     <ul class="cn-footer-links">
-                        <li><a href="#caracteristicas">Características</a></li>
-                        <li><a href="#como-funciona">Modo de uso</a></li>
+                        <li><Link :href="route('caracteristicas')">Características</Link></li>
+                        <li><Link :href="route('uso')">Modo de uso</Link></li>
                         <li><a href="#faq">Preguntas frecuentes</a></li>
                     </ul>
                 </div>
@@ -493,7 +493,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 
 /* ===== NAVBAR ===== */
 .cn-navbar {
-  padding: 1rem 0;
+  padding: 0.2rem 0;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -505,7 +505,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   right: 0 !important;
 }
 .cn-navbar.scrolled {
-  padding: .6rem 0;
+  padding: 0.1rem 0;
   background: rgba(255, 255, 255, 0.95);
   border-bottom: 1px solid rgba(76, 37, 33, 0.08);
   box-shadow: 0 8px 30px -18px rgba(76, 37, 33, 0.4);
@@ -515,10 +515,10 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   align-items: center;
   gap: .6rem;
   text-decoration: none;
-  margin-left: 0 !important; /* Forces the logo to align all the way to the left, bypassing global styles */
+  margin-left: -20px !important; /* Forces the logo to align further to the left, bypassing container padding */
 }
 .cn-navbar-logo {
-  height: 100px; /* Make it significantly larger and more visible */
+  height: 80px; /* Make it large and visible, but balanced so it is not too thick */
   width: auto;
   object-fit: contain;
 }

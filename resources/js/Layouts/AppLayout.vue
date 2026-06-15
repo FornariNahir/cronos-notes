@@ -110,13 +110,13 @@
                       <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                   </svg>
               </button>
-              <div class="settings-dropdown-container">
-                  <button class="avatar" @click="isSettingsDropdownOpen = !isSettingsDropdownOpen" @blur="closeDropdown" aria-label="Menú de usuario">
+              <div class="settings-dropdown-container" ref="dropdownRef">
+                  <button class="avatar" @click="toggleDropdown" aria-label="Menú de usuario">
                       {{ $page.props.auth.user?.nombre?.charAt(0).toUpperCase() || $page.props.auth.user?.name?.charAt(0).toUpperCase() || 'A' }}
                   </button>
                   <div v-if="isSettingsDropdownOpen" class="settings-dropdown">
-                      <Link :href="route('perfil-usuario')" class="dropdown-item">Mis Datos</Link>
-                      <Link :href="route('logout')" method="post" as="button" class="dropdown-item">Cerrar Sesión</Link>
+                      <Link :href="route('perfil-usuario')" class="dropdown-item" @click="closeDropdown">Mis Datos</Link>
+                      <Link :href="route('logout')" method="post" as="button" class="dropdown-item" type="button" @click="closeDropdown">Cerrar Sesión</Link>
                   </div>
               </div>
           </div>
@@ -146,18 +146,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
 const isSidebarClosed = ref(true);
 const isZenMode = ref(false);
 const isSettingsDropdownOpen = ref(false);
+const dropdownRef = ref(null);
+
+const toggleDropdown = () => {
+  isSettingsDropdownOpen.value = !isSettingsDropdownOpen.value;
+};
 
 const closeDropdown = () => {
-  setTimeout(() => {
-    isSettingsDropdownOpen.value = false;
-  }, 200);
+  isSettingsDropdownOpen.value = false;
 };
+
+const handleClickOutside = (event) => {
+  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+    isSettingsDropdownOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 const toggleSidebar = () => {
   isSidebarClosed.value = !isSidebarClosed.value;

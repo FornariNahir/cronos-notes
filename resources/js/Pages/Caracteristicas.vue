@@ -1,8 +1,29 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 
+const isDarkMode = ref(false);
+
+const toggleTheme = () => {
+    isDarkMode.value = !isDarkMode.value;
+    if (isDarkMode.value) {
+        document.body.classList.remove('cn-body-light');
+        document.body.classList.add('cn-body-dark');
+        localStorage.setItem('cn-theme', 'dark');
+    } else {
+        document.body.classList.remove('cn-body-dark');
+        document.body.classList.add('cn-body-light');
+        localStorage.setItem('cn-theme', 'light');
+    }
+};
+
 onMounted(async () => {
+    isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
+    if (isDarkMode.value) {
+        document.body.classList.add('cn-body-dark');
+    } else {
+        document.body.classList.add('cn-body-light');
+    }
     // Dynamically load AOS Stylesheet if not already present
     if (!document.querySelector('link[href*="aos.css"]')) {
         const link = document.createElement('link');
@@ -68,6 +89,11 @@ onMounted(async () => {
         window.removeEventListener('scroll', onScroll);
     });
 });
+
+onUnmounted(() => {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.remove('cn-body-dark');
+});
 </script>
 
 <template>
@@ -98,12 +124,18 @@ onMounted(async () => {
                         <li class="nav-item"><Link :href="route('caracteristicas') + '#top'" class="nav-link cn-link active-link">Características</Link></li>
                         <li class="nav-item"><Link :href="route('quienes-somos') + '#top'" class="nav-link cn-link">Quiénes Somos</Link></li>
                     </ul>
-                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2">
+                    <div class="d-flex align-items-center gap-2 me-lg-3 mb-2 mb-lg-0 justify-content-center">
+                        <button @click="toggleTheme" class="cn-theme-toggle-btn" aria-label="Cambiar tema">
+                            <i v-if="isDarkMode" class="bi bi-sun-fill text-warning"></i>
+                            <i v-else class="bi bi-moon-fill"></i>
+                        </button>
+                    </div>
+                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2 justify-content-center">
                         <Link :href="route('dashboard')" class="btn cn-btn-primary px-4">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </Link>
                     </div>
-                    <div v-else class="d-flex gap-2 align-items-center">
+                    <div v-else class="d-flex gap-2 align-items-center justify-content-center">
                         <Link :href="route('login')" class="btn cn-btn-ghost px-3">
                             Iniciar Sesión
                         </Link>
@@ -196,7 +228,7 @@ onMounted(async () => {
 
                     <div class="row g-4">
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-folder2-open fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Organización por Perfiles</h3>
                                 <p class="text-secondary small-text m-0">
@@ -205,7 +237,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-calendar3-event fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Calendario e Interfaz Visual</h3>
                                 <p class="text-secondary small-text m-0">
@@ -214,7 +246,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-hourglass-split fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Técnica Pomodoro e Inicio Rápido</h3>
                                 <p class="text-secondary small-text m-0">
@@ -223,7 +255,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-lightning-charge fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Inteligencia Artificial Activa</h3>
                                 <p class="text-secondary small-text m-0">
@@ -232,7 +264,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-journal-text fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Módulo de Toma de Apuntes</h3>
                                 <p class="text-secondary small-text m-0">
@@ -241,7 +273,7 @@ onMounted(async () => {
                             </div>
                         </div>
                         <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card pilar-card h-100 p-4 border rounded-4 bg-white shadow-sm">
+                            <div class="card pilar-card h-100 p-4 border rounded-4 shadow-sm">
                                 <i class="bi bi-sliders fs-2 text-marron mb-3"></i>
                                 <h3 class="h5 fw-bold text-dark">Mezclador de Sonido Ambiente</h3>
                                 <p class="text-secondary small-text m-0">
@@ -297,8 +329,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* CONFIGURACIONES GENERALES DEL COMPONENTE */
-.cn-caracteristicas-page {
+body.cn-body-light .cn-caracteristicas-page {
   --brown:   #4c2521;
   --roast:   #69342e;
   --sienna:  #c17f59;
@@ -308,16 +339,68 @@ onMounted(async () => {
   --white:   #ffffff;
   --ink:     #1c0f0e;
   --muted:   #7a5e58;
-  --r:       14px;
-  --r2:      18px;
   --sh:      0 12px 40px -14px rgba(76,37,33,.28);
   --sh2:     0 4px 18px -6px rgba(76,37,33,.18);
-  --tr:      all 0.3s ease;
+  
+  /* theme specific */
+  --cn-navbar-bg: rgba(255, 255, 255, 0.85);
+  --cn-navbar-scrolled-bg: rgba(255, 255, 255, 0.95);
+  --cn-border-soft: rgba(76, 37, 33, 0.08);
+  --cn-btn-ghost-border: rgba(76, 37, 33, 0.25);
+  --cn-btn-ghost-hover-bg: rgba(193, 127, 89, 0.12);
+  --cn-border-solid: #f0ece9;
+  --cn-card-bg: #ffffff;
+  --cn-card-icon-bg: rgba(193, 127, 89, 0.14);
+  --cn-glass-card-bg: rgba(255, 255, 255, 0.82);
+  --cn-glass-card-border: rgba(255, 255, 255, 0.6);
+  --cn-smoke-color: rgba(105, 52, 46, 0.035);
+}
 
+body.cn-body-dark .cn-caracteristicas-page {
+  --brown:   #a55e57;      /* Bordo terracota para hover de botones */
+  --roast:   #e38e76;      /* Terracota para acentos e iconos */
+  --sienna:  #f4be95;      /* Durazno para links y destaques secundarios */
+  --sand:    #7b413f;      /* Bordes secundarios */
+  --cream:   #4c2521;      /* Fondo de tarjetas */
+  --light:   #4c2521;      /* Fondo de la seccion */
+  --white:   #612c2d;      /* FONDO PRINCIPAL: Bordo Oscuro */
+  --ink:     #ffffff;      /* TEXTOS PRINCIPALES Y TITULOS: Blanco Puro (Alto contraste!) */
+  --muted:   #fcd5b8;      /* TEXTOS SECUNDARIOS: Crema durazno suave (Muy legible!) */
+  --sh:      0 12px 40px -14px rgba(0,0,0,.6);
+  --sh2:     0 4px 18px -6px rgba(0,0,0,.4);
+  
+  /* theme specific */
+  --cn-navbar-bg: rgba(76, 37, 33, 0.85);
+  --cn-navbar-scrolled-bg: rgba(97, 44, 45, 0.95);
+  --cn-border-soft: rgba(244, 190, 149, 0.15);
+  --cn-btn-ghost-border: rgba(244, 190, 149, 0.35);
+  --cn-btn-ghost-hover-bg: rgba(244, 190, 149, 0.15);
+  --cn-border-solid: #7b413f;
+  --cn-card-bg: #4c2521;
+  --cn-card-icon-bg: rgba(244, 190, 149, 0.15);
+  --cn-glass-card-bg: rgba(76, 37, 33, 0.82);
+  --cn-glass-card-border: rgba(244, 190, 149, 0.25);
+  --cn-smoke-color: rgba(244, 190, 149, 0.04);
+}
+
+.cn-caracteristicas-page {
+  --r:       14px;
+  --r2:      18px;
+  --tr:      all 0.3s ease;
+  
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  background: var(--light);
+  background: var(--white);
   color: var(--ink);
   min-height: 100vh;
+}
+
+/* OVERRIDE BOOTSTRAP TEXT COLOR UTILITIES TO ENSURE WHITE TEXT ON DARK BURGUNDY */
+.cn-caracteristicas-page .text-dark {
+  color: var(--ink) !important;
+}
+.cn-caracteristicas-page .text-secondary,
+.cn-caracteristicas-page .text-muted {
+  color: var(--muted) !important;
 }
 
 .cn-caracteristicas-page h1,
@@ -335,7 +418,7 @@ onMounted(async () => {
 /* ===== GLOBAL NAVBAR DE WELCOME ===== */
 .cn-caracteristicas-page .cn-navbar {
   padding: 0.2rem 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--cn-navbar-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
@@ -347,8 +430,8 @@ onMounted(async () => {
 }
 .cn-caracteristicas-page .cn-navbar.scrolled {
   padding: 0.1rem 0;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(76, 37, 33, 0.08);
+  background: var(--cn-navbar-scrolled-bg);
+  border-bottom: 1px solid var(--cn-border-soft);
   box-shadow: 0 8px 30px -18px rgba(76, 37, 33, 0.4);
 }
 .cn-caracteristicas-page .cn-brand {
@@ -399,14 +482,14 @@ onMounted(async () => {
 }
 .cn-caracteristicas-page .cn-btn-ghost {
   background: transparent !important;
-  color: var(--brown) !important;
+  color: var(--roast) !important;
   font-weight: 600;
   border-radius: 50px;
-  border: 1px solid var(--brown) !important;
+  border: 1px solid var(--cn-btn-ghost-border) !important;
   text-decoration: none;
 }
 .cn-caracteristicas-page .cn-btn-ghost:hover {
-  background: rgba(76, 37, 33, 0.05) !important;
+  background: var(--cn-btn-ghost-hover-bg) !important;
   transform: translateY(-2px);
 }
 .cn-caracteristicas-page .navbar-toggler { border: none; font-size: 1.6rem; color: var(--brown) !important; }
@@ -419,7 +502,7 @@ onMounted(async () => {
 .features-container {
     background-color: var(--light);
     min-height: 100vh;
-    padding-top: 9rem !important; /* Aumentado de 110px a 9rem (144px) para evitar superposición con el navbar fijo */
+    padding-top: 9rem !important;
 }
 
 .max-width-layout { max-width: 1140px; }
@@ -435,7 +518,7 @@ onMounted(async () => {
     position: absolute;
     top: 0; left: 0;
     width: 200%; height: 100%;
-    background: radial-gradient(circle, rgba(105, 52, 46, 0.035) 0%, rgba(248, 249, 250, 0) 65%);
+    background: radial-gradient(circle, var(--cn-smoke-color) 0%, rgba(248, 249, 250, 0) 65%);
     transform: translateX(0);
     pointer-events: none;
 }
@@ -451,100 +534,101 @@ onMounted(async () => {
 
 /* CARDS CON GLASSMORPHISM (FLOATING EFFECT OVER SMOKE) */
 .glass-card {
-    background: rgba(255, 255, 255, 0.82);
+    background: var(--cn-glass-card-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid var(--cn-glass-card-border) !important;
     box-shadow: 0 20px 45px rgba(0, 0, 0, 0.03);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .glass-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 25px 50px rgba(105, 52, 46, 0.06);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.06);
 }
 
 /* BADGES Y BOTONES CON PALETA DE COLORES OFICIAL */
 .badge-premium {
-    background-color: rgba(105, 52, 46, 0.09);
-    color: #69342e;
+    background-color: var(--cn-card-icon-bg);
+    color: var(--roast);
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     font-weight: 700;
 }
 
 .btn-premium {
-    background-color: #69342e;
+    background-color: var(--roast);
     color: #ffffff !important;
     border: none;
     font-size: 0.9rem;
     transition: background-color 0.2s, transform 0.2s;
 }
 .btn-premium:hover {
-    background-color: #4c2521;
+    background-color: var(--brown);
     color: #ffffff !important;
     transform: translateY(-1px);
 }
 
 .btn-outline-premium {
-    border: 2px solid #69342e;
-    color: #69342e;
+    border: 2px solid var(--roast);
+    color: var(--roast);
     background: transparent;
     font-size: 0.9rem;
     transition: all 0.2s;
 }
 .btn-outline-premium:hover {
-    background-color: #69342e;
+    background-color: var(--roast);
     color: #ffffff;
 }
 
 /* ELEMENTOS DE DISEÑO ACCENTUADOS */
 .icon-box-accent {
     width: 48px; height: 48px;
-    background-color: #69342e;
+    background-color: var(--roast);
 }
 
-.text-marron { color: #69342e !important; }
+.text-marron { color: var(--roast) !important; }
 
 /* PILARES CARDS GRID */
 .pilar-card {
+    background-color: var(--cn-card-bg);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    border-color: #e9ecef !important;
+    border-color: var(--cn-border-solid) !important;
 }
 .pilar-card:hover {
     transform: translateY(-6px);
-    border-color: rgba(105, 52, 46, 0.2) !important;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.05) !important;
+    border-color: rgba(244, 190, 149, 0.35) !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
 }
 
 /* SECCIÓN LÍMITES */
 .limits-section {
-    background-color: rgba(255, 255, 255, 0.5);
-    border-color: #dee2e6 !important;
+    background-color: var(--cn-glass-card-bg);
+    border-color: var(--cn-border-solid) !important;
 }
 .small-label { font-size: 0.68rem; letter-spacing: 0.06em; font-weight: 700; }
 
 /* GRÁFICO INTERACTIVO ABSTRACTO HERO (LADO DERECHO) */
 .hero-interactive-graphic {
     width: 260px; height: 260px;
-    background-color: #ffffff;
-    border-color: #f1f3f5 !important;
+    background-color: var(--cream);
+    border-color: var(--cn-border-solid) !important;
 }
 .inner-circle {
     width: 130px; height: 130px;
-    background-color: #faf8f7;
-    border-color: rgba(105, 52, 46, 0.06) !important;
+    background-color: var(--light);
+    border-color: var(--cn-border-soft) !important;
 }
 
 /* PUNTOS EN ÓRBITA ABSTRACTA */
 .orbiting-dot {
     position: absolute;
     width: 40px; height: 40px;
-    background: #ffffff;
-    border: 1px solid #e9ecef;
+    background: var(--cn-card-bg);
+    border: 1px solid var(--cn-border-solid);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    color: #c17f59;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    color: var(--sienna);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 .dot-1 { top: 10px; left: 10px; animation: orbitCW 20s linear infinite; }
 .dot-2 { bottom: 20px; right: 10px; animation: orbitCW 15s linear infinite; }
@@ -557,16 +641,30 @@ onMounted(async () => {
     50% { transform: translateY(-8px); }
 }
 
-/* FOOTER */
-.cn-footer {
-  background: #1c0f0e;
-  padding: 2.5rem 0;
-  color: rgba(255,255,255,.55);
-  text-align: center;
-  font-size: .8rem;
+/* ===== Theme Toggle Style & Dark mode tweaks ===== */
+.cn-theme-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.35rem;
+  padding: 6px;
+  color: var(--roast);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
 }
-.cn-footer strong {
-  color: var(--sienna);
+.cn-theme-toggle-btn:hover {
+  transform: scale(1.1);
+  background: var(--cn-btn-ghost-hover-bg);
+}
+
+body.cn-body-dark .cn-navbar-logo,
+body.cn-body-dark .cn-footer-logo {
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.8)) brightness(1.25);
 }
 </style>
 

@@ -116,7 +116,7 @@
                   </button>
                   <div v-if="isSettingsDropdownOpen" class="settings-dropdown">
                       <Link :href="route('perfil-usuario')" class="dropdown-item" @click="closeDropdown">Mis Datos</Link>
-                      <Link :href="route('logout')" method="post" as="button" class="dropdown-item" type="button" @click="closeDropdown">Cerrar Sesión</Link>
+                      <button @click="handleLogout" class="dropdown-item" type="button">Cerrar Sesión</button>
                   </div>
               </div>
           </div>
@@ -160,6 +160,25 @@ const toggleDropdown = () => {
 
 const closeDropdown = () => {
   isSettingsDropdownOpen.value = false;
+};
+
+const handleLogout = () => {
+  closeDropdown();
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = route('logout');
+  
+  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (token) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = '_token';
+    input.value = token;
+    form.appendChild(input);
+  }
+  
+  document.body.appendChild(form);
+  form.submit();
 };
 
 const handleClickOutside = (event) => {

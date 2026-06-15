@@ -1,10 +1,30 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 let revealObserver = null;
+const isDarkMode = ref(false);
+
+const toggleTheme = () => {
+    isDarkMode.value = !isDarkMode.value;
+    if (isDarkMode.value) {
+        document.body.classList.remove('cn-body-light');
+        document.body.classList.add('cn-body-dark');
+        localStorage.setItem('cn-theme', 'dark');
+    } else {
+        document.body.classList.remove('cn-body-dark');
+        document.body.classList.add('cn-body-light');
+        localStorage.setItem('cn-theme', 'light');
+    }
+};
 
 onMounted(async () => {
+    isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
+    if (isDarkMode.value) {
+        document.body.classList.add('cn-body-dark');
+    } else {
+        document.body.classList.add('cn-body-light');
+    }
     // Dynamic Bootstrap bundle loader if not already present
     const loadScript = (src) => {
         return new Promise((resolve, reject) => {
@@ -114,6 +134,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (revealObserver) revealObserver.disconnect();
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.remove('cn-body-dark');
 });
 </script>
 
@@ -145,12 +167,18 @@ onUnmounted(() => {
                         <li class="nav-item"><Link :href="route('caracteristicas') + '#top'" class="nav-link cn-link">Características</Link></li>
                         <li class="nav-item"><Link :href="route('quienes-somos') + '#top'" class="nav-link cn-link">Quiénes Somos</Link></li>
                     </ul>
-                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2">
+                    <div class="d-flex align-items-center gap-2 me-lg-3 mb-2 mb-lg-0 justify-content-center">
+                        <button @click="toggleTheme" class="cn-theme-toggle-btn" aria-label="Cambiar tema">
+                            <i v-if="isDarkMode" class="bi bi-sun-fill text-warning"></i>
+                            <i v-else class="bi bi-moon-fill"></i>
+                        </button>
+                    </div>
+                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2 justify-content-center">
                         <Link :href="route('dashboard')" class="btn cn-btn-primary px-4">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </Link>
                     </div>
-                    <div v-else class="d-flex gap-2 align-items-center">
+                    <div v-else class="d-flex gap-2 align-items-center justify-content-center">
                         <Link :href="route('login')" class="btn cn-btn-ghost px-3">
                             Iniciar Sesión
                         </Link>
@@ -454,7 +482,7 @@ onUnmounted(() => {
 
 <style>
 /* Scoped styles logic using the .cn-uso-page parent selector to prevent leaks */
-.cn-uso-page {
+body.cn-body-light .cn-uso-page {
   --brown:   #4c2521;
   --roast:   #69342e;
   --sienna:  #c17f59;
@@ -470,8 +498,53 @@ onUnmounted(() => {
   --sh2:     0 4px 18px -6px rgba(76,37,33,.18);
   --tr:      all 0.3s ease;
   
+  /* Theme toggle light custom variables */
+  --cn-navbar-bg: rgba(255, 255, 255, 0.85);
+  --cn-navbar-scrolled-bg: rgba(255, 255, 255, 0.95);
+  --cn-border-soft: rgba(76, 37, 33, 0.08);
+  --cn-btn-ghost-border: rgba(76, 37, 33, 0.25);
+  --cn-btn-ghost-hover-bg: rgba(193, 127, 89, 0.12);
+  --cn-border-solid: #f0ece9;
+  --cn-card-icon-bg: rgba(193, 127, 89, 0.14);
+  --cn-socials-bg: rgba(76, 37, 33, 0.06);
+  --cn-pomo-bg: linear-gradient(135deg,#4c2521 0%,#69342e 60%,#8b4a3a 100%);
+  --cn-cta-bg: var(--brown);
+  --cn-card-bg: #ffffff;
+}
+
+body.cn-body-dark .cn-uso-page {
+  --brown:   #f4be95;      /* durazno/crema para titulos y acentos */
+  --roast:   #e38e76;      /* terracota para botones y acentos de scrollspy */
+  --sienna:  #e38e76;      /* rosa suave */
+  --sand:    #7b413f;      /* bordo intermedio para bordes y fondos secundarios */
+  --cream:   #4c2521;      /* bordo mas oscuro para fondo de contenedores */
+  --light:   #4c2521;      /* bordo mas oscuro para fondo de secciones */
+  --white:   #612c2d;      /* FONDO PRINCIPAL: Bordo Oscuro */
+  --ink:     #fffcfb;      /* Texto principal (blanco calido) */
+  --muted:   #f4be95;      /* Texto secundario (durazno) */
+  --r:       14px;
+  --r2:      18px;
+  --sh:      0 12px 40px -14px rgba(0,0,0,.6);
+  --sh2:     0 4px 18px -6px rgba(0,0,0,.4);
+  --tr:      all 0.3s ease;
+  
+  /* Theme toggle dark custom variables */
+  --cn-navbar-bg: rgba(76, 37, 33, 0.85);
+  --cn-navbar-scrolled-bg: rgba(97, 44, 45, 0.95);
+  --cn-border-soft: rgba(244, 190, 149, 0.15);
+  --cn-btn-ghost-border: rgba(244, 190, 149, 0.3);
+  --cn-btn-ghost-hover-bg: rgba(244, 190, 149, 0.15);
+  --cn-border-solid: #7b413f;
+  --cn-card-icon-bg: rgba(244, 190, 149, 0.15);
+  --cn-socials-bg: rgba(244, 190, 149, 0.12);
+  --cn-pomo-bg: linear-gradient(135deg,#4c2521 0%,#321415 60%,#612c2d 100%);
+  --cn-cta-bg: #4c2521;
+  --cn-card-bg: #4c2521;
+}
+
+.cn-uso-page {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-  background: var(--light);
+  background: var(--white);
   color: var(--ink);
   min-height: 100vh;
 }
@@ -492,7 +565,7 @@ onUnmounted(() => {
 /* ===== GLOBAL NAVBAR DE WELCOME EN MODO USO ===== */
 .cn-uso-page .cn-navbar {
   padding: 0.2rem 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--cn-navbar-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
@@ -504,8 +577,8 @@ onUnmounted(() => {
 }
 .cn-uso-page .cn-navbar.scrolled {
   padding: 0.1rem 0;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(76, 37, 33, 0.08);
+  background: var(--cn-navbar-scrolled-bg);
+  border-bottom: 1px solid var(--cn-border-soft);
   box-shadow: 0 8px 30px -18px rgba(76, 37, 33, 0.4);
 }
 .cn-uso-page .cn-brand {
@@ -561,7 +634,7 @@ onUnmounted(() => {
   text-decoration: none;
 }
 .cn-uso-page .cn-btn-ghost:hover {
-  background: rgba(76, 37, 33, 0.05) !important;
+  background: var(--cn-btn-ghost-hover-bg) !important;
   transform: translateY(-2px);
 }
 .cn-uso-page .navbar-toggler { border: none; font-size: 1.6rem; color: var(--brown) !important; }
@@ -624,7 +697,7 @@ onUnmounted(() => {
   transition: var(--tr) !important;
 }
 .cn-uso-page .btn-nav-ghost:hover {
-  background: rgba(76, 37, 33, 0.05);
+  background: var(--cn-btn-ghost-hover-bg);
   transform: translateY(-2px);
 }
 .cn-uso-page .navbar-toggler {
@@ -698,8 +771,8 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  background: #fff;
-  border: 1px solid rgba(76,37,33,.12);
+  background: var(--cn-card-bg);
+  border: 1px solid var(--cn-border-soft);
   color: var(--brown);
   font-weight: 600;
   font-size: .78rem;
@@ -740,7 +813,7 @@ onUnmounted(() => {
 .cn-uso-page .hs-sep {
   width: 30px;
   height: 1px;
-  background: rgba(76,37,33,.18);
+  background: var(--cn-border-soft);
   margin: 0 .2rem;
 }
 
@@ -800,11 +873,11 @@ onUnmounted(() => {
 }
 .cn-uso-page .spy-nav li a:hover {
   color: var(--brown);
-  background: rgba(193,127,89,.1);
+  background: var(--cn-btn-ghost-hover-bg);
 }
 .cn-uso-page .spy-nav li a.active {
   color: var(--brown);
-  background: rgba(193,127,89,.12);
+  background: var(--cn-btn-ghost-hover-bg);
   border-left-color: var(--sienna);
   font-weight: 700;
 }
@@ -819,7 +892,7 @@ onUnmounted(() => {
 /* SECTION SHARED */
 .cn-uso-page .step-section {
   padding: 3.5rem 0;
-  border-bottom: 1px solid rgba(76,37,33,.07);
+  border-bottom: 1px solid var(--cn-border-soft);
   scroll-margin-top: 110px;
 }
 .cn-uso-page .step-section:last-child {
@@ -898,10 +971,10 @@ onUnmounted(() => {
 
 /* Cards */
 .cn-uso-page .cn-card {
-  background: #fff;
+  background: var(--cn-card-bg);
   border-radius: var(--r2);
   padding: 1.8rem 1.6rem;
-  border: 1px solid rgba(76,37,33,.07);
+  border: 1px solid var(--cn-border-solid);
   box-shadow: var(--sh2);
   transition: var(--tr);
   height: 100%;
@@ -915,7 +988,7 @@ onUnmounted(() => {
   width: 46px;
   height: 46px;
   border-radius: 12px;
-  background: rgba(193,127,89,.14);
+  background: var(--cn-card-icon-bg);
   color: var(--brown);
   display: grid;
   place-items: center;
@@ -944,7 +1017,7 @@ onUnmounted(() => {
 
 /* PASO 3 — Pomodoro */
 .cn-uso-page #paso3 {
-  background: linear-gradient(135deg,var(--brown) 0%,var(--roast) 60%,#8b4a3a 100%) !important;
+  background: var(--cn-pomo-bg) !important;
   position: relative;
   overflow: hidden;
 }
@@ -1104,9 +1177,9 @@ onUnmounted(() => {
   font-weight: 700;
   padding: .5rem 1.1rem;
   border-radius: 50px;
-  border: 1.5px solid rgba(76,37,33,.15);
+  border: 1.5px solid var(--cn-border-solid);
   color: var(--muted);
-  background: #fff;
+  background: var(--cn-card-bg);
   cursor: pointer;
   transition: var(--tr);
   display: flex;
@@ -1138,7 +1211,7 @@ onUnmounted(() => {
 
 /* CTA final */
 .cn-uso-page .final-cta {
-  background: var(--brown);
+  background: var(--cn-cta-bg);
   background-image: radial-gradient(700px 400px at 90% -10%,rgba(193,127,89,.28),transparent 60%);
   padding: 5rem 0;
   text-align: center;
@@ -1267,6 +1340,36 @@ onUnmounted(() => {
   .cn-uso-page .pomo-config {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== Theme Toggle Style & Dark mode tweaks ===== */
+.cn-theme-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.35rem;
+  padding: 6px;
+  color: var(--brown);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+}
+.cn-theme-toggle-btn:hover {
+  transform: scale(1.1);
+  background: var(--cn-btn-ghost-hover-bg);
+}
+
+body.cn-body-dark .cn-navbar-logo,
+body.cn-body-dark .cn-footer-logo {
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.8)) brightness(1.25);
+}
+
+body.cn-body-dark .accordion-button::after {
+  filter: invert(1) brightness(2);
 }
 </style>
 

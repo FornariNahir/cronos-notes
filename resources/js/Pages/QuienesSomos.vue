@@ -2,6 +2,21 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 
+const isDarkMode = ref(false);
+
+const toggleTheme = () => {
+    isDarkMode.value = !isDarkMode.value;
+    if (isDarkMode.value) {
+        document.body.classList.remove('cn-body-light');
+        document.body.classList.add('cn-body-dark');
+        localStorage.setItem('cn-theme', 'dark');
+    } else {
+        document.body.classList.remove('cn-body-dark');
+        document.body.classList.add('cn-body-light');
+        localStorage.setItem('cn-theme', 'light');
+    }
+};
+
 // Tabs switching state
 const activeTab = ref('hardware');
 const setActiveTab = (tab) => {
@@ -9,6 +24,13 @@ const setActiveTab = (tab) => {
 };
 
 onMounted(async () => {
+    isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
+    if (isDarkMode.value) {
+        document.body.classList.add('cn-body-dark');
+    } else {
+        document.body.classList.add('cn-body-light');
+    }
+
     // Dynamic Bootstrap bundle loader if not already present
     const loadScript = (src) => {
         return new Promise((resolve, reject) => {
@@ -87,6 +109,8 @@ onMounted(async () => {
         window.removeEventListener('scroll', onScroll);
         window.removeEventListener('scroll', onScrollParallax);
         observer.disconnect();
+        document.body.classList.remove('cn-body-light');
+        document.body.classList.remove('cn-body-dark');
     });
 });
 </script>
@@ -119,12 +143,18 @@ onMounted(async () => {
                         <li class="nav-item"><Link :href="route('caracteristicas') + '#top'" class="nav-link cn-link">Características</Link></li>
                         <li class="nav-item"><Link :href="route('quienes-somos') + '#top'" class="nav-link cn-link active-link">Quiénes Somos</Link></li>
                     </ul>
-                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2">
+                    <div class="d-flex align-items-center gap-2 me-lg-3 mb-2 mb-lg-0 justify-content-center">
+                        <button @click="toggleTheme" class="cn-theme-toggle-btn" aria-label="Cambiar tema">
+                            <i v-if="isDarkMode" class="bi bi-sun-fill text-warning"></i>
+                            <i v-else class="bi bi-moon-fill"></i>
+                        </button>
+                    </div>
+                    <div v-if="$page.props.auth && $page.props.auth.user" class="d-flex gap-2 justify-content-center">
                         <Link :href="route('dashboard')" class="btn cn-btn-primary px-4">
                             <i class="bi bi-speedometer2 me-1"></i> Dashboard
                         </Link>
                     </div>
-                    <div v-else class="d-flex gap-2 align-items-center">
+                    <div v-else class="d-flex gap-2 align-items-center justify-content-center">
                         <Link :href="route('login')" class="btn cn-btn-ghost px-3">
                             Iniciar Sesión
                         </Link>
@@ -454,10 +484,79 @@ onMounted(async () => {
   --shadow-strong: 0 22px 60px rgba(76, 37, 33, 0.22);
   --radius: 18px;
 
+  /* Theme toggle custom variables */
+  --cn-navbar-bg: rgba(255, 255, 255, 0.85);
+  --cn-navbar-scrolled-bg: rgba(255, 255, 255, 0.95);
+  --cn-navbar-border: rgba(76, 37, 33, 0.08);
+  --cn-btn-ghost-hover-bg: rgba(105, 52, 46, 0.05);
+
+  --cn-team-card-bg: rgba(255, 255, 255, 0.55);
+  --cn-team-card-border: rgba(255, 255, 255, 0.7);
+  --cn-tab-btn-bg: rgba(255, 255, 255, 0.6);
+  --cn-tab-btn-border: rgba(105, 52, 46, 0.2);
+  --cn-tab-active-bg: linear-gradient(135deg, var(--bordo), var(--bordo-deep));
+  --cn-tab-active-text: #ffffff;
+
+  --cn-info-card-bg: rgba(255, 255, 255, 0.6);
+  --cn-info-card-border: rgba(255, 255, 255, 0.7);
+  --cn-req-block-bg: rgba(255, 255, 255, 0.6);
+  --cn-req-block-border: rgba(255, 255, 255, 0.7);
+  --cn-req-head-bg: linear-gradient(135deg, var(--bordo), var(--bordo-deep));
+  --cn-req-head-text: #ffffff;
+  --cn-req-list-border: rgba(105, 52, 46, 0.15);
+  --cn-socials-bg: rgba(105, 52, 46, 0.08);
+
+  --cn-smoke-color-1: var(--tierra);
+  --cn-smoke-color-2: var(--bordo);
+  --cn-smoke-color-3: var(--tierra-soft);
+  --cn-smoke-bg-gradient-1: #fbf6f3;
+  --cn-smoke-bg-gradient-2: #f6efe9;
+
   font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   color: var(--text);
   background: var(--bg-base);
   min-height: 100vh;
+}
+
+body.cn-body-dark .cn-quienes-page {
+  --bg-base: #612c2d;           /* Fondo base: bordo oscuro */
+  --bg-soft: #4c2521;           /* Fondo secundario: bordo mas oscuro */
+  --bordo: #e38e76;             /* Terracota para acentos e iconos */
+  --bordo-deep: #ffffff;        /* Blanco puro en dark mode para titulos */
+  --tierra: #f4be95;            /* Durazno para acentos secundarios */
+  --tierra-soft: #7b413f;       /* Bordo intermedio */
+  --text: #ffffff;              /* Textos principales a Blanco */
+  --text-soft: #fcd5b8;         /* Textos secundarios a Crema durazno suave */
+  --white: #612c2d;             /* Fondo base */
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-strong: 0 22px 60px rgba(0, 0, 0, 0.6);
+  
+  --cn-navbar-bg: rgba(76, 37, 33, 0.85);
+  --cn-navbar-scrolled-bg: rgba(97, 44, 45, 0.95);
+  --cn-navbar-border: rgba(244, 190, 149, 0.15);
+  --cn-btn-ghost-hover-bg: rgba(244, 190, 149, 0.15);
+  
+  --cn-team-card-bg: rgba(76, 37, 33, 0.6);
+  --cn-team-card-border: rgba(244, 190, 149, 0.25);
+  --cn-tab-btn-bg: rgba(76, 37, 33, 0.6);
+  --cn-tab-btn-border: rgba(244, 190, 149, 0.25);
+  --cn-tab-active-bg: linear-gradient(135deg, #e38e76, #a55e57);
+  --cn-tab-active-text: #4c2521;
+
+  --cn-info-card-bg: rgba(76, 37, 33, 0.6);
+  --cn-info-card-border: rgba(244, 190, 149, 0.25);
+  --cn-req-block-bg: rgba(76, 37, 33, 0.6);
+  --cn-req-block-border: rgba(244, 190, 149, 0.25);
+  --cn-req-head-bg: linear-gradient(135deg, #e38e76, #a55e57);
+  --cn-req-head-text: #4c2521;
+  --cn-req-list-border: rgba(244, 190, 149, 0.25);
+  --cn-socials-bg: rgba(244, 190, 149, 0.12);
+
+  --cn-smoke-color-1: #7b413f;
+  --cn-smoke-color-2: #4c2521;
+  --cn-smoke-color-3: #8a4a3f;
+  --cn-smoke-bg-gradient-1: #502223;
+  --cn-smoke-bg-gradient-2: #5c2829;
 }
 
 .cn-quienes-page h1,
@@ -475,7 +574,7 @@ onMounted(async () => {
 /* ===== GLOBAL NAVBAR ===== */
 .cn-quienes-page .cn-navbar {
   padding: 0.2rem 0;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--cn-navbar-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
@@ -487,9 +586,9 @@ onMounted(async () => {
 }
 .cn-quienes-page .cn-navbar.scrolled {
   padding: 0.1rem 0;
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(76, 37, 33, 0.08);
-  box-shadow: 0 8px 30px -18px rgba(76, 37, 33, 0.4);
+  background: var(--cn-navbar-scrolled-bg);
+  border-bottom: 1px solid var(--cn-navbar-border);
+  box-shadow: var(--shadow);
 }
 .cn-quienes-page .cn-brand {
   display: flex;
@@ -502,6 +601,7 @@ onMounted(async () => {
   height: 80px;
   width: auto;
   object-fit: contain;
+  transition: filter 0.3s ease;
 }
 .cn-quienes-page .cn-link {
   position: relative;
@@ -524,12 +624,15 @@ onMounted(async () => {
 
 .cn-quienes-page .cn-btn-primary {
   background: var(--bordo) !important;
-  color: #fff !important;
+  color: var(--bg-base) !important; /* light text in light mode, dark text in dark mode */
   font-weight: 600;
   border-radius: 50px;
   border: 1px solid var(--bordo) !important;
   box-shadow: var(--shadow);
   text-decoration: none;
+}
+body.cn-body-light .cn-quienes-page .cn-btn-primary {
+  color: #fff !important;
 }
 .cn-quienes-page .cn-btn-primary:hover {
   background: var(--bordo-deep) !important;
@@ -546,7 +649,7 @@ onMounted(async () => {
   text-decoration: none;
 }
 .cn-quienes-page .cn-btn-ghost:hover {
-  background: rgba(105, 52, 46, 0.05) !important;
+  background: var(--cn-btn-ghost-hover-bg) !important;
   transform: translateY(-2px);
 }
 .cn-quienes-page .navbar-toggler { border: none; font-size: 1.6rem; color: var(--bordo) !important; }
@@ -561,8 +664,8 @@ onMounted(async () => {
   z-index: -1;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 20%, #fbf6f3 0%, transparent 55%),
-    radial-gradient(circle at 80% 80%, #f6efe9 0%, transparent 55%),
+    radial-gradient(circle at 20% 20%, var(--cn-smoke-bg-gradient-1) 0%, transparent 55%),
+    radial-gradient(circle at 80% 80%, var(--cn-smoke-bg-gradient-2) 0%, transparent 55%),
     var(--bg-base);
 }
 
@@ -576,14 +679,14 @@ onMounted(async () => {
 
 .cn-quienes-page .smoke-1 {
   width: 480px; height: 480px;
-  background: var(--tierra);
+  background: var(--cn-smoke-color-1);
   top: -120px; left: -80px;
   animation: drift1 22s ease-in-out infinite;
 }
 
 .cn-quienes-page .smoke-2 {
   width: 560px; height: 560px;
-  background: var(--bordo);
+  background: var(--cn-smoke-color-2);
   bottom: -160px; right: -120px;
   opacity: 0.22;
   animation: drift2 28s ease-in-out infinite;
@@ -591,7 +694,7 @@ onMounted(async () => {
 
 .cn-quienes-page .smoke-3 {
   width: 380px; height: 380px;
-  background: var(--tierra-soft);
+  background: var(--cn-smoke-color-3);
   top: 45%; left: 55%;
   animation: drift3 25s ease-in-out infinite;
 }
@@ -625,9 +728,9 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(105, 52, 46, 0.08);
+  background: var(--cn-socials-bg);
   color: var(--bordo);
-  border: 1px solid rgba(105, 52, 46, 0.2);
+  border: 1px solid var(--cn-tab-btn-border);
   padding: 8px 20px;
   border-radius: 999px;
   font-size: 0.85rem;
@@ -655,10 +758,10 @@ onMounted(async () => {
 /* ===================== SECCIONES ===================== */
 .cn-quienes-page .qs-section { padding: 80px 0; }
 .cn-quienes-page .qs-section-alt {
-  background: rgba(248, 249, 250, 0.7);
+  background: var(--bg-soft);
   backdrop-filter: blur(4px);
-  border-top: 1px solid rgba(105, 52, 46, 0.06);
-  border-bottom: 1px solid rgba(105, 52, 46, 0.06);
+  border-top: 1px solid var(--cn-navbar-border);
+  border-bottom: 1px solid var(--cn-navbar-border);
 }
 
 .cn-quienes-page .section-head { text-align: center; margin-bottom: 54px; }
@@ -689,10 +792,10 @@ onMounted(async () => {
 
 .cn-quienes-page .team-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--cn-team-card-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--cn-team-card-border);
   border-radius: var(--radius);
   padding: 30px 24px 26px;
   text-align: center;
@@ -772,7 +875,7 @@ onMounted(async () => {
   width: 38px; height: 38px;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: rgba(105, 52, 46, 0.08);
+  background: var(--cn-socials-bg);
   color: var(--bordo);
   font-size: 1.05rem;
   text-decoration: none;
@@ -780,7 +883,7 @@ onMounted(async () => {
 }
 .cn-quienes-page .socials a:hover {
   background: var(--bordo);
-  color: var(--white);
+  color: #ffffff !important;
   transform: translateY(-3px);
 }
 
@@ -796,8 +899,8 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(105, 52, 46, 0.2);
-  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--cn-tab-btn-border);
+  background: var(--cn-tab-btn-bg);
   color: var(--bordo);
   font-weight: 600;
   font-size: 0.92rem;
@@ -808,10 +911,10 @@ onMounted(async () => {
 }
 .cn-quienes-page .tab-btn:hover { border-color: var(--tierra); transform: translateY(-2px); }
 .cn-quienes-page .tab-btn.active {
-  background: linear-gradient(135deg, var(--bordo), var(--bordo-deep));
-  color: var(--white);
+  background: var(--cn-tab-active-bg);
+  color: var(--cn-tab-active-text) !important;
   border-color: transparent;
-  box-shadow: 0 8px 20px rgba(105, 52, 46, 0.3);
+  box-shadow: var(--shadow);
 }
 
 .cn-quienes-page .tab-panel { display: none; animation: fadeUp 0.5s ease; }
@@ -827,9 +930,9 @@ onMounted(async () => {
   gap: 22px;
 }
 .cn-quienes-page .info-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--cn-info-card-bg);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--cn-info-card-border);
   border-radius: var(--radius);
   padding: 30px 26px;
   box-shadow: var(--shadow);
@@ -852,9 +955,9 @@ onMounted(async () => {
   gap: 28px;
 }
 .cn-quienes-page .req-block {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--cn-req-block-bg);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--cn-req-block-border);
   border-radius: var(--radius);
   padding: 32px 30px;
   box-shadow: var(--shadow);
@@ -865,8 +968,8 @@ onMounted(async () => {
   gap: 10px;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--white);
-  background: linear-gradient(135deg, var(--bordo), var(--bordo-deep));
+  color: var(--cn-req-head-text);
+  background: var(--cn-req-head-bg);
   padding: 14px 20px;
   border-radius: 12px;
   margin-bottom: 22px;
@@ -877,7 +980,7 @@ onMounted(async () => {
   align-items: flex-start;
   gap: 14px;
   padding: 14px 0;
-  border-bottom: 1px dashed rgba(105, 52, 46, 0.15);
+  border-bottom: 1px dashed var(--cn-req-list-border);
 }
 .cn-quienes-page .req-list li:last-child { border-bottom: none; }
 .cn-quienes-page .req-list li i {
@@ -892,10 +995,13 @@ onMounted(async () => {
 /* CTA BUTTONS */
 .cn-quienes-page .btn-premium {
     background-color: var(--bordo);
-    color: #ffffff !important;
+    color: var(--bg-base) !important;
     border: none;
     font-size: 0.9rem;
     transition: background-color 0.2s, transform 0.2s;
+}
+body.cn-body-light .cn-quienes-page .btn-premium {
+    color: #ffffff !important;
 }
 .cn-quienes-page .btn-premium:hover {
     background-color: var(--bordo-deep);
@@ -912,7 +1018,36 @@ onMounted(async () => {
 }
 .cn-quienes-page .btn-outline-premium:hover {
     background-color: var(--bordo);
+    color: var(--bg-base) !important;
+}
+body.cn-body-light .cn-quienes-page .btn-outline-premium:hover {
     color: #ffffff !important;
+}
+
+/* ===== Theme Toggle Style & Dark mode tweaks ===== */
+.cn-theme-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.35rem;
+  padding: 6px;
+  color: var(--bordo);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, color 0.2s ease;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+}
+.cn-theme-toggle-btn:hover {
+  transform: scale(1.1);
+  background: var(--cn-btn-ghost-hover-bg);
+}
+
+body.cn-body-dark .cn-navbar-logo,
+body.cn-body-dark .cn-footer-logo {
+  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.8)) brightness(1.25);
 }
 
 /* ===================== FOOTER ===================== */

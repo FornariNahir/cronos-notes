@@ -170,23 +170,32 @@ class PerfilCompartidoController extends Controller
     }
 
     /**
-     * Revoca el acceso de un usuario al perfil compartido.
+     * Revoca el acceso de un usuario al perfil compartido o permite al usuario abandonar el perfil.
      */
     public function revocar($idPerfil, $idUsuario)
     {
         $perfil = Perfil::findOrFail($idPerfil);
         $user = Auth::user();
 
-        // Solo el propietario puede revocar acceso
-        if ($perfil->idUsuario !== $user->idUsuario) {
-            abort(403, 'Solo el propietario puede revocar acceso.');
+        // El propietario puede revocar a cualquiera, y cualquier usuario puede revocarse a sí mismo (abandonar)
+        if ($perfil->idUsuario !== $user->idUsuario && (int)$idUsuario !== $user->idUsuario) {
+            abort(403, 'No tenés permisos para realizar esta acción.');
         }
 
         PerfilCompartido::where('idUsuario', $idUsuario)
             ->where('idPerfil', $idPerfil)
             ->delete();
 
-        return redirect()->back()->with('success', 'Acceso revocado correctamente.');
+        // Si el usuario abandonó el perfil y lo tenía como activo, limpiamos la sesión
+        if ((int)$idUsuario === $user->idUsuario && session('perfilActivo') == $idPerfil) {
+            session()->forget('perfilActivo');
+        }
+
+        $mensaje = ((int)$idUsuario === $user->idUsuario)
+            ? 'Saliste del perfil correctamente.'
+            : 'Acceso revocado correctamente.';
+
+        return redirect()->back()->with('success', $mensaje);
     }
 
     /**

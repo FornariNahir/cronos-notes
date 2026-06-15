@@ -203,6 +203,23 @@ const eliminarPerfil = (perfil) => {
     });
 };
 
+const abandonarPerfil = (perfil) => {
+    const page = usePage();
+    const currentUserId = page.props.auth.user.idUsuario;
+    
+    triggerConfirm({
+        title: 'Abandonar Perfil',
+        message: `¿Estás seguro de que querés salir del perfil compartido "${perfil.tituloPerfil}"? Ya no tendrás acceso a sus tareas y apuntes.`,
+        confirmText: 'Abandonar',
+        isDanger: true,
+        onConfirm: () => {
+            router.delete(route('perfil-compartido.revocar', { idPerfil: perfil.idPerfil, idUsuario: currentUserId }), {
+                preserveScroll: true
+            });
+        }
+    });
+};
+
 const seleccionarPerfil = (idPerfil) => {
     router.post(route('perfiles.activar'), { 
         idPerfil: idPerfil,
@@ -351,11 +368,22 @@ const obtenerIniciales = (nombreCompleto) => {
                         <!-- If Lector (No actions allowed on profile metadata) -->
                         <span 
                             v-if="perfil.esCompartido && perfil.permisoCompartido === 'Lector'" 
-                            class="text-secondary small w-100 text-center py-1 d-flex align-items-center justify-content-center gap-1 border rounded bg-light"
+                            class="text-secondary small flex-grow-1 text-center py-1 d-flex align-items-center justify-content-center gap-1 border rounded bg-light"
                             style="font-size: 12px; height: 31px;"
                         >
                             <i class="bi bi-lock-fill"></i> Solo vista
                         </span>
+
+                        <!-- Abandonar button (Only for shared profiles) -->
+                        <button 
+                            v-if="perfil.esCompartido" 
+                            class="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center" 
+                            style="width: 40px;" 
+                            @click.stop="abandonarPerfil(perfil)" 
+                            title="Abandonar perfil"
+                        >
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>

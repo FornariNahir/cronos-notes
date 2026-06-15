@@ -265,7 +265,6 @@ onUnmounted(() => {
                                 <ul class="feat-list mb-4">
                                     <li><i class="bi bi-cpu"></i> IA que sugiere qué hacer primero, automáticamente.</li>
                                     <li><i class="bi bi-flag-fill"></i> Etiquetá tareas por prioridad: Alta, Media o Baja.</li>
-                                    <li><i class="bi bi-calendar-check"></i> Fechas límite sincronizables con Google Calendar.</li>
                                     <li><i class="bi bi-arrow-repeat"></i> Las sugerencias de la IA se actualizan en tiempo real.</li>
                                 </ul>
                                 <div class="img-container">

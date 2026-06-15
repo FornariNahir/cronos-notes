@@ -94,7 +94,7 @@ onMounted(async () => {
 <template>
     <Head>
         <title>Cronos Notes — Quiénes Somos y Recursos</title>
-        <meta name="description" content="El equipo detrás de Cronos Notes: proyecto final de carrera de Ingeniería en Sistemas de Información." />
+        <meta name="description" content="El equipo detrás de Cronos Notes: proyecto final." />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -148,7 +148,7 @@ onMounted(async () => {
             <header class="hero">
                 <div class="container">
                     <span class="badge-top reveal" data-reveal>
-                        <i class="bi bi-mortarboard-fill"></i> Proyecto Final de Carrera
+                        <i class="bi bi-mortarboard-fill"></i> Proyecto Final 
                     </span>
                     <h1 class="hero-title reveal" data-reveal data-delay="100">
                         El Equipo Detrás de <span class="accent">Cronos Notes</span>

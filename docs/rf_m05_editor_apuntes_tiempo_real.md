@@ -21,17 +21,17 @@ El editor enriquecido y la grabadora de voz combinan APIs nativas del navegador 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Editor.vue](/Cronos-Note/resources/js/Pages/apunte/Editor.vue) - Vista del formulario de toma de apuntes, enlazado de texto y estructura Cornell.
-- [AudioPanel.vue](/Cronos-Note/resources/js/Pages/apunte/components/AudioPanel.vue) - Componente encargado de manejar la interacción con el micrófono mediante `MediaRecorder`, gestionar estados de grabación y reproducir el audio guardado.
-- [EditorToolbar.vue](/Cronos-Note/resources/js/Pages/apunte/components/EditorToolbar.vue) - Barra de herramientas de formateo de texto del editor.
-- [NoteEditor.vue](/Cronos-Note/resources/js/Pages/apunte/components/NoteEditor.vue) - Área editable del apunte con soporte Cornell o estándar.
+- [Editor.vue](/resources/js/Pages/apunte/Editor.vue) - Vista del formulario de toma de apuntes, enlazado de texto y estructura Cornell.
+- [AudioPanel.vue](/resources/js/Pages/apunte/components/AudioPanel.vue) - Componente encargado de manejar la interacción con el micrófono mediante `MediaRecorder`, gestionar estados de grabación y reproducir el audio guardado.
+- [EditorToolbar.vue](/resources/js/Pages/apunte/components/EditorToolbar.vue) - Barra de herramientas de formateo de texto del editor.
+- [NoteEditor.vue](/resources/js/Pages/apunte/components/NoteEditor.vue) - Área editable del apunte con soporte Cornell o estándar.
 
 ### Backend & Controladores (Laravel)
-- [ApunteController.php](/Cronos-Note/app/Http/Controllers/ApunteController.php) - Recibe las peticiones HTTP, almacena el audio físico en disco y persiste las referencias en base de datos.
+- [ApunteController.php](/app/Http/Controllers/ApunteController.php) - Recibe las peticiones HTTP, almacena el audio físico en disco y persiste las referencias en base de datos.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Apunte.php](/Cronos-Note/app/Models/Apunte.php) - Modelo de Eloquent para las notas.
-- [ApunteAudio.php](/Cronos-Note/app/Models/ApunteAudio.php) - Asocia los archivos de audio físicos con el apunte correspondiente.
+- [Apunte.php](/app/Models/Apunte.php) - Modelo de Eloquent para las notas.
+- [ApunteAudio.php](/app/Models/ApunteAudio.php) - Asocia los archivos de audio físicos con el apunte correspondiente.
 
 ---
 

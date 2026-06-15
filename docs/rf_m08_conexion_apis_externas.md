@@ -20,17 +20,17 @@ Para esta integración se emplean protocolos estándar de seguridad y librerías
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Login.vue](/Cronos-Note/resources/js/Pages/auth/Login.vue) - Contiene el botón de "Continuar con Google".
-- [Register.vue](/Cronos-Note/resources/js/Pages/auth/Register.vue) - Contiene el botón de "Registrarse con Google".
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Panel de control e interfaz de reproducción para Spotify (reproductor integrado).
+- [Login.vue](/resources/js/Pages/auth/Login.vue) - Contiene el botón de "Continuar con Google".
+- [Register.vue](/resources/js/Pages/auth/Register.vue) - Contiene el botón de "Registrarse con Google".
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Panel de control e interfaz de reproducción para Spotify (reproductor integrado).
 
 ### Backend & Controladores (Laravel)
-- [GoogleAuthController.php](/Cronos-Note/app/Http/Controllers/Auth/GoogleAuthController.php) - Administra la redirección y el retorno (callback) del flujo de autenticación de Google.
-- [routes/auth.php](/Cronos-Note/routes/auth.php) - Define las rutas de redirección (`auth/google`) y de callback (`auth/google/callback`).
+- [GoogleAuthController.php](/app/Http/Controllers/Auth/GoogleAuthController.php) - Administra la redirección y el retorno (callback) del flujo de autenticación de Google.
+- [routes/auth.php](/routes/auth.php) - Define las rutas de redirección (`auth/google`) y de callback (`auth/google/callback`).
 
 ### Modelos y Datos (Eloquent ORM)
-- [IntegracionExterna.php](/Cronos-Note/app/Models/IntegracionExterna.php) - Modelo de Eloquent que representa la tabla `IntegracionExterna` para el guardado de tokens.
-- [User.php](/Cronos-Note/app/Models/User.php) - Define la relación `hasMany` con `IntegracionExterna`.
+- [IntegracionExterna.php](/app/Models/IntegracionExterna.php) - Modelo de Eloquent que representa la tabla `IntegracionExterna` para el guardado de tokens.
+- [User.php](/app/Models/User.php) - Define la relación `hasMany` con `IntegracionExterna`.
 
 ---
 

@@ -19,13 +19,13 @@ El calendario visual combina la recuperación selectiva de registros del servido
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Calendario.vue](/Cronos-Note/resources/js/Pages/Calendario.vue) - Página que define el diseño del calendario mensual, lógica de navegación de meses (anterior/siguiente) y renderiza las tarjetas de tareas dentro de los días correspondientes.
+- [Calendario.vue](/resources/js/Pages/Calendario.vue) - Página que define el diseño del calendario mensual, lógica de navegación de meses (anterior/siguiente) y renderiza las tarjetas de tareas dentro de los días correspondientes.
 
 ### Backend & Controladores (Laravel)
-- [DashboardController.php](/Cronos-Note/app/Http/Controllers/DashboardController.php) - Coordina la recuperación de las tareas y perfiles vinculados para alimentar la visualización inicial de la página.
+- [DashboardController.php](/app/Http/Controllers/DashboardController.php) - Coordina la recuperación de las tareas y perfiles vinculados para alimentar la visualización inicial de la página.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Tarea.php](/Cronos-Note/app/Models/Tarea.php) - Contiene los campos `tituloTarea` y `fechaLimite` utilizados para estructurar el calendario.
+- [Tarea.php](/app/Models/Tarea.php) - Contiene los campos `tituloTarea` y `fechaLimite` utilizados para estructurar el calendario.
 
 ---
 

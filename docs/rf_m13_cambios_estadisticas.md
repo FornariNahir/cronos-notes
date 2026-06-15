@@ -21,16 +21,16 @@ Este requerimiento introduce dos nuevas métricas y estadísticas clave para pot
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Estadisticas.vue](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/resources/js/Pages/Estadisticas.vue) - Muestra las tarjetas con la hora diaria de hoy con íconos vectoriales modernos y la cantidad de sesiones por perfil en la leyenda del gráfico de dona.
+- [Estadisticas.vue](/resources/js/Pages/Estadisticas.vue) - Muestra las tarjetas con la hora diaria de hoy con íconos vectoriales modernos y la cantidad de sesiones por perfil en la leyenda del gráfico de dona.
 
 ### Backend & Controladores (Laravel)
-- [EstadisticaController.php](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/app/Http/Controllers/EstadisticaController.php) - Recalcula dinámicamente las horas de hoy e introduce el recuento de sesiones (`sesionesCount`) en el arreglo del gráfico de dona.
-- [DashboardController.php](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/app/Http/Controllers/DashboardController.php) - Sincroniza dinámicamente el valor en la carga del dashboard del usuario.
-- [EstadisticaService.php](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/app/Services/EstadisticaService.php) - Recalcula y guarda el valor en base de datos al registrar nuevos minutos de trabajo.
+- [EstadisticaController.php](/app/Http/Controllers/EstadisticaController.php) - Recalcula dinámicamente las horas de hoy e introduce el recuento de sesiones (`sesionesCount`) en el arreglo del gráfico de dona.
+- [DashboardController.php](/app/Http/Controllers/DashboardController.php) - Sincroniza dinámicamente el valor en la carga del dashboard del usuario.
+- [EstadisticaService.php](/app/Services/EstadisticaService.php) - Recalcula y guarda el valor en base de datos al registrar nuevos minutos de trabajo.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Estadistica.php](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/app/Models/Estadistica.php) - Modela la tabla que almacena `horasConcentracionDiaria`.
-- [SesionPomodoro.php](file:///C:/Users/forna/OneDrive/Escritorio/Facultad/4to%20año%20Primer%20Cuatrimestre/Programación%20en%20ambientes%20web/Cronos-Note/app/Models/SesionPomodoro.php) - Utilizado para sumar el tiempo acumulado de concentración por fecha y perfil.
+- [Estadistica.php](/app/Models/Estadistica.php) - Modela la tabla que almacena `horasConcentracionDiaria`.
+- [SesionPomodoro.php](/app/Models/SesionPomodoro.php) - Utilizado para sumar el tiempo acumulado de concentración por fecha y perfil.
 
 ---
 

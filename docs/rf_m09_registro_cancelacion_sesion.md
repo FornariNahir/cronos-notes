@@ -19,15 +19,15 @@ Este requerimiento utiliza la infraestructura estándar de sesiones e interfaz d
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Administra el inicio del flujo de cancelación de sesión y renderiza los modales de confirmación (`showConfirmEndModal`).
-- [AppLayout.vue](/Cronos-Note/resources/js/Layouts/AppLayout.vue) - Captura el mensaje flash de éxito e introduce un toast emergente flotante en el lateral derecho superior de la pantalla.
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Administra el inicio del flujo de cancelación de sesión y renderiza los modales de confirmación (`showConfirmEndModal`).
+- [AppLayout.vue](/resources/js/Layouts/AppLayout.vue) - Captura el mensaje flash de éxito e introduce un toast emergente flotante en el lateral derecho superior de la pantalla.
 
 ### Backend & Controladores (Laravel)
-- [PomodoroController.php](/Cronos-Note/app/Http/Controllers/PomodoroController.php) - Modifica la acción `finalizarSesion()`. Gestiona el flujo redirigiendo al usuario y adjuntando el mensaje motivacional.
-- [EstadisticaService.php](/Cronos-Note/app/Services/EstadisticaService.php) - Proporciona el método `registrarCancelacion()` encargado de persistir el conteo en la base de datos.
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Modifica la acción `finalizarSesion()`. Gestiona el flujo redirigiendo al usuario y adjuntando el mensaje motivacional.
+- [EstadisticaService.php](/app/Services/EstadisticaService.php) - Proporciona el método `registrarCancelacion()` encargado de persistir el conteo en la base de datos.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Estadistica.php](/Cronos-Note/app/Models/Estadistica.php) - Modelo Eloquent con la columna `sesionesCanceladas`.
+- [Estadistica.php](/app/Models/Estadistica.php) - Modelo Eloquent con la columna `sesionesCanceladas`.
 
 ---
 

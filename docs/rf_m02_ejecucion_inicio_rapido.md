@@ -18,14 +18,14 @@ Este requerimiento interactúa con la lógica de sesiones e interfaz mediante:
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Contiene la interfaz del panel de configurador y el botón "Inicio Rápido (25 min)" en la pantalla de Setup.
-- [usePomodoroTimer.js](/Cronos-Note/resources/js/Composables/usePomodoroTimer.js) - Composable reactivo que inicializa los valores por defecto (25m de trabajo, 5m de descanso corto, 15m de descanso largo) y coordina el disparo del endpoint en el backend.
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Contiene la interfaz del panel de configurador y el botón "Inicio Rápido (25 min)" en la pantalla de Setup.
+- [usePomodoroTimer.js](/resources/js/Composables/usePomodoroTimer.js) - Composable reactivo que inicializa los valores por defecto (25m de trabajo, 5m de descanso corto, 15m de descanso largo) y coordina el disparo del endpoint en el backend.
 
 ### Backend & Controladores (Laravel)
-- [PomodoroController.php](/Cronos-Note/app/Http/Controllers/PomodoroController.php) - Recibe las peticiones HTTP para persistir el inicio de la sesión en el backend (`iniciarSesion()`).
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Recibe las peticiones HTTP para persistir el inicio de la sesión en el backend (`iniciarSesion()`).
 
 ### Modelos y Datos (Eloquent ORM)
-- [SesionPomodoro.php](/Cronos-Note/app/Models/SesionPomodoro.php) - Modelo relacional que representa el registro físico del bloque de concentración en la base de datos MySQL.
+- [SesionPomodoro.php](/app/Models/SesionPomodoro.php) - Modelo relacional que representa el registro físico del bloque de concentración en la base de datos MySQL.
 
 ---
 

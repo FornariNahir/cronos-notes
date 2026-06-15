@@ -19,14 +19,14 @@ Este requerimiento aprovecha el modelo relacional estándar y la validación en 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [GestionTareas.vue](/Cronos-Note/resources/js/Pages/GestionTareas.vue) - Formulario principal de creación y edición de tareas, y renderizado de la estimación en la tarjeta de detalle de tarea.
-- [GestionPerfil.vue](/Cronos-Note/resources/js/Pages/GestionPerfil.vue) - Formulario modal de creación rápida de tareas vinculadas a perfiles.
+- [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) - Formulario principal de creación y edición de tareas, y renderizado de la estimación en la tarjeta de detalle de tarea.
+- [GestionPerfil.vue](/resources/js/Pages/GestionPerfil.vue) - Formulario modal de creación rápida de tareas vinculadas a perfiles.
 
 ### Backend & Controladores (Laravel)
-- [TareaController.php](/Cronos-Note/app/Http/Controllers/TareaController.php) - Valida e introduce el campo `estimacionEsfuerzo` al crear (`store()`) o actualizar (`update()`) tareas.
+- [TareaController.php](/app/Http/Controllers/TareaController.php) - Valida e introduce el campo `estimacionEsfuerzo` al crear (`store()`) o actualizar (`update()`) tareas.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Tarea.php](/Cronos-Note/app/Models/Tarea.php) - Representación de la tabla `Tarea` con la regla de casteo `'estimacionEsfuerzo' => 'integer'`.
+- [Tarea.php](/app/Models/Tarea.php) - Representación de la tabla `Tarea` con la regla de casteo `'estimacionEsfuerzo' => 'integer'`.
 
 ---
 

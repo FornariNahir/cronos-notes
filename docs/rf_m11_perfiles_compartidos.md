@@ -23,24 +23,24 @@ Este conjunto de requerimientos define la capacidad de trabajo colaborativo dent
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [CompartirPerfilModal.vue](/Cronos-Note/resources/js/Components/CompartirPerfilModal.vue) - Modal de administración de colaboradores, envío de invitaciones, edición de roles y revocación de accesos.
-- [GestionPerfil.vue](/Cronos-Note/resources/js/Pages/GestionPerfil.vue) - Integra el modal de compartir y gestiona la activación del perfil activo.
-- [Invitacion.vue](/Cronos-Note/resources/js/Pages/perfil-compartido/Invitacion.vue) - Vista para aceptar/rechazar invitaciones.
-- [InvitacionExpirada.vue](/Cronos-Note/resources/js/Pages/perfil-compartido/InvitacionExpirada.vue) - Vista en caso de token expirado o utilizado.
-- [Index.vue (Apuntes)](/Cronos-Note/resources/js/Pages/apunte/Index.vue) y [Editor.vue (Apuntes)](/Cronos-Note/resources/js/Pages/apunte/Editor.vue) - Controlan que la interfaz oculte botones de edición/creación o bloquee el editor en modo solo lectura (`isReadOnly`) para el rol `Lector`.
-- [GestionTareas.vue](/Cronos-Note/resources/js/Pages/GestionTareas.vue) - Bloquea o permite la interacción en tareas según los permisos de perfil.
+- [CompartirPerfilModal.vue](/resources/js/Components/CompartirPerfilModal.vue) - Modal de administración de colaboradores, envío de invitaciones, edición de roles y revocación de accesos.
+- [GestionPerfil.vue](/resources/js/Pages/GestionPerfil.vue) - Integra el modal de compartir y gestiona la activación del perfil activo.
+- [Invitacion.vue](/resources/js/Pages/perfil-compartido/Invitacion.vue) - Vista para aceptar/rechazar invitaciones.
+- [InvitacionExpirada.vue](/resources/js/Pages/perfil-compartido/InvitacionExpirada.vue) - Vista en caso de token expirado o utilizado.
+- [Index.vue (Apuntes)](/resources/js/Pages/apunte/Index.vue) y [Editor.vue (Apuntes)](/resources/js/Pages/apunte/Editor.vue) - Controlan que la interfaz oculte botones de edición/creación o bloquee el editor en modo solo lectura (`isReadOnly`) para el rol `Lector`.
+- [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) - Bloquea o permite la interacción en tareas según los permisos de perfil.
 
 ### Backend & Controladores (Laravel)
-- [PerfilCompartidoController.php](/Cronos-Note/app/Http/Controllers/PerfilCompartidoController.php) - Coordina el flujo de invitaciones, validaciones, confirmación, y edición de roles pivote.
-- [ApunteController.php](/Cronos-Note/app/Http/Controllers/ApunteController.php) - Valida autorizaciones antes de realizar acciones en apuntes.
-- [TareaController.php](/Cronos-Note/app/Http/Controllers/TareaController.php) - Valida autorizaciones antes de realizar acciones en tareas.
-- [InvitacionPerfilNotification.php](/Cronos-Note/app/Notifications/InvitacionPerfilNotification.php) - Clase que formatea el email para el colaborador.
+- [PerfilCompartidoController.php](/app/Http/Controllers/PerfilCompartidoController.php) - Coordina el flujo de invitaciones, validaciones, confirmación, y edición de roles pivote.
+- [ApunteController.php](/app/Http/Controllers/ApunteController.php) - Valida autorizaciones antes de realizar acciones en apuntes.
+- [TareaController.php](/app/Http/Controllers/TareaController.php) - Valida autorizaciones antes de realizar acciones en tareas.
+- [InvitacionPerfilNotification.php](/app/Notifications/InvitacionPerfilNotification.php) - Clase que formatea el email para el colaborador.
 
 ### Políticas y Modelos (Laravel Policy & ORM)
-- [PerfilPolicy.php](/Cronos-Note/app/Policies/PerfilPolicy.php) - Centraliza la lógica jerárquica de permisos (`Lector` = 1, `Editor` = 2, `Administrador` = 3) y la resolución de la condición `before()`.
-- [Perfil.php](/Cronos-Note/app/Models/Perfil.php) - Define la relación `usuariosCompartidos` muchos a muchos con la tabla pivote.
-- [InvitacionPerfil.php](/Cronos-Note/app/Models/InvitacionPerfil.php) - Manejo y persistencia de invitaciones y tokens.
-- [PerfilCompartido.php](/Cronos-Note/app/Models/PerfilCompartido.php) - Representa el registro de acceso colaborativo.
+- [PerfilPolicy.php](/app/Policies/PerfilPolicy.php) - Centraliza la lógica jerárquica de permisos (`Lector` = 1, `Editor` = 2, `Administrador` = 3) y la resolución de la condición `before()`.
+- [Perfil.php](/app/Models/Perfil.php) - Define la relación `usuariosCompartidos` muchos a muchos con la tabla pivote.
+- [InvitacionPerfil.php](/app/Models/InvitacionPerfil.php) - Manejo y persistencia de invitaciones y tokens.
+- [PerfilCompartido.php](/app/Models/PerfilCompartido.php) - Representa el registro de acceso colaborativo.
 
 ---
 

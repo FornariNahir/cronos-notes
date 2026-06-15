@@ -22,18 +22,18 @@ El sistema de estadísticas está diseñado con una arquitectura eficiente que r
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Estadisticas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Estadisticas.vue) - Componente principal de la vista analítica. Contiene las tarjetas de métricas, los cálculos reactivos de ejes, las leyendas cromáticas y las estructuras SVG/CSS para pintar los gráficos de dona y barras.
+- [Estadisticas.vue](/resources/js/Pages/Estadisticas.vue) - Componente principal de la vista analítica. Contiene las tarjetas de métricas, los cálculos reactivos de ejes, las leyendas cromáticas y las estructuras SVG/CSS para pintar los gráficos de dona y barras.
 
 ### Backend & Controladores (Laravel)
-- [EstadisticaController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/EstadisticaController.php) - Controlador que calcula las tareas creadas, completadas y retrasadas, agrupa los minutos trabajados por perfil y por día para la última semana, y actualiza la concentración diaria.
-- [EstadisticaService.php](file:///C:/Users/della/Cronos-Notes/app/Services/EstadisticaService.php) - Servicio que incrementa el total de minutos trabajados globales y suma tareas resueltas a nivel de base de datos.
+- [EstadisticaController.php](/app/Http/Controllers/EstadisticaController.php) - Controlador que calcula las tareas creadas, completadas y retrasadas, agrupa los minutos trabajados por perfil y por día para la última semana, y actualiza la concentración diaria.
+- [EstadisticaService.php](/app/Services/EstadisticaService.php) - Servicio que incrementa el total de minutos trabajados globales y suma tareas resueltas a nivel de base de datos.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Estadistica.php](file:///C:/Users/della/Cronos-Notes/app/Models/Estadistica.php) - Mapea la tabla `Estadistica` donde se acumulan las rachas, el total de minutos trabajados e información consolidada.
+- [Estadistica.php](/app/Models/Estadistica.php) - Mapea la tabla `Estadistica` donde se acumulan las rachas, el total de minutos trabajados e información consolidada.
 
 ### Enrutamiento y Base de Datos
-- [web.php](file:///C:/Users/della/Cronos-Notes/routes/web.php) - Define la ruta GET `/estadisticas` protegida por el middleware de autenticación.
-- [2026_01_01_000005_create_estadistica_racha_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000005_create_estadistica_racha_table.php) - Migración de estructura para la tabla `Estadistica`.
+- [web.php](/routes/web.php) - Define la ruta GET `/estadisticas` protegida por el middleware de autenticación.
+- [2026_01_01_000005_create_estadistica_racha_table.php](/database/migrations/2026_01_01_000005_create_estadistica_racha_table.php) - Migración de estructura para la tabla `Estadistica`.
 
 ---
 

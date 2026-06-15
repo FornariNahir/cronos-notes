@@ -14,28 +14,28 @@ Se compone de los siguientes sub-requerimientos:
 Este requerimiento interactúa con componentes avanzados de reactividad, control de audio y persistencia en el backend:
 
 - **Vue 3 Composables (`usePomodoroTimer`)**: Composable reactivo que encapsula la lógica pura del temporizador, los intervalos de segundo a segundo, la persistencia en `localStorage` ante recargas accidentales de página y el registro automático de minutos trabajados en background.
-- **Inertia.js & Laravel Controller**: [PomodoroController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/PomodoroController.php) recibe peticiones síncronas y asíncronas (Axios) para iniciar, registrar minutos minuto a minuto, pausar y finalizar la sesión.
+- **Inertia.js & Laravel Controller**: [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) recibe peticiones síncronas y asíncronas (Axios) para iniciar, registrar minutos minuto a minuto, pausar y finalizar la sesión.
 - **HTML5 Web Audio API & Howler.js**: Carga y reproduce dinámicamente bucles de música y ruido ambiental durante la fase activa, pausándose y deteniéndose automáticamente cuando el temporizador se detiene.
-- **AlertModal (Componente Vue)**: Componente modal personalizado [AlertModal.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Components/AlertModal.vue) utilizado para desplegar las alertas de fin de ciclo en pantalla completa.
+- **AlertModal (Componente Vue)**: Componente modal personalizado [AlertModal.vue](/resources/js/Components/AlertModal.vue) utilizado para desplegar las alertas de fin de ciclo en pantalla completa.
 
 ---
 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/pomodoro/SesionZen.vue) - Interfaz principal del espacio de concentración. Renderiza el cronómetro, controles de reproducción (Iniciar, Pausar, Finalizar), mezclador de sonidos y las ventanas modales de alerta de fin de fase y de confirmación de cierre.
-- [usePomodoroTimer.js](file:///C:/Users/della/Cronos-Notes/resources/js/Composables/usePomodoroTimer.js) - Composable reactivo que coordina el estado de cuenta regresiva, fases (`work`, `shortBreak`, `longBreak`), conteo de ciclos y sincronización del estado actual con el almacenamiento local (`localStorage`).
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Interfaz principal del espacio de concentración. Renderiza el cronómetro, controles de reproducción (Iniciar, Pausar, Finalizar), mezclador de sonidos y las ventanas modales de alerta de fin de fase y de confirmación de cierre.
+- [usePomodoroTimer.js](/resources/js/Composables/usePomodoroTimer.js) - Composable reactivo que coordina el estado de cuenta regresiva, fases (`work`, `shortBreak`, `longBreak`), conteo de ciclos y sincronización del estado actual con el almacenamiento local (`localStorage`).
 
 ### Backend & Controladores (Laravel)
-- [PomodoroController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/PomodoroController.php) - Controlador que gestiona la inicialización de sesiones en base de datos, actualización de estados (pausar/reanudar) y la persistencia del tiempo real trabajado tras la finalización o cancelación.
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Controlador que gestiona la inicialización de sesiones en base de datos, actualización de estados (pausar/reanudar) y la persistencia del tiempo real trabajado tras la finalización o cancelación.
 
 ### Modelos y Datos (Eloquent ORM)
-- [SesionPomodoro.php](file:///C:/Users/della/Cronos-Notes/app/Models/SesionPomodoro.php) - Modelo Eloquent que mapea a la tabla `SesionPomodoro` para registrar el estado, ciclos completados y minutos de trabajo acumulados.
-- [ConfiguracionPomodoro.php](file:///C:/Users/della/Cronos-Notes/app/Models/ConfiguracionPomodoro.php) - Modelo que guarda las preferencias de duración por usuario.
+- [SesionPomodoro.php](/app/Models/SesionPomodoro.php) - Modelo Eloquent que mapea a la tabla `SesionPomodoro` para registrar el estado, ciclos completados y minutos de trabajo acumulados.
+- [ConfiguracionPomodoro.php](/app/Models/ConfiguracionPomodoro.php) - Modelo que guarda las preferencias de duración por usuario.
 
 ### Enrutamiento y Base de Datos
-- [web.php](file:///C:/Users/della/Cronos-Notes/routes/web.php) - Define las rutas de API y enrutamiento del temporizador bajo el prefijo `/pomodoro`.
-- [2026_01_01_000011_create_sesion_pomodoro_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000011_create_sesion_pomodoro_table.php) - Migración para la tabla `SesionPomodoro`.
+- [web.php](/routes/web.php) - Define las rutas de API y enrutamiento del temporizador bajo el prefijo `/pomodoro`.
+- [2026_01_01_000011_create_sesion_pomodoro_table.php](/database/migrations/2026_01_01_000011_create_sesion_pomodoro_table.php) - Migración para la tabla `SesionPomodoro`.
 
 ---
 

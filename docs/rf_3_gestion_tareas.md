@@ -15,7 +15,7 @@ Se desglosa en los siguientes sub-requerimientos:
 Este requerimiento se apoya en el stack reactivo del proyecto:
 
 - **Laravel Core & Eloquent ORM**: Almacenamiento en la tabla `Tarea` con integridad referencial hacia la tabla `Perfil` (eliminación en cascada).
-- **Inertia.js & Vue 3**: La página [GestionTareas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionTareas.vue) recibe las tareas cargadas en las `props` y expone computadas reactivas (`tareasFiltradas`) para filtrar la lista al instante en el navegador del cliente sin realizar nuevas consultas al servidor.
+- **Inertia.js & Vue 3**: La página [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) recibe las tareas cargadas en las `props` y expone computadas reactivas (`tareasFiltradas`) para filtrar la lista al instante en el navegador del cliente sin realizar nuevas consultas al servidor.
 - **EstadisticaService (Backend Service)**: Servicio PHP que se activa cuando una tarea cambia a estado `'Completado'`, sumando de manera automática el conteo de la tarea resuelta en las estadísticas globales del usuario.
 - **Bootstrap Icons**: Librería de iconos vectoriales para identificar los estados de las tareas.
 
@@ -24,18 +24,18 @@ Este requerimiento se apoya en el stack reactivo del proyecto:
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [GestionTareas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionTareas.vue) - Vista principal del panel de tareas. Maneja el listado, los filtros de estado/prioridad en memoria (`filtroEstado`, `filtroPrioridad`), los modales de creación/edición, la conmutación de rejilla/lista (`esVistaGrid`) y la priorización inteligente con IA.
+- [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) - Vista principal del panel de tareas. Maneja el listado, los filtros de estado/prioridad en memoria (`filtroEstado`, `filtroPrioridad`), los modales de creación/edición, la conmutación de rejilla/lista (`esVistaGrid`) y la priorización inteligente con IA.
 
 ### Backend & Controladores (Laravel)
-- [TareaController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/TareaController.php) - Controlador que gestiona los métodos CRUD de tareas y valida que las peticiones tengan permisos correctos según el perfil activo del usuario.
+- [TareaController.php](/app/Http/Controllers/TareaController.php) - Controlador que gestiona los métodos CRUD de tareas y valida que las peticiones tengan permisos correctos según el perfil activo del usuario.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Tarea.php](file:///C:/Users/della/Cronos-Notes/app/Models/Tarea.php) - Modelo Eloquent para la tabla `Tarea` con casts para formateo de fechas e integridad de datos.
-- [Perfil.php](file:///C:/Users/della/Cronos-Notes/app/Models/Perfil.php) - Define la relación inversa de pertenencia `tareas()`.
+- [Tarea.php](/app/Models/Tarea.php) - Modelo Eloquent para la tabla `Tarea` con casts para formateo de fechas e integridad de datos.
+- [Perfil.php](/app/Models/Perfil.php) - Define la relación inversa de pertenencia `tareas()`.
 
 ### Enrutamiento y Base de Datos
-- [web.php](file:///C:/Users/della/Cronos-Notes/routes/web.php) - Contiene las rutas para las tareas (`/tareas`, `/tareas/{id}`, `/tareas/{id}/completar`, etc.) bajo el middleware de autenticación.
-- [2026_01_01_000007_create_tareas_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000007_create_tareas_table.php) - Estructura de migración de la base de datos para la tabla `Tarea`.
+- [web.php](/routes/web.php) - Contiene las rutas para las tareas (`/tareas`, `/tareas/{id}`, `/tareas/{id}/completar`, etc.) bajo el middleware de autenticación.
+- [2026_01_01_000007_create_tareas_table.php](/database/migrations/2026_01_01_000007_create_tareas_table.php) - Estructura de migración de la base de datos para la tabla `Tarea`.
 
 ---
 

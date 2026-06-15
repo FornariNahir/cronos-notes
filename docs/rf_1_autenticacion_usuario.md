@@ -24,23 +24,23 @@ Este requerimiento se implementa utilizando las siguientes capas tecnológicas d
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Register.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/auth/Register.vue) - Componente que renderiza el formulario de registro y realiza el envío de datos POST a `/register`.
-- [Login.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/auth/Login.vue) - Componente del formulario de acceso web con soporte para recordar credenciales y enlace al login de Google.
+- [Register.vue](/resources/js/Pages/auth/Register.vue) - Componente que renderiza el formulario de registro y realiza el envío de datos POST a `/register`.
+- [Login.vue](/resources/js/Pages/auth/Login.vue) - Componente del formulario de acceso web con soporte para recordar credenciales y enlace al login de Google.
 
 ### Backend & Controladores (Laravel)
-- [RegisteredUserController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/Auth/RegisteredUserController.php) - Controlador que valida los campos de registro de usuario y guarda la información en la base de datos.
-- [AuthenticatedSessionController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/Auth/AuthenticatedSessionController.php) - Maneja el inicio de sesión personalizado, la creación de la cookie y la desactivación física del registro de sesión al cerrar la cuenta.
-- [LoginRequest.php](file:///C:/Users/della/Cronos-Notes/app/Http/Requests/Auth/LoginRequest.php) - Gestiona la validación de credenciales del login y el control de tasa de peticiones (Rate Limiting).
-- [CheckCustomSession.php](file:///C:/Users/della/Cronos-Notes/app/Http/Middleware/CheckCustomSession.php) - Middleware que intercepta la cookie `cronos_session_token` y autologuea al usuario si el token es válido y no ha caducado.
+- [RegisteredUserController.php](/app/Http/Controllers/Auth/RegisteredUserController.php) - Controlador que valida los campos de registro de usuario y guarda la información en la base de datos.
+- [AuthenticatedSessionController.php](/app/Http/Controllers/Auth/AuthenticatedSessionController.php) - Maneja el inicio de sesión personalizado, la creación de la cookie y la desactivación física del registro de sesión al cerrar la cuenta.
+- [LoginRequest.php](/app/Http/Requests/Auth/LoginRequest.php) - Gestiona la validación de credenciales del login y el control de tasa de peticiones (Rate Limiting).
+- [CheckCustomSession.php](/app/Http/Middleware/CheckCustomSession.php) - Middleware que intercepta la cookie `cronos_session_token` y autologuea al usuario si el token es válido y no ha caducado.
 
 ### Modelos y Datos (Eloquent ORM)
-- [User.php](file:///C:/Users/della/Cronos-Notes/app/Models/User.php) - Modelo de usuario (`Usuario`) que provee las funciones helper de inicio (`iniciarSesionPersonalizada`) y cierre (`cerrarSesionPersonalizada`) de sesiones en DB.
-- [SesionUsuario.php](file:///C:/Users/della/Cronos-Notes/app/Models/SesionUsuario.php) - Modelo para representar y verificar la validez y expiración física de los tokens persistidos.
+- [User.php](/app/Models/User.php) - Modelo de usuario (`Usuario`) que provee las funciones helper de inicio (`iniciarSesionPersonalizada`) y cierre (`cerrarSesionPersonalizada`) de sesiones en DB.
+- [SesionUsuario.php](/app/Models/SesionUsuario.php) - Modelo para representar y verificar la validez y expiración física de los tokens persistidos.
 
 ### Enrutamiento y Base de Datos
-- [auth.php](file:///C:/Users/della/Cronos-Notes/routes/auth.php) - Rutas de endpoints `/login`, `/register`, `/logout` y redireccionamiento OAuth.
-- [2026_01_01_000000_create_users_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000000_create_users_table.php) - Migración de estructura para la tabla `Usuario`.
-- [2026_01_01_000009_create_sesion_usuario_recuperacion_password_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000009_create_sesion_usuario_recuperacion_password_table.php) - Migración para la tabla `SesionUsuario`.
+- [auth.php](/routes/auth.php) - Rutas de endpoints `/login`, `/register`, `/logout` y redireccionamiento OAuth.
+- [2026_01_01_000000_create_users_table.php](/database/migrations/2026_01_01_000000_create_users_table.php) - Migración de estructura para la tabla `Usuario`.
+- [2026_01_01_000009_create_sesion_usuario_recuperacion_password_table.php](/database/migrations/2026_01_01_000009_create_sesion_usuario_recuperacion_password_table.php) - Migración para la tabla `SesionUsuario`.
 
 ---
 
@@ -73,20 +73,20 @@ graph TD
 
 ### Detalle del Flujo de Control (Pasos)
 1. **Acceso Inicial y Validación de Sesión (Middleware):**
-   - Cuando un usuario solicita cualquier ruta protegida, el middleware [CheckCustomSession.php](file:///C:/Users/della/Cronos-Notes/app/Http/Middleware/CheckCustomSession.php) intercepta la petición.
+   - Cuando un usuario solicita cualquier ruta protegida, el middleware [CheckCustomSession.php](/app/Http/Middleware/CheckCustomSession.php) intercepta la petición.
    - Lee el valor de la cookie `cronos_session_token`. Si existe, busca el token correspondiente en la tabla `SesionUsuario`.
    - Si la sesión es válida (está activa y no ha caducado), se autentica al usuario programáticamente en el framework y se le permite el acceso.
    - De lo contrario, se limpia cualquier rastro de la sesión, se elimina la cookie y se lo redirige al formulario de inicio de sesión.
 2. **Flujo de Registro (Register.vue):**
-   - El usuario completa los datos en el componente [Register.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/auth/Register.vue) y se envían por POST a `/register`.
-   - El controlador [RegisteredUserController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/Auth/RegisteredUserController.php) valida los campos.
+   - El usuario completa los datos en el componente [Register.vue](/resources/js/Pages/auth/Register.vue) y se envían por POST a `/register`.
+   - El controlador [RegisteredUserController.php](/app/Http/Controllers/Auth/RegisteredUserController.php) valida los campos.
    - Si las validaciones fallan (ej. contraseñas distintas, correo inválido o ya registrado), se retornan los errores al frontend.
    - Si las validaciones son exitosas, se aplica hashing seguro a la contraseña y se crea un registro en la tabla `Usuario`. Luego se redirige a `/login` con un mensaje flash de éxito.
 3. **Flujo de Inicio de Sesión (Login.vue):**
-   - El usuario ingresa sus credenciales en [Login.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/auth/Login.vue).
-   - [LoginRequest.php](file:///C:/Users/della/Cronos-Notes/app/Http/Requests/Auth/LoginRequest.php) verifica el control de tasa de intentos (Rate Limiting). Si se superan los 5 intentos en un minuto, bloquea las peticiones.
+   - El usuario ingresa sus credenciales en [Login.vue](/resources/js/Pages/auth/Login.vue).
+   - [LoginRequest.php](/app/Http/Requests/Auth/LoginRequest.php) verifica el control de tasa de intentos (Rate Limiting). Si se superan los 5 intentos en un minuto, bloquea las peticiones.
    - Si las credenciales son incorrectas, se incrementa el contador de fallos y se retorna un mensaje de error.
-   - Si la autenticación es correcta, se invoca a `iniciarSesionPersonalizada()` en el modelo [User.php](file:///C:/Users/della/Cronos-Notes/app/Models/User.php) para generar un nuevo token criptográfico, registrar la sesión activa en la base de datos y guardar la cookie `cronos_session_token` en el navegador con duración de 24 horas.
+   - Si la autenticación es correcta, se invoca a `iniciarSesionPersonalizada()` en el modelo [User.php](/app/Models/User.php) para generar un nuevo token criptográfico, registrar la sesión activa en la base de datos y guardar la cookie `cronos_session_token` en el navegador con duración de 24 horas.
 
 ---
 

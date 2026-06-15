@@ -22,12 +22,12 @@ La sesión de invitado utiliza rutas públicas y condicionales lógicos en el fr
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Oculta la selección de tareas en el configurador, bloquea los paisajes y sonidos premium para visitantes, y abre el modal promocional de registro.
-- [Welcome.vue](/Cronos-Note/resources/js/Pages/Welcome.vue) - Landing page que provee el botón de acceso directo "Probar como Invitado".
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Oculta la selección de tareas en el configurador, bloquea los paisajes y sonidos premium para visitantes, y abre el modal promocional de registro.
+- [Welcome.vue](/resources/js/Pages/Welcome.vue) - Landing page que provee el botón de acceso directo "Probar como Invitado".
 
 ### Backend & Controladores (Laravel)
-- [web.php](/Cronos-Note/routes/web.php) - Ruta de acceso pública a `/invitado` asociada al controlador.
-- [PomodoroController.php](/Cronos-Note/app/Http/Controllers/PomodoroController.php) - Método `invitado()` que carga el componente `SesionZen` pasando `isGuest` como `true`.
+- [web.php](/routes/web.php) - Ruta de acceso pública a `/invitado` asociada al controlador.
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Método `invitado()` que carga el componente `SesionZen` pasando `isGuest` como `true`.
 
 ---
 

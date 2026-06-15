@@ -23,17 +23,17 @@ Este requerimiento utiliza la estructura relacional de estadísticas y configura
 
 ### Frontend (Vue 3)
 *No requiere modificaciones directas en el frontend, pero la racha se visualiza en:*
-- [PerfilUsuario.vue](/Cronos-Note/resources/js/Pages/PerfilUsuario.vue) - Muestra al usuario su racha actual y su racha récord.
-- [Dashboard.vue](/Cronos-Note/resources/js/Pages/Dashboard.vue) - Muestra el panel con resúmenes estadísticos que incluyen las rachas de productividad.
+- [PerfilUsuario.vue](/resources/js/Pages/PerfilUsuario.vue) - Muestra al usuario su racha actual y su racha récord.
+- [Dashboard.vue](/resources/js/Pages/Dashboard.vue) - Muestra el panel con resúmenes estadísticos que incluyen las rachas de productividad.
 
 ### Backend & Controladores (Laravel)
-- [PomodoroController.php](/Cronos-Note/app/Http/Controllers/PomodoroController.php) - Recupera la duración configurada para la sesión activa y la envía como argumento al servicio al registrar y completar ciclos o finalizar la sesión.
-- [EstadisticaService.php](/Cronos-Note/app/Services/EstadisticaService.php) - Filtra el incremento de racha en el método `evaluarRachaAlCompletarSesion`, finalizando el flujo de manera temprana si la sesión no es de exactamente 25 minutos.
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Recupera la duración configurada para la sesión activa y la envía como argumento al servicio al registrar y completar ciclos o finalizar la sesión.
+- [EstadisticaService.php](/app/Services/EstadisticaService.php) - Filtra el incremento de racha en el método `evaluarRachaAlCompletarSesion`, finalizando el flujo de manera temprana si la sesión no es de exactamente 25 minutos.
 
 ### Modelos y Datos (Eloquent ORM)
-- [SesionPomodoro.php](/Cronos-Note/app/Models/SesionPomodoro.php) - Representa la sesión de trabajo y provee la relación con su configuración.
-- [ConfiguracionPomodoro.php](/Cronos-Note/app/Models/ConfiguracionPomodoro.php) - Almacena las preferencias de tiempo del temporizador.
-- [Racha.php](/Cronos-Note/app/Models/Racha.php) y [Estadistica.php](/Cronos-Note/app/Models/Estadistica.php) - Modelos de persistencia de las rachas de concentración.
+- [SesionPomodoro.php](/app/Models/SesionPomodoro.php) - Representa la sesión de trabajo y provee la relación con su configuración.
+- [ConfiguracionPomodoro.php](/app/Models/ConfiguracionPomodoro.php) - Almacena las preferencias de tiempo del temporizador.
+- [Racha.php](/app/Models/Racha.php) y [Estadistica.php](/app/Models/Estadistica.php) - Modelos de persistencia de las rachas de concentración.
 
 ---
 

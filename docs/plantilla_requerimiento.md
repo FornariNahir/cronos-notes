@@ -24,12 +24,12 @@
 *Enumerar los archivos que forman parte del requerimiento. Esto ayuda a cualquiera a navegar dentro código fuente.*
 
 ### Frontend (Vue 3)
-- [GestionTareas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionTareas.vue) - Contiene el componente del panel de tareas y el botón de priorización.
-- [Welcome.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Welcome.vue) - Landing page que contiene el acceso directo al modo invitado.
+- [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) - Contiene el componente del panel de tareas y el botón de priorización.
+- [Welcome.vue](/resources/js/Pages/Welcome.vue) - Landing page que contiene el acceso directo al modo invitado.
 
 ### Backend & Controladores (Laravel)
-- [TareaController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/TareaController.php) - Maneja los endpoints para crear, listar y priorizar tareas a través del servicio de IA.
-- [PomodoroController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/PomodoroController.php) - Controla la lógica de inicio, pausa y finalización de ciclos de concentración.
+- [TareaController.php](/app/Http/Controllers/TareaController.php) - Maneja los endpoints para crear, listar y priorizar tareas a través del servicio de IA.
+- [PomodoroController.php](/app/Http/Controllers/PomodoroController.php) - Controla la lógica de inicio, pausa y finalización de ciclos de concentración.
 
 ### Modelos y Datos (Eloquent ORM)
 - `app/Models/Tarea.php` - Modelo de datos con los atributos de prioridad, título y fecha límite.

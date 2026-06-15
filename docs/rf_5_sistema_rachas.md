@@ -15,27 +15,27 @@ Se compone de las siguientes características y reglas de negocio:
 El sistema de rachas se implementa mediante servicios y persistencia relacional en el backend:
 
 - **Laravel Core & Carbon**: Para realizar las operaciones de fechas y tiempo, comparando si la última racha finalizó ayer (`Carbon::yesterday()`) o antes para declarar su pérdida.
-- **EstadisticaService (Backend Service)**: Clase centralizada [EstadisticaService.php](file:///C:/Users/della/Cronos-Notes/app/Services/EstadisticaService.php) que evalúa las fechas, crea los registros de racha y sincroniza la tabla `Estadistica` global con el desglose histórico de la tabla `Racha`.
-- **Inertia.js Props**: El estado actual de la racha (`rachaActual` y `rachaMasLarga`) se inyecta como propiedad del usuario autenticado en las vistas de [Dashboard.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Dashboard.vue), [PerfilUsuario.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/PerfilUsuario.vue) y [Estadisticas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Estadisticas.vue).
+- **EstadisticaService (Backend Service)**: Clase centralizada [EstadisticaService.php](/app/Services/EstadisticaService.php) que evalúa las fechas, crea los registros de racha y sincroniza la tabla `Estadistica` global con el desglose histórico de la tabla `Racha`.
+- **Inertia.js Props**: El estado actual de la racha (`rachaActual` y `rachaMasLarga`) se inyecta como propiedad del usuario autenticado en las vistas de [Dashboard.vue](/resources/js/Pages/Dashboard.vue), [PerfilUsuario.vue](/resources/js/Pages/PerfilUsuario.vue) y [Estadisticas.vue](/resources/js/Pages/Estadisticas.vue).
 
 ---
 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [Dashboard.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Dashboard.vue) - Muestra el indicador principal de la racha actual ("X días de racha") en la sección de estadísticas rápidas del usuario.
-- [PerfilUsuario.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/PerfilUsuario.vue) y [Estadisticas.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/Estadisticas.vue) - Exponen la racha más larga histórica y la racha actual del perfil del estudiante.
+- [Dashboard.vue](/resources/js/Pages/Dashboard.vue) - Muestra el indicador principal de la racha actual ("X días de racha") en la sección de estadísticas rápidas del usuario.
+- [PerfilUsuario.vue](/resources/js/Pages/PerfilUsuario.vue) y [Estadisticas.vue](/resources/js/Pages/Estadisticas.vue) - Exponen la racha más larga histórica y la racha actual del perfil del estudiante.
 
 ### Backend & Servicios (Laravel)
-- [EstadisticaService.php](file:///C:/Users/della/Cronos-Notes/app/Services/EstadisticaService.php) - Contiene la lógica para comprobar pérdidas de racha (`verificarRachaPerdida`) e incrementar el contador de días consecutivos al completar sesiones de 25 minutos (`evaluarRachaAlCompletarSesion`).
+- [EstadisticaService.php](/app/Services/EstadisticaService.php) - Contiene la lógica para comprobar pérdidas de racha (`verificarRachaPerdida`) e incrementar el contador de días consecutivos al completar sesiones de 25 minutos (`evaluarRachaAlCompletarSesion`).
 
 ### Modelos y Datos (Eloquent ORM)
-- [Racha.php](file:///C:/Users/della/Cronos-Notes/app/Models/Racha.php) - Modelo Eloquent que mapea a la tabla `Racha` para almacenar el histórico de rachas del usuario.
-- [Estadistica.php](file:///C:/Users/della/Cronos-Notes/app/Models/Estadistica.php) - Modelo que unifica y acumula los contadores del usuario para búsquedas rápidas.
+- [Racha.php](/app/Models/Racha.php) - Modelo Eloquent que mapea a la tabla `Racha` para almacenar el histórico de rachas del usuario.
+- [Estadistica.php](/app/Models/Estadistica.php) - Modelo que unifica y acumula los contadores del usuario para búsquedas rápidas.
 
 ### Enrutamiento y Base de Datos
-- [web.php](file:///C:/Users/della/Cronos-Notes/routes/web.php) - Pasa por el servicio de racha para resetearla si caducó al cargar el dashboard o la página de perfil.
-- [2026_01_01_000005_create_estadistica_racha_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000005_create_estadistica_racha_table.php) - Define las tablas `Racha` y `Estadistica`.
+- [web.php](/routes/web.php) - Pasa por el servicio de racha para resetearla si caducó al cargar el dashboard o la página de perfil.
+- [2026_01_01_000005_create_estadistica_racha_table.php](/database/migrations/2026_01_01_000005_create_estadistica_racha_table.php) - Define las tablas `Racha` y `Estadistica`.
 
 ---
 

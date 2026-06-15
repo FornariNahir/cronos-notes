@@ -19,11 +19,11 @@ Este requerimiento se implementa a nivel de interfaz de usuario mediante control
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Gestiona la cabecera del widget del temporizador donde se incluye el botón de ojo (`bi-eye-fill` / `bi-eye-slash-fill`), el estado de pantalla completa, y los estilos que modifican el layout a modo zen.
-- [AppLayout.vue](/Cronos-Note/resources/js/Layouts/AppLayout.vue) - Contiene la estructura general con el menú de navegación lateral (`.sidebar`) y superior (`.top-bar`) que se ocultan ante la presencia de la clase `distraction-free-mode` en el `body`.
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Gestiona la cabecera del widget del temporizador donde se incluye el botón de ojo (`bi-eye-fill` / `bi-eye-slash-fill`), el estado de pantalla completa, y los estilos que modifican el layout a modo zen.
+- [AppLayout.vue](/resources/js/Layouts/AppLayout.vue) - Contiene la estructura general con el menú de navegación lateral (`.sidebar`) y superior (`.top-bar`) que se ocultan ante la presencia de la clase `distraction-free-mode` en el `body`.
 
 ### Directivas de Interacción
-- [vDraggable.js](/Cronos-Note/resources/js/Directives/vDraggable.js) - Controla el comportamiento de arrastre libre del widget principal del temporizador.
+- [vDraggable.js](/resources/js/Directives/vDraggable.js) - Controla el comportamiento de arrastre libre del widget principal del temporizador.
 
 ---
 

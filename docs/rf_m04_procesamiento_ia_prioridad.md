@@ -20,13 +20,13 @@ Este requerimiento requiere una integración segura mediante APIs externas y con
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [GestionTareas.vue](/Cronos-Note/resources/js/Pages/GestionTareas.vue) - Interfaz principal del gestor de tareas que incluye el botón para activar la ordenación por Inteligencia Artificial y el spinner de carga.
+- [GestionTareas.vue](/resources/js/Pages/GestionTareas.vue) - Interfaz principal del gestor de tareas que incluye el botón para activar la ordenación por Inteligencia Artificial y el spinner de carga.
 
 ### Backend & Controladores (Laravel)
-- [TareaController.php](/Cronos-Note/app/Http/Controllers/TareaController.php) - Contiene la lógica del endpoint `priorizarConIA()`. Construye el prompt estructurado, configura los modelos y llama al endpoint de Gemini, parseando la respuesta JSON devuelta.
+- [TareaController.php](/app/Http/Controllers/TareaController.php) - Contiene la lógica del endpoint `priorizarConIA()`. Construye el prompt estructurado, configura los modelos y llama al endpoint de Gemini, parseando la respuesta JSON devuelta.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Tarea.php](/Cronos-Note/app/Models/Tarea.php) - Representa la entidad Tarea con los atributos actualizables por la IA.
+- [Tarea.php](/app/Models/Tarea.php) - Representa la entidad Tarea con los atributos actualizables por la IA.
 
 ---
 

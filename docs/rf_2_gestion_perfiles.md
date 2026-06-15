@@ -19,7 +19,7 @@ Este requerimiento utiliza la arquitectura estándar de Laravel, Vue 3 e Inertia
 
 - **Laravel Core & Eloquent ORM**: Persistencia en la tabla `Perfil` y control de relaciones con `Usuario` y `Tarea`.
 - **Laravel Policy (`PerfilPolicy`)**: Gobierna los permisos del perfil según los roles jerárquicos (Lector, Editor, Administrador), asegurando que solo el propietario o usuarios autorizados puedan ver, editar o eliminar el perfil.
-- **Inertia.js & Vue 3**: La página [GestionPerfil.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionPerfil.vue) maneja el listado dinámico, la apertura de diálogos modales para la creación y edición de perfiles (incluyendo selección de iconos visuales) sin recargas.
+- **Inertia.js & Vue 3**: La página [GestionPerfil.vue](/resources/js/Pages/GestionPerfil.vue) maneja el listado dinámico, la apertura de diálogos modales para la creación y edición de perfiles (incluyendo selección de iconos visuales) sin recargas.
 - **Sesión de PHP/Laravel**: Se almacena la clave `perfilActivo` en la sesión del servidor para persistir qué perfil está utilizando el usuario en el dashboard.
 
 ---
@@ -27,22 +27,22 @@ Este requerimiento utiliza la arquitectura estándar de Laravel, Vue 3 e Inertia
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [GestionPerfil.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionPerfil.vue) - Componente principal de la interfaz que permite administrar perfiles, cambiar de perfil activo, editar nombres, descripciones y seleccionar iconos.
+- [GestionPerfil.vue](/resources/js/Pages/GestionPerfil.vue) - Componente principal de la interfaz que permite administrar perfiles, cambiar de perfil activo, editar nombres, descripciones y seleccionar iconos.
 
 ### Backend & Controladores (Laravel)
-- [PerfilController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/PerfilController.php) - Controlador que gestiona los endpoints CRUD de perfiles y la asignación del perfil activo en la sesión.
+- [PerfilController.php](/app/Http/Controllers/PerfilController.php) - Controlador que gestiona los endpoints CRUD de perfiles y la asignación del perfil activo en la sesión.
 
 ### Políticas de Acceso (Laravel Policy)
-- [PerfilPolicy.php](file:///C:/Users/della/Cronos-Notes/app/Policies/PerfilPolicy.php) - Define las autorizaciones para asegurar que los usuarios no propietarios tengan permisos específicos (Lector, Editor o Administrador) y bloquea operaciones indebidas.
+- [PerfilPolicy.php](/app/Policies/PerfilPolicy.php) - Define las autorizaciones para asegurar que los usuarios no propietarios tengan permisos específicos (Lector, Editor o Administrador) y bloquea operaciones indebidas.
 
 ### Modelos y Datos (Eloquent ORM)
-- [Perfil.php](file:///C:/Users/della/Cronos-Notes/app/Models/Perfil.php) - Modelo Eloquent que representa la tabla `Perfil`, definiendo las relaciones con `User`, `Tarea` y `Apunte`.
-- [User.php](file:///C:/Users/della/Cronos-Notes/app/Models/User.php) - Modelo de usuario con la relación `perfiles()`.
+- [Perfil.php](/app/Models/Perfil.php) - Modelo Eloquent que representa la tabla `Perfil`, definiendo las relaciones con `User`, `Tarea` y `Apunte`.
+- [User.php](/app/Models/User.php) - Modelo de usuario con la relación `perfiles()`.
 
 ### Enrutamiento y Base de Datos
-- [web.php](file:///C:/Users/della/Cronos-Notes/routes/web.php) - Define las rutas `/perfiles`, `/perfiles/activar` y `/gestion-perfil`.
-- [2026_01_01_000003_create_perfils_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_01_01_000003_create_perfils_table.php) - Migración de estructura para la tabla `Perfil`.
-- [2026_06_10_165143_add_icono_perfil_to_perfil_table.php](file:///C:/Users/della/Cronos-Notes/database/migrations/2026_06_10_165143_add_icono_perfil_to_perfil_table.php) - Migración que añade la columna `iconoPerfil` para almacenar el icono personalizado.
+- [web.php](/routes/web.php) - Define las rutas `/perfiles`, `/perfiles/activar` y `/gestion-perfil`.
+- [2026_01_01_000003_create_perfils_table.php](/database/migrations/2026_01_01_000003_create_perfils_table.php) - Migración de estructura para la tabla `Perfil`.
+- [2026_06_10_165143_add_icono_perfil_to_perfil_table.php](/database/migrations/2026_06_10_165143_add_icono_perfil_to_perfil_table.php) - Migración que añade la columna `iconoPerfil` para almacenar el icono personalizado.
 
 ---
 
@@ -78,7 +78,7 @@ graph TD
 
 ### Detalle del Flujo de Control (Pasos)
 1. **Listar Perfiles:**
-   - Al entrar a `/gestion-perfil`, [PerfilController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/PerfilController.php) consulta todos los perfiles creados por el usuario y los compartidos con él, y los envía como `props` a [GestionPerfil.vue](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/GestionPerfil.vue).
+   - Al entrar a `/gestion-perfil`, [PerfilController.php](/app/Http/Controllers/PerfilController.php) consulta todos los perfiles creados por el usuario y los compartidos con él, y los envía como `props` a [GestionPerfil.vue](/resources/js/Pages/GestionPerfil.vue).
 2. **Crear Perfil (RF 2.1):**
    - El usuario abre el modal "Crear Perfil" e ingresa título (máx. 30 caracteres), descripción (máx. 100 caracteres) y selecciona un icono visual (ej: `bi-folder-fill`, `bi-book`, etc.).
    - Envía la petición POST a `/perfiles`. El backend valida que el usuario tenga menos de 5 perfiles y que el nombre sea único para su cuenta. Si pasa, crea el registro y redirige refrescando la vista.

@@ -13,14 +13,14 @@ El mezclador de sonidos aprovecha una combinación de recursos de audio locales 
 - **Howler.js**: Librería JavaScript de control de audio en 3D y multicanal, utilizada para cargar las pistas, reproducirlas concurrentemente en bucle (`loop: true`), y cambiar el volumen dinámicamente sin interrumpir la reproducción.
 - **Pistas Locales (Directorio public)**: Archivos de sonido comprimidos en formatos de alta calidad `.mp3` y `.webm` alojados directamente en el servidor.
 - **Vue 3 (Composition API)**: Estructuración reactiva del mezclador mediante `mixerState` y mapeo de emojis dinámicos según el tipo de sonido.
-- **Resolución de Rutas Relativas (XAMPP)**: Método `getAssetUrl` para garantizar que las pistas de sonido se ubiquen correctamente tanto en servidores locales de subdirectorio (ej. `http://localhost/Cronos-Notes/public/`) como en entornos virtuales de dominio raíz.
+- **Resolución de Rutas Relativas (XAMPP)**: Método `getAssetUrl` para garantizar que las pistas de sonido se ubiquen correctamente tanto en servidores locales de subdirectorio (ej. `http://localhost/public/`) como en entornos virtuales de dominio raíz.
 
 ---
 
 ## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SesionZen.vue](/Cronos-Note/resources/js/Pages/pomodoro/SesionZen.vue) - Administra la lógica del mezclador, controla la instanciación de objetos `Howl`, maneja los sliders de volumen individuales y los estados activos.
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Administra la lógica del mezclador, controla la instanciación de objetos `Howl`, maneja los sliders de volumen individuales y los estados activos.
 
 ### Recursos Estáticos (Audios)
 - `public/audios/` - Directorio que aloja las pistas de audio locales comprimidas (ej. `storm.mp3`, `campfire.webm`, `cafe.mp3`, etc.).

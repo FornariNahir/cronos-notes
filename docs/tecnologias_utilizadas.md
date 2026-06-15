@@ -2,7 +2,7 @@
 
 Este documento recopila las tecnologías, frameworks y librerías que conforman el stack técnico de **Cronos Notes**, detallando su definición, propósito en el proyecto y su funcionamiento interno.
 
-Las dependencias principales se encuentran registradas y gestionadas en los archivos [composer.json](file:///C:/Users/della/Cronos-Notes/composer.json) (Backend) y [package.json](file:///C:/Users/della/Cronos-Notes/package.json) (Frontend).
+Las dependencias principales se encuentran registradas y gestionadas en los archivos [composer.json](/composer.json) (Backend) y [package.json](/package.json) (Frontend).
 
 ---
 
@@ -24,7 +24,7 @@ Las dependencias principales se encuentran registradas y gestionadas en los arch
 
 ### Inertia.js (El Puente)
 * **¿Qué es?** Un framework de embridado (glue framework) que permite conectar un backend monolítico (como Laravel) con un frontend de componentes SPA (como Vue) sin necesidad de crear una API REST compleja con enrutamiento duplicado.
-* **Uso en el Proyecto:** Conecta nuestros controladores de Laravel directamente con las páginas Vue en [resources/js/Pages/](file:///C:/Users/della/Cronos-Notes/resources/js/Pages/).
+* **Uso en el Proyecto:** Conecta nuestros controladores de Laravel directamente con las páginas Vue en [resources/js/Pages/](/resources/js/Pages/).
 * **Funcionamiento Clave:** Intercepta todos los clics en enlaces dentro de la aplicación. En lugar de hacer una recarga completa del navegador, Inertia realiza una petición AJAX al servidor. El controlador de Laravel responde con un objeto JSON que contiene los datos (las `props`) y el nombre de la página Vue que debe cargarse. Inertia reemplaza dinámicamente la vista actual en el navegador, ofreciendo una experiencia SPA fluida.
 
 ### Tailwind CSS
@@ -44,7 +44,7 @@ Las dependencias principales se encuentran registradas y gestionadas en los arch
 ### Chart.js & Vue-Chartjs
 * **¿Qué es?** Una librería de gráficos HTML5 basada en Canvas, junto con su envoltorio oficial para Vue.
 * **Uso en el Proyecto:** Generación de gráficos interactivos en la pantalla de **Estadísticas de Usuario** (ej. horas de estudio diarias, pomodoros finalizados, tareas completadas por perfil).
-* **Funcionamiento Clave:** Recibe los datos procesados desde [app/Http/Controllers/EstadisticaController.php](file:///C:/Users/della/Cronos-Notes/app/Http/Controllers/EstadisticaController.php) como `props`, y dibuja en un elemento `<canvas>` del navegador gráficos de barra y dona que responden dinámicamente al pasar el mouse por encima.
+* **Funcionamiento Clave:** Recibe los datos procesados desde [app/Http/Controllers/EstadisticaController.php](/app/Http/Controllers/EstadisticaController.php) como `props`, y dibuja en un elemento `<canvas>` del navegador gráficos de barra y dona que responden dinámicamente al pasar el mouse por encima.
 
 ### Ziggy (tightenco/ziggy)
 * **¿Qué es?** Una librería que expone las rutas del backend de Laravel al frontend de JavaScript.

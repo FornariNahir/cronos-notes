@@ -14,7 +14,12 @@
             <h2 class="section-title">Tus perfiles</h2>
             <p class="section-subtitle">Seguí organizando y avanzando en tus lugares de trabajo.</p>
           </div>
-          
+          <button class="add-button" @click="irAPerfiles">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Añadir perfil
+          </button>
         </div>
 
         <div class="profiles-grid">
@@ -50,7 +55,7 @@
             <h3 class="profile-name">{{ perfil.tituloPerfil }}</h3>
             <p class="profile-date">
               <span v-if="perfil.esCompartido" class="badge bg-light text-secondary border me-1" style="font-size: 9px; font-weight: 500;">Compartido</span>
-              {{ perfilActivo && perfilActivo.idPerfil === perfil.idPerfil ? 'Perfil Activo' : 'Haz clic para seleccionar' }}
+              Ingresado por última vez el: {{ formatDate(perfil.updated_at) }}
             </p>
             <div class="progress-bar">
               <div class="progress-fill" :style="{ width: (animateProgress ? calcularProgreso(perfil) : 0) + '%' }"></div>
@@ -76,13 +81,14 @@
           <div class="stats-grid">
             <div class="stats-left flex flex-col gap-5">
               <!-- Streak Card -->
-              <Card>
-                <CardContent class="p-6 pt-6 flex items-center justify-between">
-                  <div>
-                    <div class="text-5xl font-bold text-[#612c2d]">{{ estadisticas.rachaActual || 0 }}</div>
-                    <div class="text-sm text-[#666] mt-1">días de racha</div>
+              <Card class="streak-card-with-accent">
+                <CardContent class="p-6 pt-6 flex items-center justify-between relative">
+                  <div class="streak-accent-bar"></div>
+                  <div class="flex-1">
+                    <div class="text-5xl font-bold streak-value">{{ estadisticas.rachaActual || 0 }}</div>
+                    <div class="text-sm streak-text mt-1">días de racha</div>
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-[#612c2d] opacity-80">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="streak-icon-svg">
                     <path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>
                   </svg>
                 </CardContent>
@@ -96,8 +102,8 @@
                 <CardContent>
                   <div class="flex items-center justify-center h-[180px]">
                     <Doughnut v-if="animateProgress && chartDataPerfil && chartDataPerfil.length > 0" :data="doughnutChartData" :options="doughnutChartOptions" />
-                    <div v-else-if="!animateProgress" class="text-sm text-[#666]">Cargando gráfico...</div>
-                    <div v-else class="text-sm text-[#666]">No hay sesiones de pomodoro registradas.</div>
+                    <div v-else-if="!animateProgress" class="text-sm no-data-text">Cargando gráfico...</div>
+                    <div v-else class="text-sm no-data-text">No hay sesiones de pomodoro registradas.</div>
                   </div>
                 </CardContent>
               </Card>
@@ -113,10 +119,10 @@
                 <div class="h-[280px] w-full" v-if="animateProgress && chartDataSemana && chartDataSemana.length > 0">
                   <Bar :data="barChartData" :options="barChartOptions" />
                 </div>
-                <div v-else-if="!animateProgress" class="flex items-center justify-center h-full text-sm text-[#666]">
+                <div v-else-if="!animateProgress" class="flex items-center justify-center h-full text-sm no-data-text">
                   Cargando gráfico...
                 </div>
-                <div v-else class="flex items-center justify-center h-full text-sm text-[#666]">
+                <div v-else class="flex items-center justify-center h-full text-sm no-data-text">
                   No hay horas de estudio registradas esta semana.
                 </div>
               </CardContent>
@@ -199,7 +205,20 @@ const obtenerIniciales = (nombreCompleto) => {
     .join('');
 };
 
+const isDarkMode = ref(false);
+
 onMounted(() => {
+  isDarkMode.value = document.body.classList.contains('cn-body-dark') || localStorage.getItem('cn-theme') === 'dark';
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        isDarkMode.value = document.body.classList.contains('cn-body-dark');
+      }
+    });
+  });
+  observer.observe(document.body, { attributes: true });
+
   setTimeout(() => {
     animateProgress.value = true;
   }, 150);
@@ -238,60 +257,72 @@ const formatDate = (date) => {
 
 const barChartData = computed(() => {
   const data = [...props.chartDataSemana].reverse();
+  const barColor = isDarkMode.value ? '#f4be95' : '#612c2d';
   return {
     labels: data.map(d => d.fecha),
     datasets: [{
       label: 'Horas de estudio',
-      backgroundColor: '#612c2d', // Color de marca del tema claro
+      backgroundColor: barColor,
       data: data.map(d => d.horas),
       borderRadius: 4
     }]
   }
 });
 
-const barChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      grid: { color: 'rgba(0, 0, 0, 0.05)', borderDash: [5, 5] },
-      ticks: { color: '#666', font: { size: 12 } },
-      border: { display: false }
+const barChartOptions = computed(() => {
+  const textColor = isDarkMode.value ? '#fcd5b8' : '#666';
+  const gridColor = isDarkMode.value ? 'rgba(244, 190, 149, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+  const tooltipBg = isDarkMode.value ? '#4c2521' : '#fff';
+  const tooltipBorder = isDarkMode.value ? '#7b413f' : '#e5e5e5';
+  const tooltipTitle = isDarkMode.value ? '#ffffff' : '#1a1a1a';
+  const tooltipBody = isDarkMode.value ? '#fcd5b8' : '#666';
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: gridColor, borderDash: [5, 5] },
+        ticks: { color: textColor, font: { size: 12 } },
+        border: { display: false }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: textColor, font: { size: 12 } },
+        border: { display: false }
+      }
     },
-    x: {
-      grid: { display: false },
-      ticks: { color: '#666', font: { size: 12 } },
-      border: { display: false }
-    }
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: '#fff',
-      titleColor: '#1a1a1a',
-      bodyColor: '#666',
-      borderColor: '#e5e5e5',
-      borderWidth: 1,
-      padding: 12,
-      boxPadding: 4,
-      usePointStyle: true,
-      callbacks: {
-        label: function(context) {
-          return context.parsed.y + ' hrs';
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        titleColor: tooltipTitle,
+        bodyColor: tooltipBody,
+        borderColor: tooltipBorder,
+        borderWidth: 1,
+        padding: 12,
+        boxPadding: 4,
+        usePointStyle: true,
+        callbacks: {
+          label: function(context) {
+            return context.parsed.y + ' hrs';
+          }
         }
       }
     }
-  }
-};
+  };
+});
 
 const doughnutChartData = computed(() => {
   return {
     labels: props.chartDataPerfil.map(d => d.perfil),
     datasets: [{
       backgroundColor: props.chartDataPerfil.map((d, index) => {
-        const colorPalette = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
-        return d.color || colorPalette[index % colorPalette.length];
+        const lightPalette = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
+        const darkPalette = ['#f4be95', '#f9dac3', '#fbe8da', '#cf997b', '#aa7561'];
+        const palette = isDarkMode.value ? darkPalette : lightPalette;
+        return d.color || palette[index % palette.length];
       }),
       data: props.chartDataPerfil.map(d => d.horas),
       borderWidth: 0
@@ -299,26 +330,34 @@ const doughnutChartData = computed(() => {
   }
 });
 
-const doughnutChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: '75%',
-  plugins: {
-    legend: {
-      position: 'right',
-      labels: { color: '#666', usePointStyle: true, pointStyle: 'circle' }
-    },
-    tooltip: {
-      backgroundColor: '#fff',
-      titleColor: '#1a1a1a',
-      bodyColor: '#666',
-      borderColor: '#e5e5e5',
-      borderWidth: 1,
-      padding: 12,
-      usePointStyle: true,
+const doughnutChartOptions = computed(() => {
+  const textColor = isDarkMode.value ? '#fcd5b8' : '#666';
+  const tooltipBg = isDarkMode.value ? '#4c2521' : '#fff';
+  const tooltipBorder = isDarkMode.value ? '#7b413f' : '#e5e5e5';
+  const tooltipTitle = isDarkMode.value ? '#ffffff' : '#1a1a1a';
+  const tooltipBody = isDarkMode.value ? '#fcd5b8' : '#666';
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '75%',
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { color: textColor, usePointStyle: true, pointStyle: 'circle' }
+      },
+      tooltip: {
+        backgroundColor: tooltipBg,
+        titleColor: tooltipTitle,
+        bodyColor: tooltipBody,
+        borderColor: tooltipBorder,
+        borderWidth: 1,
+        padding: 12,
+        usePointStyle: true,
+      }
     }
-  }
-};
+  };
+});
 </script>
 
 <style scoped>

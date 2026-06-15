@@ -266,7 +266,7 @@ const textoEstado = (estado) => {
 
         <div v-if="perfilActivo">
             <!-- Barra de Filtros -->
-            <div v-if="tareasList.length > 0" class="d-flex flex-wrap gap-3 mb-4 p-3 bg-white border rounded shadow-sm align-items-end">
+            <div v-if="tareasList.length > 0" class="d-flex flex-wrap gap-3 mb-4 p-3 bg-white border rounded shadow-sm align-items-end barra-filtros-tareas">
                 <div class="flex-grow-1">
                     <label class="form-label text-secondary small fw-medium mb-1">Filtrar por Estado</label>
                     <select v-model="filtroEstado" class="form-select select-custom form-select-sm">
@@ -314,7 +314,7 @@ const textoEstado = (estado) => {
                         <p class="text-secondary small text-desc flex-grow-1 cursor-pointer btn-ver-detalle" @click="abrirDetalle(tarea)">
                             {{ tarea.descripcionTarea || 'Sin descripción' }}
                         </p>
-                        <div v-if="tarea.sugerenciaIA" class="mt-2 mb-1 p-2 bg-light rounded text-dark small border-start border-3 border-info">
+                        <div v-if="tarea.sugerenciaIA" class="mt-2 mb-1 p-2 bg-light rounded text-dark small border-start border-3 border-info sugerencia-ia-box">
                             <i class="bi bi-robot text-info me-1"></i> <strong>IA:</strong> {{ tarea.sugerenciaIA }}
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">

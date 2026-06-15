@@ -105,10 +105,8 @@
           </div>
           <div class="top-bar-actions">
               <button class="icon-button" @click="toggleMode" title="Cambiar Modo">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                  </svg>
+                  <i v-if="isDarkMode" class="bi bi-sun-fill text-warning" style="font-size: 1.25rem;"></i>
+                  <i v-else class="bi bi-moon-fill" style="font-size: 1.25rem;"></i>
               </button>
               <div class="settings-dropdown-container" ref="dropdownRef">
                   <button class="avatar" @click="toggleDropdown" aria-label="Menú de usuario">
@@ -153,6 +151,7 @@ const isSidebarClosed = ref(true);
 const isZenMode = ref(false);
 const isSettingsDropdownOpen = ref(false);
 const dropdownRef = ref(null);
+const isDarkMode = ref(false);
 
 const toggleDropdown = () => {
   isSettingsDropdownOpen.value = !isSettingsDropdownOpen.value;
@@ -189,6 +188,15 @@ const handleClickOutside = (event) => {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  
+  isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
+  if (isDarkMode.value) {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.add('cn-body-dark');
+  } else {
+    document.body.classList.remove('cn-body-dark');
+    document.body.classList.add('cn-body-light');
+  }
 });
 
 onUnmounted(() => {
@@ -206,8 +214,16 @@ const closeSidebarOnMobile = () => {
 };
 
 const toggleMode = () => {
-  isZenMode.value = !isZenMode.value;
-  document.body.classList.toggle('light-mode');
+  isDarkMode.value = !isDarkMode.value;
+  if (isDarkMode.value) {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.add('cn-body-dark');
+    localStorage.setItem('cn-theme', 'dark');
+  } else {
+    document.body.classList.remove('cn-body-dark');
+    document.body.classList.add('cn-body-light');
+    localStorage.setItem('cn-theme', 'light');
+  }
 };
 </script>
 
@@ -546,5 +562,556 @@ const toggleMode = () => {
 @keyframes slideIn {
   from { transform: translateY(-10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<style>
+/* Global Dark Mode Overrides */
+body.cn-body-dark .layout-container {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark #content {
+  background-color: #612c2d !important;
+}
+
+body.cn-body-dark .sidebar {
+  background-color: #4d2323 !important;
+  border-right: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .logo-icon img {
+  filter: brightness(0) invert(1) !important;
+}
+
+body.cn-body-dark .nav-item {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .nav-item:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .nav-item.active {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .nav-section-title {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .top-bar {
+  background-color: #4d2323 !important;
+  border-bottom: 1px solid #7b413f !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+body.cn-body-dark .search-input {
+  background-color: #f3f4f6 !important;
+  border-color: transparent !important;
+  color: #333333 !important;
+}
+
+body.cn-body-dark .search-input::placeholder {
+  color: #666666 !important;
+  opacity: 0.8;
+}
+
+body.cn-body-dark .search-input:focus {
+  border-color: #f4be95 !important;
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 0 0 2px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .icon-button {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .icon-button:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .avatar {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .settings-dropdown {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .dropdown-item {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .dropdown-item:hover {
+  background-color: #7b413f !important;
+}
+
+body.cn-body-dark .error-toast {
+  background-color: #4d2323 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .success-toast {
+  background-color: #4d2323 !important;
+  color: #ffffff !important;
+  border-color: #f4be95 !important;
+}
+
+/* Dynamic sub-page elements (Dashboard, Calendario, Tareas, etc.) */
+body.cn-body-dark .welcome-title,
+body.cn-body-dark .section-title,
+body.cn-body-dark .bar-chart-title,
+body.cn-body-dark .donut-card-title,
+body.cn-body-dark .modal-title,
+body.cn-body-dark h1,
+body.cn-body-dark h2,
+body.cn-body-dark h3,
+body.cn-body-dark h4,
+body.cn-body-dark h5,
+body.cn-body-dark h6 {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark p,
+body.cn-body-dark .section-subtitle,
+body.cn-body-dark .streak-label,
+body.cn-body-dark .no-data-text,
+body.cn-body-dark .profile-date,
+body.cn-body-dark .text-muted,
+body.cn-body-dark .text-secondary {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .profile-card,
+body.cn-body-dark .streak-card,
+body.cn-body-dark .donut-card,
+body.cn-body-dark .bar-chart-card,
+body.cn-body-dark .task-card-light,
+body.cn-body-dark .info-card,
+body.cn-body-dark .card,
+body.cn-body-dark .modal-content,
+body.cn-body-dark .rounded-xl,
+body.cn-body-dark .streak-card-with-accent {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .profile-card {
+  position: relative !important;
+  overflow: hidden !important;
+  padding-bottom: 55px !important;
+}
+
+body.cn-body-dark .profile-card:hover,
+body.cn-body-dark .task-card-light:hover,
+body.cn-body-dark .info-card:hover,
+body.cn-body-dark .rounded-xl:hover {
+  border-color: #f4be95 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.cn-body-dark .profile-card.active-card {
+  border: 2px solid #f4be95 !important;
+  box-shadow: 0 2px 8px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .profile-icon {
+  border: 2px solid #f4be95 !important;
+  color: #f4be95 !important;
+  background-color: #612c2d !important;
+}
+
+body.cn-body-dark .profile-card .progress-bar {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: 30px !important;
+  background-color: #3b1717 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  border-top: 1px solid #7b413f !important;
+  overflow: hidden !important;
+}
+
+body.cn-body-dark .profile-card .progress-fill {
+  height: 100% !important;
+  background-color: #f4be95 !important;
+  border-radius: 0 !important;
+  transition: width 1s ease-out !important;
+}
+
+body.cn-body-dark .streak-number,
+body.cn-body-dark .streak-icon {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .add-profile-card {
+  border: 2px dashed #a55e57 !important;
+  color: #f4be95 !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .add-profile-card:hover {
+  border-color: #f4be95 !important;
+  background-color: rgba(244, 190, 149, 0.05) !important;
+}
+
+body.cn-body-dark .dashboard-page {
+  background-color: #612c2d !important;
+}
+
+/* Streak Card Left Accent & Values */
+.streak-value {
+  color: #612c2d;
+}
+.streak-text {
+  color: #666;
+}
+.streak-icon-svg {
+  color: #612c2d;
+  opacity: 0.8;
+}
+.streak-accent-bar {
+  display: none;
+}
+
+body.cn-body-dark .streak-card-with-accent {
+  position: relative !important;
+  padding-left: 0 !important;
+}
+
+body.cn-body-dark .streak-card-with-accent .flex-1 {
+  padding-left: 12px !important;
+}
+
+body.cn-body-dark .streak-accent-bar {
+  display: block !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 12px !important;
+  background-color: #f4be95 !important;
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+}
+
+body.cn-body-dark .streak-value {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .streak-text {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .streak-icon-svg {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .range-select {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .range-select:focus {
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .owner-avatar-badge-card {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+  border-color: #4d2323 !important;
+}
+
+body.cn-body-dark .shared-icon-badge-card {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-primary,
+body.cn-body-dark .btn-premium {
+  background-color: #f4be95 !important;
+  border-color: #f4be95 !important;
+  color: #4d2323 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .btn-primary:hover,
+body.cn-body-dark .btn-premium:hover {
+  background-color: #a55e57 !important;
+  border-color: #a55e57 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-outline-primary,
+body.cn-body-dark .btn-outline-premium {
+  border-color: #f4be95 !important;
+  color: #f4be95 !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .btn-outline-primary:hover,
+body.cn-body-dark .btn-outline-premium:hover {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .form-control,
+body.cn-body-dark .form-select,
+body.cn-body-dark input,
+body.cn-body-dark select,
+body.cn-body-dark textarea {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .form-control:focus,
+body.cn-body-dark .form-select:focus,
+body.cn-body-dark input:focus,
+body.cn-body-dark select:focus,
+body.cn-body-dark textarea:focus {
+  border-color: #f4be95 !important;
+  box-shadow: 0 0 0 2px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .add-button {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .add-button:hover {
+  background-color: #fbe8da !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .text-\[\#666\],
+body.cn-body-dark .text-\[\#1a1a1a\] {
+  color: #fcd5b8 !important;
+}
+
+/* Profiles Management Page (GestionPerfil.vue) Dark Mode Overrides */
+body.cn-body-dark .btn-marron {
+  background-color: #f4be95 !important;
+  border-color: #f4be95 !important;
+  color: #4d2323 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .btn-marron:hover,
+body.cn-body-dark .btn-marron:focus {
+  background-color: #fbe8da !important;
+  border-color: #fbe8da !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .btn-filtro {
+  background-color: #4d2323 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-filtro:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-filtro.active {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+  border-color: #f4be95 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .conmutador-vistas-box {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-vista {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .btn-vista:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-vista.active {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .card-perfil {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .icon-box-perfil {
+  background-color: #612c2d !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-outline-secondary {
+  border-color: #7b413f !important;
+  color: #fcd5b8 !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .btn-outline-secondary:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-outline-danger {
+  border-color: #7b413f !important;
+  color: #fca5a5 !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .btn-outline-danger:hover {
+  background-color: #991b1b !important;
+  color: #ffffff !important;
+  border-color: #fca5a5 !important;
+}
+
+/* Modal Headers & Controls Globally */
+body.cn-body-dark .modal-header {
+  background-color: #4d2323 !important;
+  border-bottom: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .modal-header .modal-title,
+body.cn-body-dark .modal-header h5,
+body.cn-body-dark .modal-header .text-dark,
+body.cn-body-dark .modal-content .text-dark {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .modal-header .btn-close {
+  filter: invert(1) !important;
+}
+
+body.cn-body-dark .input-custom,
+body.cn-body-dark .select-custom {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .input-custom:focus,
+body.cn-body-dark .select-custom:focus {
+  border-color: #f4be95 !important;
+  box-shadow: 0 0 0 2px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .btn-light-custom {
+  background-color: #612c2d !important;
+  color: #fcd5b8 !important;
+  border: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .btn-light-custom:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+/* Icon Selection Buttons in Modal */
+body.cn-body-dark .modal-body .btn.border {
+  background-color: #612c2d !important;
+  border-color: #7b413f !important;
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .modal-body .btn.border:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .modal-body .btn.border.border-marron {
+  background-color: #f4be95 !important;
+  border-color: #f4be95 !important;
+  color: #4d2323 !important;
+}
+
+/* Tasks Management Page (GestionTareas.vue) Dark Mode Overrides */
+body.cn-body-dark .barra-filtros-tareas {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .text-marron-institucional {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-light {
+  background-color: #612c2d !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-light:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .badge-estado {
+  background-color: #612c2d !important;
+  border-color: #7b413f !important;
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .sugerencia-ia-box {
+  background-color: #3b1717 !important;
+  color: #ffffff !important;
+  border-color: #0dcaf0 !important;
+}
+
+body.cn-body-dark .sugerencia-ia-box strong {
+  color: #0dcaf0 !important;
+}
+
+/* Ver Detalle Modal (GestionTareas.vue) Dark Mode Overrides */
+body.cn-body-dark .header-detalle-marron {
+  background-color: #3b1717 !important;
+  border-bottom: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .header-detalle-marron .badge.bg-white {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .modal-body.bg-white {
+  background-color: #4d2323 !important;
+}
+
+body.cn-body-dark .modal-body .text-dark,
+body.cn-body-dark .modal-body .fw-semibold.text-dark {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .modal-body .text-marron-institucional {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .modal-body .border-top {
+  border-color: #7b413f !important;
 }
 </style>

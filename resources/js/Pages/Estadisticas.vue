@@ -15,15 +15,50 @@ const props = defineProps({
   chartDataPerfil: Array,
 });
 
+const isDarkMode = ref(false);
+
+// Control de animaciones y MutationObserver para modo oscuro
+const animateProgress = ref(false);
+
+onMounted(() => {
+  isDarkMode.value = document.body.classList.contains('cn-body-dark') || localStorage.getItem('cn-theme') === 'dark';
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class') {
+        isDarkMode.value = document.body.classList.contains('cn-body-dark');
+      }
+    });
+  });
+  observer.observe(document.body, { attributes: true });
+
+  setTimeout(() => {
+    animateProgress.value = true;
+  }, 100);
+});
+
 // Lógica de Gráficos de Dashboard
 const maxBarHours = computed(() => {
   if (!props.chartDataSemana || props.chartDataSemana.length === 0) return 4;
   return Math.max(4, ...props.chartDataSemana.map(d => Math.ceil(d.horas)));
 });
 
+const chartDataPerfilConColores = computed(() => {
+  if (!props.chartDataPerfil) return [];
+  const lightPalette = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
+  const darkPalette = ['#f4be95', '#f9dac3', '#fbe8da', '#cf997b', '#aa7561'];
+  const palette = isDarkMode.value ? darkPalette : lightPalette;
+  
+  return props.chartDataPerfil.map((p, index) => {
+    return {
+      ...p,
+      color: p.color || palette[index % palette.length]
+    };
+  });
+});
+
 const totalHorasPerfil = computed(() => {
-  if (!props.chartDataPerfil) return 0;
-  return props.chartDataPerfil.reduce((sum, p) => sum + p.horas, 0);
+  return chartDataPerfilConColores.value.reduce((sum, p) => sum + p.horas, 0);
 });
 
 const getDashArray = (horas, total) => {
@@ -34,19 +69,10 @@ const getDashArray = (horas, total) => {
 const getDashOffset = (index) => {
   let offset = 0;
   for (let i = 0; i < index; i++) {
-    offset += getDashArray(props.chartDataPerfil[i].horas, totalHorasPerfil.value);
+    offset += getDashArray(chartDataPerfilConColores.value[i].horas, totalHorasPerfil.value);
   }
   return 25 - offset; 
 };
-
-// Control de animaciones
-const animateProgress = ref(false);
-
-onMounted(() => {
-  setTimeout(() => {
-    animateProgress.value = true;
-  }, 100);
-});
 </script>
 
 <template>
@@ -104,11 +130,11 @@ onMounted(() => {
         <!-- Donut Chart -->
         <div class="chart-card">
           <h3 class="chart-title">Horas de pomodoro por perfil</h3>
-          <div class="donut-content" v-if="animateProgress && chartDataPerfil && chartDataPerfil.length > 0">
+          <div class="donut-content" v-if="animateProgress && chartDataPerfilConColores && chartDataPerfilConColores.length > 0">
             <svg class="donut-chart" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15.915" fill="none" stroke="#e5d5d5" stroke-width="3"/>
+              <circle cx="18" cy="18" r="15.915" fill="none" :stroke="isDarkMode ? '#612c2d' : '#e5d5d5'" stroke-width="3"/>
               <circle 
-                v-for="(perfil, index) in chartDataPerfil"
+                v-for="(perfil, index) in chartDataPerfilConColores"
                 :key="index"
                 cx="18" cy="18" r="15.915" fill="none" 
                 :stroke="perfil.color" stroke-width="3" 
@@ -117,7 +143,7 @@ onMounted(() => {
               />
             </svg>
             <div class="donut-legend">
-              <div class="legend-item" v-for="(perfil, index) in chartDataPerfil" :key="'leg-'+index">
+              <div class="legend-item" v-for="(perfil, index) in chartDataPerfilConColores" :key="'leg-'+index">
                 <span class="legend-dot" :style="{ backgroundColor: perfil.color }"></span>
                 {{ perfil.perfil }}: {{ perfil.horas }}h ({{ perfil.sesiones }} sesiones)
               </div>
@@ -507,5 +533,98 @@ onMounted(() => {
     .summary-grid {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+/* Statistics Page Dark Mode Styles */
+body.cn-body-dark .stat-card {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .stat-icon {
+  background-color: #612c2d !important;
+}
+
+body.cn-body-dark .stat-info .stat-value {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .stat-info .stat-label {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .chart-card {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .chart-title {
+  color: #ffffff !important;
+  border-bottom: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .legend-item {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .bar {
+  background-color: #f4be95 !important;
+}
+
+body.cn-body-dark .bar:hover {
+  background-color: #fbe8da !important;
+}
+
+body.cn-body-dark .bar-chart-y-axis,
+body.cn-body-dark .bar-date {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .comparison-bar {
+  background-color: #612c2d !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .comparison-fill-created {
+  background-color: #f4be95 !important;
+}
+
+body.cn-body-dark .comparison-fill-completed {
+  background-color: #cf997b !important;
+}
+
+body.cn-body-dark .comparison-number {
+  color: #4d2323 !important;
+}
+
+body.cn-body-dark .comparison-label {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .circular-bg {
+  background: conic-gradient(var(--fill-color, #f4be95) calc(var(--percentage) * 1%), #612c2d 0) !important;
+}
+
+body.cn-body-dark .circular-bg::before {
+  background-color: #4d2323 !important;
+  color: var(--fill-color, #f4be95) !important;
+}
+
+body.cn-body-dark .base-color {
+  --fill-color: #f4be95 !important;
+}
+
+body.cn-body-dark .eff-color {
+  --fill-color: #f9dac3 !important;
+}
+
+body.cn-body-dark .delay-color {
+  --fill-color: #cf997b !important;
+}
+
+body.cn-body-dark .circular-label {
+  color: #fcd5b8 !important;
 }
 </style>

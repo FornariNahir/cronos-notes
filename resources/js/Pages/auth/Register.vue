@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted, onUnmounted, ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 const form = useForm({
@@ -16,12 +17,27 @@ const submit = () => {
 };
 
 const setFocus = (event) => {
-    event.target.parentElement.querySelector('.icon').style.color = '#8b5a4b';
+    const color = localStorage.getItem('cn-theme') === 'dark' ? '#e38e76' : '#8b5a4b';
+    event.target.parentElement.querySelector('.icon').style.color = color;
 };
 
 const removeFocus = (event) => {
     event.target.parentElement.querySelector('.icon').style.color = '#888';
 };
+
+onMounted(() => {
+    const isDark = localStorage.getItem('cn-theme') === 'dark';
+    if (isDark) {
+        document.body.classList.add('cn-body-dark');
+    } else {
+        document.body.classList.add('cn-body-light');
+    }
+});
+
+onUnmounted(() => {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.remove('cn-body-dark');
+});
 </script>
 
 <template>
@@ -161,6 +177,11 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     min-height: 100vh;
     background-color: #e8e5e1;
+    transition: background-color 0.3s ease;
+}
+
+body.cn-body-dark {
+    background-color: #612c2d !important;
 }
 
 #app {
@@ -412,5 +433,86 @@ html, body {
 
 .container {
     animation: fadeIn 0.6s ease-out;
+}
+
+/* Dark Mode Overrides */
+body.cn-body-dark .shape-1 {
+    background-color: #4c2521;
+    opacity: 0.8;
+}
+
+body.cn-body-dark .shape-2 {
+    background-color: #7b413f;
+    opacity: 0.4;
+}
+
+body.cn-body-dark .shape-3 {
+    background-color: #7b413f;
+    opacity: 0.3;
+}
+
+body.cn-body-dark .shape-4 {
+    background-color: #8a4a3f;
+    opacity: 0.2;
+}
+
+body.cn-body-dark .container {
+    background-color: rgba(76, 37, 33, 0.75);
+    border: 1px solid rgba(244, 190, 149, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+body.cn-body-dark .form-panel h1 {
+    color: #ffffff;
+}
+
+body.cn-body-dark .input-group input {
+    background-color: #f3f0ed;
+    color: #2b211f;
+}
+
+body.cn-body-dark .input-group input:focus {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 2px rgba(227, 142, 118, 0.4);
+}
+
+body.cn-body-dark .btn-register {
+    background-color: #e38e76;
+    color: #ffffff;
+}
+
+body.cn-body-dark .btn-register:hover {
+    background-color: #a55e57;
+    box-shadow: 0 4px 12px rgba(227, 142, 118, 0.3);
+}
+
+body.cn-body-dark .login-link {
+    color: #fcd5b8;
+}
+
+body.cn-body-dark .login-link a {
+    color: #ffffff;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+body.cn-body-dark .login-link a:hover {
+    color: #e38e76;
+}
+
+body.cn-body-dark .btn-google {
+    color: #ffffff;
+    border: 1px solid rgba(244, 190, 149, 0.3);
+}
+
+body.cn-body-dark .btn-google:hover {
+    background-color: rgba(244, 190, 149, 0.1);
+    border-color: #e38e76;
+}
+
+body.cn-body-dark .illustration-panel {
+    background-color: #e38e76;
 }
 </style>

@@ -17,6 +17,9 @@ const toggleTheme = () => {
     }
 };
 
+let onScroll = null;
+let typedInstance = null;
+
 onMounted(async () => {
     isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
     if (isDarkMode.value) {
@@ -60,11 +63,16 @@ onMounted(async () => {
         // ---- AOS (Animate On Scroll) ----
         if (window.AOS) {
             window.AOS.init({ duration: 800, easing: 'ease-out-cubic', once: true, offset: 80 });
+            setTimeout(() => {
+                if (window.AOS) {
+                    window.AOS.refresh();
+                }
+            }, 100);
         }
 
         // ---- Typed.js (texto dinámico del hero) ----
         if (window.Typed) {
-            new window.Typed('#typed', {
+            typedInstance = new window.Typed('#typed', {
                 strings: [
                     'gestionar tu tiempo.',
                     'optimizar tus materias.',
@@ -84,8 +92,8 @@ onMounted(async () => {
     }
 
     // ---- Navbar con cambio al hacer scroll ----
-    const navbar = document.getElementById('cnNavbar');
-    const onScroll = () => {
+    onScroll = () => {
+        const navbar = document.getElementById('cnNavbar');
         if (!navbar) return;
         if (window.scrollY > 30) navbar.classList.add('scrolled');
         else navbar.classList.remove('scrolled');
@@ -138,6 +146,12 @@ onUnmounted(() => {
     // Clean up class to return body to dashboard style
     document.body.classList.remove('cn-body-light');
     document.body.classList.remove('cn-body-dark');
+    if (onScroll) {
+        window.removeEventListener('scroll', onScroll);
+    }
+    if (typedInstance) {
+        typedInstance.destroy();
+    }
 });
 </script>
 
@@ -223,7 +237,7 @@ onUnmounted(() => {
                         <div class="cn-avatars">
                             <span></span><span></span><span></span><span></span>
                         </div>
-                        <span class="cn-meta-text">Empieza a Optimiar tu Tiempo Ahora</span>
+                        <span class="cn-meta-text">Empieza a Optimizar tu Tiempo Ahora</span>
                     </div>
                 </div>
 
@@ -444,14 +458,14 @@ onUnmounted(() => {
     <!-- ===== FOOTER ===== -->
     <footer class="cn-footer">
         <div class="container">
-            <div class="row g-4 align-items-start justify-content-between">
+            <div class="row g-4 align-items-start justify-content-start">
                 <div class="col-lg-6">
                     <a class="navbar-brand cn-brand cn-brand-footer" href="#hero">
                         <img src="/img/logo-cronos.png" alt="Cronos Notes Logo" class="cn-footer-logo" />
                     </a>
                     <p class="cn-footer-text mt-3">El espacio inteligente donde tu tiempo y tus tareas trabajan a tu favor.</p>
                 </div>
-                <div class="col-lg-3">
+                <div class="col-lg-3 offset-lg-1">
                     <h4 class="cn-footer-head">Producto</h4>
                     <ul class="cn-footer-links">
                         <li><Link :href="route('caracteristicas')">Características</Link></li>
@@ -480,11 +494,12 @@ body.cn-body-light {
   --cn-brown-dark: #4c2521;
   --cn-brown-dark-2: #69342e;
   --cn-brown-soft: #c17f59;
+  --cn-brown-soft-text: #964d26;  /* Versión oscura para contraste accesible de texto */
   --cn-brown-hover: #542924;
   --cn-bg-light: #f8f9fa;
   --cn-white: #ffffff;
   --cn-text: #212529;
-  --cn-text-muted: #6b5e59;
+  --cn-text-muted: #574a44;      /* Un poco más oscuro para mejor legibilidad */
   --cn-shadow: 0 18px 50px -20px rgba(76, 37, 33, 0.35);
   --cn-shadow-soft: 0 10px 30px -15px rgba(76, 37, 33, 0.25);
   
@@ -504,6 +519,21 @@ body.cn-body-light {
   --cn-socials-bg: rgba(76, 37, 33, 0.06);
   --cn-border-solid: #f0ece9;
 
+  /* Colores de texto en botones y elementos interactivos */
+  --cn-btn-primary-text: #ffffff;
+  --cn-btn-primary-text-hover: #ffffff;
+  --cn-card-icon-hover-text: #ffffff;
+  --cn-socials-hover-text: #ffffff;
+
+  /* Estilos del Mockup */
+  --cn-mockup-bg: #ffffff;
+  --cn-mockup-border: rgba(76, 37, 33, 0.07);
+  --cn-mockup-card-bg: var(--cn-bg-light);
+
+  /* Links del Footer */
+  --cn-footer-link-color: var(--cn-text-muted);
+  --cn-footer-link-hover-color: var(--cn-brown-dark-2);
+
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
   color: var(--cn-text) !important;
   background-color: var(--cn-white) !important;
@@ -512,14 +542,15 @@ body.cn-body-light {
 
 /* Evitar conflictos con hojas globales en el landing - OSCURO */
 body.cn-body-dark {
-  --cn-brown-dark: #f4be95;      /* Peach/cream color for text headings/highlights */
-  --cn-brown-dark-2: #e38e76;    /* Terracotta for buttons/accents */
-  --cn-brown-soft: #e38e76;      /* Soft rose/terracotta */
-  --cn-brown-hover: #fcd5b8;     /* Lighter peach for hover states */
-  --cn-bg-light: #4c2521;        /* Slightly darker burgundy background for sections */
-  --cn-white: #612c2d;           /* MAIN BACKGROUND: Dark Burgundy/Maroon */
-  --cn-text: #fffcfb;            /* Primary text (Warm White) */
-  --cn-text-muted: #f4be95;      /* Secondary text (Peach) */
+  --cn-brown-dark: #f4be95;      /* Color durazno/crema para encabezados/destaques */
+  --cn-brown-dark-2: #e38e76;    /* Terracota para botones/acentos */
+  --cn-brown-soft: #e38e76;      /* Rosa suave/terracota */
+  --cn-brown-soft-text: #f4be95; /* Versión más clara para alto contraste en fondo oscuro */
+  --cn-brown-hover: #fcd5b8;     /* Durazno más claro para hover */
+  --cn-bg-light: #4c2521;        /* Fondo burdeos un poco más oscuro para secciones */
+  --cn-white: #612c2d;           /* FONDO PRINCIPAL: Burdeos oscuro / Granate */
+  --cn-text: #fffcfb;            /* Texto primario (Blanco cálido) */
+  --cn-text-muted: #f4be95;      /* Texto secundario (Durazno) */
   --cn-shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.6);
   --cn-shadow-soft: 0 10px 30px -15px rgba(0, 0, 0, 0.4);
   
@@ -527,17 +558,32 @@ body.cn-body-dark {
   --cn-navbar-bg: rgba(76, 37, 33, 0.85);
   --cn-navbar-scrolled-bg: rgba(97, 44, 45, 0.95);
   --cn-border-soft: rgba(244, 190, 149, 0.15);
-  --cn-btn-ghost-border: rgba(244, 190, 149, 0.3);
+  --cn-btn-ghost-border: rgba(244, 190, 149, 0.35);
   --cn-btn-ghost-hover-bg: rgba(244, 190, 149, 0.15);
   --cn-hero-glow: radial-gradient(circle, rgba(244, 190, 149, 0.2), transparent 70%);
   --cn-hero-gradient: radial-gradient(1200px 600px at 80% -10%, rgba(227, 142, 118, 0.12), transparent 60%), var(--cn-bg-light);
   --cn-footer-divider: rgba(244, 190, 149, 0.2);
-  --cn-card-bg: #4c2521;         /* Card background in dark burgundy */
+  --cn-card-bg: #4c2521;         /* Fondo de tarjetas en burdeos oscuro */
   --cn-card-icon-bg: rgba(244, 190, 149, 0.15);
   --cn-pill-soft-bg: #7b413f;
   --cn-video-badge-bg: rgba(76, 37, 33, 0.9);
   --cn-socials-bg: rgba(244, 190, 149, 0.12);
   --cn-border-solid: #7b413f;
+
+  /* Correcciones de contraste en texto de botones e interactivos */
+  --cn-btn-primary-text: #4c2521;       /* Texto burdeos oscuro sobre fondo durazno claro */
+  --cn-btn-primary-text-hover: #3b1717; /* Burdeos aún más oscuro en hover */
+  --cn-card-icon-hover-text: #4c2521;
+  --cn-socials-hover-text: #4c2521;
+
+  /* Integración de mockup en tema oscuro */
+  --cn-mockup-bg: #4c2521;
+  --cn-mockup-border: rgba(255, 255, 255, 0.1);
+  --cn-mockup-card-bg: rgba(255, 255, 255, 0.05);
+
+  /* Links del Footer */
+  --cn-footer-link-color: var(--cn-text-muted);
+  --cn-footer-link-hover-color: #ffffff; /* Blanco brillante en hover sobre fondo oscuro */
 
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif !important;
   color: var(--cn-text) !important;
@@ -603,10 +649,10 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   align-items: center;
   gap: .6rem;
   text-decoration: none;
-  margin-left: -20px !important; /* Forces the logo to align further to the left, bypassing container padding */
+  margin-left: -20px !important; /* Mueve el logo más a la izquierda alineado */
 }
 .cn-navbar-logo {
-  height: 80px; /* Make it large and visible, but balanced so it is not too thick */
+  height: 80px;
   width: auto;
   object-fit: contain;
 }
@@ -647,16 +693,17 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 /* ===== BOTONES ===== */
 .cn-btn-primary {
   background: var(--cn-brown-dark) !important;
-  color: #fff !important;
+  color: var(--cn-btn-primary-text, #fff) !important;
   font-weight: 600;
   border-radius: 50px;
   border: 1px solid var(--cn-brown-dark) !important;
   box-shadow: var(--cn-shadow-soft);
   text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cn-btn-primary:hover {
   background: var(--cn-brown-hover) !important;
-  color: #fff !important;
+  color: var(--cn-btn-primary-text-hover, #fff) !important;
   transform: translateY(-2px);
   box-shadow: 0 14px 30px -12px rgba(76, 37, 33, 0.55);
 }
@@ -667,6 +714,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   border-radius: 50px;
   border: 1px solid var(--cn-btn-ghost-border) !important;
   text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cn-btn-ghost:hover { background: var(--cn-btn-ghost-hover-bg) !important; color: var(--cn-brown-dark) !important; transform: translateY(-2px); }
 .cn-cta:hover { letter-spacing: .3px; }
@@ -677,7 +725,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   padding: 11rem 0 6rem;
   background: var(--cn-hero-gradient);
   overflow: hidden;
-  text-align: left; /* Explicitly left-align on desktop */
+  text-align: left;
 }
 .cn-hero-glow {
   position: absolute; top: -120px; right: -120px;
@@ -722,14 +770,15 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 /* ===== MOCKUP ===== */
 .cn-mockup { position: relative; transform-style: preserve-3d; perspective: 1000px; }
 .cn-mockup-inner {
-  background: #fff;
+  background: var(--cn-mockup-bg, #ffffff);
   border-radius: 24px;
   padding: 1.4rem;
   box-shadow: var(--cn-shadow);
-  border: 1px solid rgba(76, 37, 33, 0.07);
+  border: 1px solid var(--cn-mockup-border, rgba(76, 37, 33, 0.07));
   transform-style: preserve-3d;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
-.cn-mockup-head { display: flex; align-items: center; gap: .4rem; padding-bottom: 1rem; border-bottom: 1px solid #f0ece9; }
+.cn-mockup-head { display: flex; align-items: center; gap: .4rem; padding-bottom: 1rem; border-bottom: 1px solid var(--cn-border-solid); }
 .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
 .dot-r { background: #e06c5e; } .dot-y { background: #e0b25e; } .dot-g { background: #7fb87a; }
 .cn-mockup-title { margin-left: auto; font-size: .8rem; font-weight: 600; color: var(--cn-text-muted); }
@@ -746,16 +795,17 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 @keyframes ringPulse { from { stroke-dashoffset: 110; } to { stroke-dashoffset: 60; } }
 .cn-timer-label { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
 .cn-timer-time { font-family: 'Fraunces', serif; font-size: 2.1rem; font-weight: 700; color: var(--cn-brown-dark) !important; }
-.cn-timer-state { font-size: .8rem; color: var(--cn-brown-soft) !important; font-weight: 600; }
+.cn-timer-state { font-size: .8rem; color: var(--cn-brown-soft-text) !important; font-weight: 600; }
 
 .cn-tasks { display: flex; flex-direction: column; gap: .6rem; transform: translateZ(20px); }
 .cn-task {
   display: flex; align-items: center; gap: .7rem;
-  background: var(--cn-bg-light);
+  background: var(--cn-mockup-card-bg, var(--cn-bg-light));
   padding: .7rem .9rem; border-radius: 12px;
   font-size: .9rem; font-weight: 500;
   border: 1px solid var(--cn-border-solid);
   color: var(--cn-text) !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 .cn-task i { font-size: 1.1rem; color: var(--cn-text-muted) !important; }
 .cn-task.done { color: var(--cn-text-muted) !important; }
@@ -766,7 +816,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 .cn-task span:nth-child(2) { flex: 1; }
 .cn-pill { font-size: .7rem; font-weight: 700; padding: .2rem .6rem; border-radius: 50px; }
 .cn-pill-soft { background: var(--cn-pill-soft-bg); color: var(--cn-text-muted) !important; }
-.cn-pill-accent { background: var(--cn-brown-dark); color: #fff !important; }
+.cn-pill-accent { background: var(--cn-brown-dark); color: var(--cn-btn-primary-text) !important; }
 
 .cn-float-card {
   position: absolute;
@@ -787,7 +837,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 .cn-section-head { max-width: 640px; margin-bottom: 1rem; }
 .cn-eyebrow {
   display: inline-block; font-weight: 700; font-size: .8rem; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--cn-brown-soft) !important; margin-bottom: .6rem;
+  color: var(--cn-brown-soft-text) !important; margin-bottom: .6rem;
 }
 .cn-section-title { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -.5px; color: var(--cn-brown-dark) !important; }
 .cn-section-sub { color: var(--cn-text-muted); font-size: 1.05rem; margin-top: .8rem; line-height: 1.6; }
@@ -800,14 +850,15 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   border: 1px solid var(--cn-border-solid);
   box-shadow: var(--cn-shadow-soft);
   color: var(--cn-text) !important;
+  transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s ease, border-color .3s ease;
 }
 .cn-card-img { padding: 0; overflow: hidden; }
 .cn-card-img .cn-card-icon { margin-left: 1.8rem; margin-top: -29px; position: relative; z-index: 2; }
 .cn-card-img .cn-card-title { padding-inline: 1.8rem; }
 .cn-card-img .cn-card-text { padding: 0 1.8rem 2rem; }
-.cn-card-media { height: 190px; overflow: hidden; }
-.cn-card-media img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.02); }
-.cn-card-img:hover .cn-card-media img { transform: scale(1.1); }
+.cn-card-media { height: 190px; overflow: hidden; position: relative; }
+.cn-card-media img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.02); transition: transform 0.4s ease; }
+.cn-card-img:hover .cn-card-media img { transform: scale(1.08); }
 .cn-card:hover { transform: translateY(-8px); box-shadow: var(--cn-shadow); border-color: rgba(193, 127, 89, 0.4); }
 .cn-card-icon {
   width: 58px; height: 58px; border-radius: 16px;
@@ -815,13 +866,14 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   background: var(--cn-card-icon-bg);
   color: var(--cn-brown-dark) !important; font-size: 1.6rem;
   margin-bottom: 1.3rem;
+  transition: background-color .3s ease, color .3s ease, transform .3s ease;
 }
-.cn-card:hover .cn-card-icon { background: var(--cn-brown-dark); color: #fff !important; transform: rotate(-6deg); }
+.cn-card:hover .cn-card-icon { background: var(--cn-brown-dark); color: var(--cn-card-icon-hover-text, #fff) !important; transform: rotate(-6deg); }
 .cn-card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: .6rem; color: var(--cn-brown-dark) !important; }
 .cn-card-text { color: var(--cn-text-muted); line-height: 1.6; margin: 0; }
 
 /* ===== SHOWCASE / VIDEO ===== */
-.cn-showcase { padding: 6rem 0; background: var(--cn-bg-light); }
+.cn-showcase { padding: 6rem 0; background: var(--cn-bg-light); transition: background-color 0.3s ease; }
 .cn-check-list { list-style: none; padding: 0; margin: 1.6rem 0 2rem; }
 .cn-check-list li { display: flex; align-items: center; gap: .7rem; font-weight: 500; color: var(--cn-text) !important; margin-bottom: .8rem; }
 .cn-check-list i { color: var(--cn-brown-soft) !important; font-size: 1.2rem; }
@@ -849,6 +901,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   color: var(--cn-text);
   border-top: 1px solid var(--cn-border-solid);
   border-bottom: 1px solid var(--cn-border-solid);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 /* ===== STEP CARDS ===== */
 .cn-step-card {
@@ -858,7 +911,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   border: 1px solid var(--cn-border-solid);
   box-shadow: var(--cn-shadow-soft);
   position: relative;
-  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  transition: transform .3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow .3s ease, border-color .3s ease;
 }
 .cn-step-card:hover {
   transform: translateY(-8px);
@@ -888,11 +941,11 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   color: var(--cn-brown-dark);
   font-size: 1.6rem;
   margin: 0 auto 1.4rem;
-  transition: background-color .3s ease, color .3s ease;
+  transition: background-color .3s ease, color .3s ease, transform .3s ease;
 }
 .cn-step-card:hover .cn-step-icon {
   background: var(--cn-brown-dark);
-  color: #fff;
+  color: var(--cn-card-icon-hover-text, #fff) !important;
   transform: scale(1.05);
 }
 .cn-step-title {
@@ -910,14 +963,41 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 }
 
 /* ===== FAQ / ACCORDION ===== */
-.cn-accordion .accordion-item { border: 1px solid var(--cn-border-solid); border-radius: 14px !important; margin-bottom: .8rem; overflow: hidden; }
-.cn-accordion .accordion-button {
-  font-weight: 600; color: var(--cn-text); background: var(--cn-card-bg); padding: 1.2rem 1.4rem;
+.cn-accordion .accordion-item {
+  background: var(--cn-card-bg) !important;
+  border: 1px solid var(--cn-border-solid) !important;
+  border-radius: 14px !important;
+  margin-bottom: .8rem;
+  overflow: hidden;
 }
-.cn-accordion .accordion-button:not(.collapsed) { color: var(--cn-brown-dark) !important; background: var(--cn-btn-ghost-hover-bg); box-shadow: none; }
-.cn-accordion .accordion-button:focus { box-shadow: none; border-color: var(--cn-brown-soft); }
-.cn-accordion .accordion-button::after { filter: sepia(1) saturate(3) hue-rotate(-10deg); }
-.cn-accordion .accordion-body { color: var(--cn-text-muted); line-height: 1.6; }
+.cn-accordion .accordion-button {
+  font-weight: 600;
+  color: var(--cn-text) !important;
+  background: var(--cn-card-bg) !important;
+  padding: 1.2rem 1.4rem;
+  border: none !important;
+  box-shadow: none !important;
+}
+.cn-accordion .accordion-button:not(.collapsed) {
+  color: var(--cn-brown-dark) !important;
+  background: var(--cn-btn-ghost-hover-bg) !important;
+}
+.cn-accordion .accordion-button:focus {
+  box-shadow: none !important;
+  border-color: var(--cn-brown-soft) !important;
+}
+.cn-accordion .accordion-button::after {
+  filter: sepia(1) saturate(3) hue-rotate(-10deg);
+}
+body.cn-body-dark .cn-accordion .accordion-button::after {
+  filter: invert(1) brightness(2) !important;
+}
+.cn-accordion .accordion-body {
+  background: var(--cn-card-bg) !important;
+  color: var(--cn-text-muted) !important;
+  line-height: 1.6;
+  border-top: 1px solid var(--cn-border-solid) !important;
+}
 
 /* ===== FOOTER (LIGERO) ===== */
 .cn-footer {
@@ -925,6 +1005,11 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   color: var(--cn-text-muted);
   padding: 4rem 0 2rem;
   border-top: 1px solid var(--cn-border-solid);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.cn-brand-footer {
+  display: inline-flex !important;
+  width: fit-content;
 }
 .cn-brand-footer .cn-brand-text { color: var(--cn-brown-dark) !important; }
 .cn-footer-text { color: var(--cn-text-muted); max-width: 280px; line-height: 1.6; }
@@ -933,13 +1018,21 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center;
   background: var(--cn-socials-bg); color: var(--cn-brown-dark) !important; font-size: 1.1rem;
   text-decoration: none;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
-.cn-socials a:hover { background: var(--cn-brown-soft); color: #fff !important; transform: translateY(-3px); }
+.cn-socials a:hover { background: var(--cn-brown-soft); color: var(--cn-socials-hover-text, #fff) !important; transform: translateY(-3px); }
 .cn-footer-head { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--cn-brown-dark) !important; font-weight: 700; font-size: 1rem; margin-bottom: 1.1rem; }
 .cn-footer-links { list-style: none; padding: 0; margin: 0; }
 .cn-footer-links li { margin-bottom: .6rem; }
-.cn-footer-links a { color: var(--cn-text-muted); text-decoration: none; }
-.cn-footer-links a:hover { color: var(--cn-brown-soft); padding-left: 4px; }
+.cn-footer-links a { 
+  color: var(--cn-footer-link-color, var(--cn-text-muted)); 
+  text-decoration: none; 
+  transition: color 0.2s ease, padding-left 0.2s ease;
+}
+.cn-footer-links a:hover { 
+  color: var(--cn-footer-link-hover-color, var(--cn-brown-soft)); 
+  padding-left: 6px; 
+}
 .cn-footer-divider { border-color: var(--cn-border-soft); margin: 2.5rem 0 1.5rem; }
 .cn-footer-credits { text-align: center; color: var(--cn-text-muted); font-size: .9rem; margin: 0; }
 
@@ -976,9 +1069,20 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
   background: var(--cn-btn-ghost-hover-bg);
 }
 
+/* Integración premium de imágenes y videos en Modo Oscuro */
+body.cn-body-dark .cn-card-media img,
+body.cn-body-dark .cn-video {
+  filter: brightness(0.8) contrast(1.05) sepia(0.18);
+  transition: filter 0.3s ease;
+}
+body.cn-body-dark .cn-card-media:hover img {
+  filter: brightness(0.9) contrast(1.05) sepia(0.12);
+}
+
 body.cn-body-dark .cn-navbar-logo,
 body.cn-body-dark .cn-footer-logo {
-  filter: brightness(0) invert(1) !important;
+  filter: brightness(0) invert(0.95) !important;
+  opacity: 0.95;
 }
 
 body.cn-body-dark .accordion-button::after {

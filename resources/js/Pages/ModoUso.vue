@@ -510,6 +510,12 @@ body.cn-body-light .cn-uso-page {
   --cn-pomo-bg: linear-gradient(135deg,#4c2521 0%,#69342e 60%,#8b4a3a 100%);
   --cn-cta-bg: var(--brown);
   --cn-card-bg: #ffffff;
+
+  /* Colores de texto en botones */
+  --cn-btn-primary-text: #ffffff;
+  --cn-btn-primary-text-hover: #ffffff;
+  --cn-btn-ghost-text: var(--brown);
+  --cn-btn-ghost-text-hover: var(--brown);
 }
 
 body.cn-body-dark .cn-uso-page {
@@ -540,6 +546,12 @@ body.cn-body-dark .cn-uso-page {
   --cn-pomo-bg: linear-gradient(135deg,#4c2521 0%,#321415 60%,#612c2d 100%);
   --cn-cta-bg: #4c2521;
   --cn-card-bg: #4c2521;
+
+  /* Colores de texto en botones con contraste corregido */
+  --cn-btn-primary-text: #4c2521;       /* Texto burdeos sobre fondo durazno */
+  --cn-btn-primary-text-hover: #3b1717; /* Texto burdeos más oscuro en hover */
+  --cn-btn-ghost-text: var(--brown);
+  --cn-btn-ghost-text-hover: var(--brown);
 }
 
 .cn-uso-page {
@@ -612,29 +624,32 @@ body.cn-body-dark .cn-uso-page {
 
 .cn-uso-page .cn-btn-primary {
   background: var(--brown) !important;
-  color: #fff !important;
+  color: var(--cn-btn-primary-text, #fff) !important;
   font-weight: 600;
   border-radius: 50px;
   border: 1px solid var(--brown) !important;
   box-shadow: var(--sh2);
   text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cn-uso-page .cn-btn-primary:hover {
   background: var(--roast) !important;
-  color: #fff !important;
+  color: var(--cn-btn-primary-text-hover, #fff) !important;
   transform: translateY(-2px);
   box-shadow: var(--sh);
 }
 .cn-uso-page .cn-btn-ghost {
   background: transparent !important;
-  color: var(--brown) !important;
+  color: var(--cn-btn-ghost-text, var(--brown)) !important;
   font-weight: 600;
   border-radius: 50px;
-  border: 1px solid var(--brown) !important;
+  border: 1px solid var(--cn-btn-ghost-border, var(--brown)) !important;
   text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cn-uso-page .cn-btn-ghost:hover {
   background: var(--cn-btn-ghost-hover-bg) !important;
+  color: var(--cn-btn-ghost-text-hover, var(--brown)) !important;
   transform: translateY(-2px);
 }
 .cn-uso-page .navbar-toggler { border: none; font-size: 1.6rem; color: var(--brown) !important; }
@@ -1365,7 +1380,8 @@ body.cn-body-dark .cn-uso-page {
 
 body.cn-body-dark .cn-navbar-logo,
 body.cn-body-dark .cn-footer-logo {
-  filter: brightness(0) invert(1) !important;
+  filter: brightness(0) invert(0.95) !important;
+  opacity: 0.95;
 }
 
 body.cn-body-dark .accordion-button::after {

@@ -489,6 +489,7 @@ onMounted(async () => {
   --cn-navbar-scrolled-bg: rgba(255, 255, 255, 0.95);
   --cn-navbar-border: rgba(76, 37, 33, 0.08);
   --cn-btn-ghost-hover-bg: rgba(105, 52, 46, 0.05);
+  --cn-btn-primary-text-hover: #ffffff;
 
   --cn-team-card-bg: rgba(255, 255, 255, 0.55);
   --cn-team-card-border: rgba(255, 255, 255, 0.7);
@@ -535,6 +536,7 @@ body.cn-body-dark .cn-quienes-page {
   --cn-navbar-scrolled-bg: rgba(97, 44, 45, 0.95);
   --cn-navbar-border: rgba(244, 190, 149, 0.15);
   --cn-btn-ghost-hover-bg: rgba(244, 190, 149, 0.15);
+  --cn-btn-primary-text-hover: #4c2521;
   
   --cn-team-card-bg: rgba(76, 37, 33, 0.6);
   --cn-team-card-border: rgba(244, 190, 149, 0.25);
@@ -630,13 +632,14 @@ body.cn-body-dark .cn-quienes-page {
   border: 1px solid var(--bordo) !important;
   box-shadow: var(--shadow);
   text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 body.cn-body-light .cn-quienes-page .cn-btn-primary {
   color: #fff !important;
 }
 .cn-quienes-page .cn-btn-primary:hover {
   background: var(--bordo-deep) !important;
-  color: #fff !important;
+  color: var(--cn-btn-primary-text-hover, #fff) !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-strong);
 }
@@ -1047,7 +1050,8 @@ body.cn-body-light .cn-quienes-page .btn-outline-premium:hover {
 
 body.cn-body-dark .cn-navbar-logo,
 body.cn-body-dark .cn-footer-logo {
-  filter: brightness(0) invert(1) !important;
+  filter: brightness(0) invert(0.95) !important;
+  opacity: 0.95;
 }
 
 /* ===================== FOOTER ===================== */

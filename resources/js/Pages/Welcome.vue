@@ -200,6 +200,9 @@ onUnmounted(() => {
                     <Link :href="route('register')" class="btn cn-btn-primary px-4">
                         Registrarse
                     </Link>
+                    <Link :href="route('pomodoro.invitado')" class="btn cn-btn-ghost px-3">
+                        Modo Invitado
+                    </Link>
                 </div>
             </div>
         </div>
@@ -228,6 +231,9 @@ onUnmounted(() => {
                         </Link>
                         <Link v-else :href="route('dashboard')" class="btn cn-btn-primary btn-lg px-4 cn-cta">
                             Ir al Dashboard <i class="bi bi-arrow-right ms-1"></i>
+                        </Link>
+                        <Link v-if="!($page.props.auth && $page.props.auth.user)" :href="route('pomodoro.invitado')" class="btn cn-btn-ghost btn-lg px-4">
+                            <i class="bi bi-person-fill me-1"></i> Modo Invitado
                         </Link>
                         <Link :href="route('uso')" class="btn cn-btn-ghost btn-lg px-4">
                             <i class="bi bi-play-circle me-1"></i> Ver Modo de Uso
@@ -350,8 +356,17 @@ onUnmounted(() => {
                         <li><i class="bi bi-check-circle-fill"></i> Fondos estáticos y animados</li>
                         <li><i class="bi bi-check-circle-fill"></i> Estadísticas de enfoque tras cada sesión</li>
                     </ul>
-                    <Link v-if="!($page.props.auth && $page.props.auth.user)" :href="route('register')" class="btn cn-btn-primary btn-lg px-4 mt-2">Probar ahora <i class="bi bi-arrow-right ms-1"></i></Link>
-                    <Link v-else :href="route('dashboard')" class="btn cn-btn-primary btn-lg px-4 mt-2">Probar ahora <i class="bi bi-arrow-right ms-1"></i></Link>
+                    <div class="d-flex flex-wrap gap-3 mt-3">
+                        <Link v-if="!($page.props.auth && $page.props.auth.user)" :href="route('register')" class="btn cn-btn-primary btn-lg px-4">
+                            Probar ahora <i class="bi bi-arrow-right ms-1"></i>
+                        </Link>
+                        <Link v-else :href="route('dashboard')" class="btn cn-btn-primary btn-lg px-4">
+                            Probar ahora <i class="bi bi-arrow-right ms-1"></i>
+                        </Link>
+                        <Link v-if="!($page.props.auth && $page.props.auth.user)" :href="route('pomodoro.invitado')" class="btn cn-btn-ghost btn-lg px-4">
+                            <i class="bi bi-person-fill me-1"></i> Modo Invitado
+                        </Link>
+                    </div>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
                     <div class="cn-video-frame">

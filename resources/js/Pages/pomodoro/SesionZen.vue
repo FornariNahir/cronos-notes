@@ -1122,10 +1122,9 @@ watch(cornellTab, async () => {
           </div>
         </div>
       </transition>
-    </div>
 
     <!-- Advanced Settings Modal (Teleported to avoid layout clipping) -->
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isFullscreen">
       <div v-show="modalAvanzadoOpen" class="modal-avanzado-backdrop" :class="{ 'dark-mode': isDarkMode }" @click.self="cerrarModalAvanzado">
         <div class="modal-avanzado-content" :class="{ 'dark-mode': isDarkMode }">
           <div class="modal-avanzado-header">
@@ -1212,7 +1211,7 @@ watch(cornellTab, async () => {
     </Teleport>
 
     <!-- Modal Personalizado para Promoción de Registro -->
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isFullscreen">
       <div v-if="modalRegistroOpen" class="zen-custom-modal-overlay">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
@@ -1228,7 +1227,7 @@ watch(cornellTab, async () => {
       </div>
     </Teleport>
     <!-- Modal de Confirmación para Terminar Sesión -->
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isFullscreen">
       <div v-if="showConfirmEndModal" class="zen-custom-modal-overlay">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
@@ -1245,7 +1244,7 @@ watch(cornellTab, async () => {
     </Teleport>
 
     <!-- Modal de Pregunta sobre la Tarea Activa -->
-    <Teleport to="body">
+    <Teleport to="body" :disabled="isFullscreen">
       <div v-if="showTaskCompletePrompt" class="zen-custom-modal-overlay">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
@@ -1267,6 +1266,7 @@ watch(cornellTab, async () => {
       :message="alertMessage" 
       @close="showAlertModal = false" 
     />
+    </div>
   </component>
 </template>
 
@@ -2379,7 +2379,7 @@ body.distraction-free-mode .task-badge {
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
   animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-custom-modal,
+.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-custom-modal,
 body.dark-mode .zen-custom-modal {
   background: #2a2a2a;
   color: white;
@@ -2394,7 +2394,7 @@ body.dark-mode .zen-custom-modal {
   margin-bottom: 10px;
   color: #333;
 }
-.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-modal-title {
+.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-title {
   color: #fff;
 }
 .zen-modal-text {
@@ -2402,7 +2402,7 @@ body.dark-mode .zen-custom-modal {
   color: #666;
   margin-bottom: 25px;
 }
-.pomodoro-zen-container.dark-mode ~ .zen-custom-modal-overlay .zen-modal-text {
+.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-text {
   color: #ccc;
 }
 .zen-modal-actions {

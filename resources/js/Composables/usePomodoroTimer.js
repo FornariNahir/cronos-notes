@@ -1,18 +1,44 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { useZenMixer } from './useZenMixer';
+
+// Module-level shared states (persistent across page navigations in SPA)
+const isRunning = ref(false);
+const currentPhase = ref('work');
+const currentCycle = ref(1);
+const totalSeconds = ref(25 * 60);
+const timeLeft = ref(25 * 60);
+const quickStartTaskId = ref('');
+const selectedConfigId = ref('');
+const minutesRegisteredInCurrentPhase = ref(0);
+const localSesionActiva = ref(null);
+
+const tickCallback = ref(null);
+const phaseCompleteCallback = ref(null);
+
+let timerInterval = null;
+
+const updateDocumentTitle = () => {
+  if (isRunning.value && timeLeft.value > 0) {
+    const mins = Math.floor(timeLeft.value / 60);
+    const secs = timeLeft.value % 60;
+    const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const phaseStr = currentPhase.value === 'work' ? 'Trabajo' : 'Descanso';
+    
+    // Get the base title (without any existing timer prefix)
+    const regex = /^\[\d{2}:\d{2}\]\s+[^|]+\s+\|\s+/;
+    const baseTitle = document.title.replace(regex, '');
+    
+    document.title = `[${timeStr}] ${phaseStr} | ${baseTitle}`;
+  }
+};
+
+const restoreDocumentTitle = () => {
+  const regex = /^\[\d{2}:\d{2}\]\s+[^|]+\s+\|\s+/;
+  document.title = document.title.replace(regex, '');
+};
 
 export function usePomodoroTimer(props) {
-  const isRunning = ref(false);
-  const currentPhase = ref('work');
-  const currentCycle = ref(1);
-  const totalSeconds = ref(25 * 60);
-  const timeLeft = ref(25 * 60);
-  let timerInterval = null;
-
-  const quickStartTaskId = ref('');
-  const selectedConfigId = ref('');
-  const minutesRegisteredInCurrentPhase = ref(0);
-
   const form = useForm({
     duracionSesion: 25,
     duracionDescansoCorto: 5,
@@ -24,7 +50,7 @@ export function usePomodoroTimer(props) {
   });
 
   watch(selectedConfigId, (newId) => {
-    if (newId) {
+    if (newId && props?.configs) {
       const config = props.configs.find(c => c.idConfiguracionPomodoro == newId);
       if (config) {
         form.duracionSesion = config.duracionSesion;
@@ -35,14 +61,19 @@ export function usePomodoroTimer(props) {
     }
   });
 
-  const localSesionActiva = ref(props.sesionActiva);
-
-  watch(() => props.sesionActiva, (newVal) => {
-    localSesionActiva.value = newVal;
+  watch(() => props?.sesionActiva, (newVal) => {
+    if (newVal !== undefined) {
+      localSesionActiva.value = newVal;
+    }
   }, { immediate: true });
 
+  const registerCallbacks = (onTick, onPhaseComplete) => {
+    if (onTick) tickCallback.value = onTick;
+    if (onPhaseComplete) phaseCompleteCallback.value = onPhaseComplete;
+  };
+
   const iniciarInicioRapido = () => {
-    if (props.isGuest) {
+    if (props?.isGuest) {
       localSesionActiva.value = {
         idSesion: 'guest',
         duracionSesion: 25,
@@ -61,7 +92,7 @@ export function usePomodoroTimer(props) {
   };
 
   const iniciarSesion = () => {
-    if (props.isGuest) {
+    if (props?.isGuest) {
       localSesionActiva.value = {
         idSesion: 'guest_custom',
         duracionSesion: form.duracionSesion || 25,
@@ -118,6 +149,8 @@ export function usePomodoroTimer(props) {
   };
 
   const initTimer = () => {
+    if (isRunning.value) return; // Do not interrupt a running background timer
+    
     if (localSesionActiva.value) {
       const restored = loadStateFromStorage();
       if (!restored) {
@@ -138,14 +171,21 @@ export function usePomodoroTimer(props) {
   };
 
   const startTimer = (onTick, onPhaseComplete, isRestored = false) => {
+    if (onTick) tickCallback.value = onTick;
+    if (onPhaseComplete) phaseCompleteCallback.value = onPhaseComplete;
+    
     if (isRunning.value && !isRestored) return;
     isRunning.value = true;
     
     if (!isRestored) {
       saveStateToStorage();
-      if (localSesionActiva.value && !props.isGuest) {
+      if (localSesionActiva.value && !props?.isGuest) {
         window.axios.patch(route('pomodoro.estado'), { estado: 'En Progreso' });
       }
+
+      // Play active sounds from global mixer
+      const { playActiveSounds } = useZenMixer();
+      playActiveSounds();
     }
 
     clearInterval(timerInterval);
@@ -153,8 +193,9 @@ export function usePomodoroTimer(props) {
       if (timeLeft.value > 0) {
         timeLeft.value--;
         saveStateToStorage();
+        updateDocumentTitle();
 
-        if (currentPhase.value === 'work' && localSesionActiva.value && !props.isGuest) {
+        if (currentPhase.value === 'work' && localSesionActiva.value && !props?.isGuest) {
           const elapsedSeconds = totalSeconds.value - timeLeft.value;
           if (elapsedSeconds > 0 && elapsedSeconds % 60 === 0 && timeLeft.value > 0) {
             window.axios.post(route('pomodoro.registrar'), {
@@ -166,10 +207,11 @@ export function usePomodoroTimer(props) {
           }
         }
 
-        if (onTick) onTick(timeLeft.value);
+        if (tickCallback.value) tickCallback.value(timeLeft.value);
       } else {
         stopTimer();
-        if (onPhaseComplete) onPhaseComplete();
+        completePhase();
+        if (phaseCompleteCallback.value) phaseCompleteCallback.value();
       }
     }, 1000);
   };
@@ -178,7 +220,13 @@ export function usePomodoroTimer(props) {
     isRunning.value = false;
     clearInterval(timerInterval);
     saveStateToStorage();
-    if (localSesionActiva.value && !props.isGuest) {
+    restoreDocumentTitle();
+
+    // Pause active sounds from global mixer
+    const { pauseActiveSounds } = useZenMixer();
+    pauseActiveSounds();
+
+    if (localSesionActiva.value && !props?.isGuest) {
       window.axios.patch(route('pomodoro.estado'), { estado: 'Pausada' });
     }
   };
@@ -188,6 +236,11 @@ export function usePomodoroTimer(props) {
     timeLeft.value = totalSeconds.value;
     minutesRegisteredInCurrentPhase.value = 0;
     saveStateToStorage();
+    restoreDocumentTitle();
+
+    // Stop all sounds from global mixer
+    const { stopAllSounds } = useZenMixer();
+    stopAllSounds();
   };
 
   const completePhase = () => {
@@ -195,27 +248,31 @@ export function usePomodoroTimer(props) {
     let currentMinutos = Math.floor((totalSeconds.value - timeLeft.value) / 60);
     
     if (currentPhase.value === 'work') {
-      if (!props.isGuest) {
+      if (localSesionActiva.value && !props?.isGuest) {
         const minutosRestantes = currentMinutos - minutesRegisteredInCurrentPhase.value;
         window.axios.post(route('pomodoro.registrar'), { 
           minutosTrabajados: minutosRestantes > 0 ? minutosRestantes : 0,
           incrementarCiclo: true
         });
       }
-      if (currentCycle.value >= localSesionActiva.value.sesionesPrevioDescansoLargo) {
-        currentPhase.value = 'longBreak';
-        totalSeconds.value = localSesionActiva.value.duracionDescansoLargo * 60;
-      } else {
-        currentCycle.value++;
-        currentPhase.value = 'shortBreak';
-        totalSeconds.value = localSesionActiva.value.duracionDescansoCorto * 60;
+      if (localSesionActiva.value) {
+        if (currentCycle.value >= localSesionActiva.value.sesionesPrevioDescansoLargo) {
+          currentPhase.value = 'longBreak';
+          totalSeconds.value = localSesionActiva.value.duracionDescansoLargo * 60;
+        } else {
+          currentCycle.value++;
+          currentPhase.value = 'shortBreak';
+          totalSeconds.value = localSesionActiva.value.duracionDescansoCorto * 60;
+        }
       }
     } else if (currentPhase.value === 'shortBreak' || currentPhase.value === 'longBreak') {
       if (currentPhase.value === 'longBreak') {
         currentCycle.value = 1;
       }
       currentPhase.value = 'work';
-      totalSeconds.value = localSesionActiva.value.duracionSesion * 60;
+      if (localSesionActiva.value) {
+        totalSeconds.value = localSesionActiva.value.duracionSesion * 60;
+      }
     }
 
     minutesRegisteredInCurrentPhase.value = 0;
@@ -228,8 +285,13 @@ export function usePomodoroTimer(props) {
     
     stopTimer();
     clearStorage();
+    restoreDocumentTitle();
 
-    if (props.isGuest) {
+    // Stop all sounds from global mixer
+    const { stopAllSounds } = useZenMixer();
+    stopAllSounds();
+
+    if (props?.isGuest) {
       localSesionActiva.value = null;
       return;
     }
@@ -260,7 +322,8 @@ export function usePomodoroTimer(props) {
   };
 
   onUnmounted(() => {
-    clearInterval(timerInterval);
+    tickCallback.value = null;
+    phaseCompleteCallback.value = null;
   });
 
   return {
@@ -281,6 +344,7 @@ export function usePomodoroTimer(props) {
     endSession,
     saveStateToStorage,
     totalSeconds,
-    localSesionActiva
+    localSesionActiva,
+    registerCallbacks
   };
 }

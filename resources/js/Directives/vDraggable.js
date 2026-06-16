@@ -6,10 +6,7 @@ export const vDraggable = {
 
     const onMouseDown = (e) => {
       // Ignore if clicking on interactive elements like buttons, inputs, selects, switches, links, etc.
-      if (e.target.closest('button, input, select, textarea, a, .toggle-switch, .settings-panel, .control-btn, .btn-zen-primary, .btn-zen-secondary, .btn-cancel-session, .dock-audio-pill')) return;
-
-      // Disable dragging when Zen Mode (distraction-free-mode) is active
-      if (document.body.classList.contains('distraction-free-mode')) return;
+      if (e.target.closest('button, input, select, textarea, a, [contenteditable], .toggle-switch, .settings-panel, .control-btn, .btn-zen-primary, .btn-zen-secondary, .btn-cancel-session, .dock-audio-pill')) return;
 
       isDragging = true;
       hasDragged = false;

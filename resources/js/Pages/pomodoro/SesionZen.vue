@@ -1,11 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue';
 import { Link, usePage, router, useForm, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
 import AlertModal from '@/Components/AlertModal.vue';
-import { Howl } from 'howler';
+import { useZenMixer } from '@/Composables/useZenMixer';
 
 const props = defineProps({
   configs: {
@@ -59,9 +59,6 @@ const handleTaskCompletionPrompt = (completed) => {
 };
 
 const proceedEndSession = (marcarTareaCompletada) => {
-  for (const key in howlerInstances) {
-    if (howlerInstances[key]) howlerInstances[key].stop();
-  }
   endSession(marcarTareaCompletada);
 };
 
@@ -127,34 +124,20 @@ const timerWidget = ref(null);
 const settingsToggle = ref(null);
 
 let timerInterval = null;
-const howlerInstances = {};
-const mixerState = reactive({});
+const {
+  mixerState,
+  toggleMixerSound: toggleMixerSoundGlobal,
+  updateMixerVolume,
+  isSoundLocked: isSoundLockedGlobal
+} = useZenMixer();
 
-// Sound and landscape database (root-relative public paths)
-const bancoSonidos = {
-  'Tormenta': '/audios/storm',
-  'Agua': '/audios/water',
-  'Fogata': '/audios/campfire',
-  'Lluvia': '/audios/rain',
-  'Olas del Mar': '/audios/waves',
-  'Aire': '/audios/air',
-  'Viento': '/audios/wind',
-  'Bosque': '/audios/forest',
-  'Lluvia Bosque': '/audios/forest-rain',
-  'Ambiente de Fondo': '/audios/background-music',
-  'Cafetería': '/audios/cafe',
-  'Tráfico': '/audios/city-traffic',
-  'Teclado': '/audios/keyboard',
-  'Meditación del Tigre': '/audios/meditative-tiger',
-  'Ruido Blanco': '/audios/white-noise',
-  'Ruido Rosa': '/audios/pink-noise',
-  'Ruido Marrón': '/audios/brown-noise',
-  'Tibetanos': '/audios/tibetan-meditation'
+const toggleMixerSound = (soundKey) => {
+  const result = toggleMixerSoundGlobal(soundKey, props.isGuest);
+  if (result === 'locked') {
+    mensajeRegistro.value = 'Este sonido es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
+    modalRegistroOpen.value = true;
+  }
 };
-
-for (const key in bancoSonidos) {
-  mixerState[key] = { active: false, volume: 0.5 };
-}
 
 const bancoFondos = {
   'paisaje1': { claro: '/imagenes/atardecer.webp', oscuro: '/imagenes/noche.webp', nombre: 'Paisaje 1' },
@@ -205,10 +188,7 @@ const isLandscapeLocked = (key) => {
   return !['paisaje1', 'paisaje2', 'paisaje3', 'paisaje4'].includes(key);
 };
 
-const isSoundLocked = (key) => {
-  if (!props.isGuest) return false;
-  return !['Lluvia', 'Cafetería', 'Viento'].includes(key);
-};
+const isSoundLocked = (key) => isSoundLockedGlobal(key, props.isGuest);
 
 const handleSelectLandscape = (key) => {
   if (isLandscapeLocked(key)) {
@@ -253,7 +233,8 @@ const {
   endSession,
   saveStateToStorage,
   totalSeconds,
-  localSesionActiva
+  localSesionActiva,
+  registerCallbacks
 } = usePomodoroTimer(props);
 
 watch(() => localSesionActiva.value, () => {
@@ -310,6 +291,28 @@ const closeOnOutsideClick = (e) => {
 };
 
 onMounted(() => {
+  isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
+  if (isDarkMode.value) {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.add('cn-body-dark');
+  } else {
+    document.body.classList.remove('cn-body-dark');
+    document.body.classList.add('cn-body-light');
+  }
+
+  // Registrar los callbacks del temporizador al montar el componente
+  registerCallbacks(null, () => {
+    if (localSesionActiva.value) {
+      showCustomAlert("¡Tiempo cumplido!", "El pomodoro ha finalizado exitosamente.");
+    } else {
+      if (currentPhase.value === 'work') {
+        showCustomAlert("¡Sesión finalizada!", "¡Sesión de trabajo finalizada! Es hora de un descanso.");
+      } else {
+        showCustomAlert("¡Descanso terminado!", "¡Descanso terminado! Volvemos al trabajo.");
+      }
+    }
+  });
+
   if (!document.querySelector('link[href*="bootstrap-icons"]')) {
       const linkIcons = document.createElement('link');
       linkIcons.rel = 'stylesheet';
@@ -325,12 +328,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   clearInterval(timerInterval);
-  for (const key in howlerInstances) {
-    if (howlerInstances[key]) {
-      howlerInstances[key].stop();
-      howlerInstances[key].unload();
-    }
-  }
   document.body.classList.remove('distraction-free-mode');
   window.removeEventListener('keydown', handleKeyDown);
   document.removeEventListener('fullscreenchange', syncFullscreenState);
@@ -339,55 +336,6 @@ onUnmounted(() => {
 
 const handleKeyDown = (e) => {
   if (e.key === 'Escape') cerrarModalAvanzado();
-};
-
-const updateMixerVolume = (soundKey) => {
-  if (howlerInstances[soundKey]) {
-    howlerInstances[soundKey].volume(mixerState[soundKey].volume);
-  }
-};
-
-const getAssetUrl = (path) => {
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  const pathname = window.location.pathname;
-  const publicIndex = pathname.indexOf('/public');
-  if (publicIndex !== -1) {
-    const basePath = pathname.substring(0, publicIndex + 7);
-    return `${window.location.origin}${basePath}/${cleanPath}`;
-  }
-  return `${window.location.origin}/${cleanPath}`;
-};
-
-const toggleMixerSound = (soundKey) => {
-  if (isSoundLocked(soundKey)) {
-    mensajeRegistro.value = 'Este sonido es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
-    modalRegistroOpen.value = true;
-    return;
-  }
-  const state = mixerState[soundKey];
-  state.active = !state.active;
-
-  if (state.active) {
-    if (!howlerInstances[soundKey]) {
-      const soundPath = bancoSonidos[soundKey];
-      howlerInstances[soundKey] = new Howl({
-        src: [getAssetUrl(`${soundPath}.webm`), getAssetUrl(`${soundPath}.mp3`)],
-        html5: true,
-        loop: true,
-        volume: state.volume,
-        onplayerror: function() {
-          if (howlerInstances[soundKey]) {
-            howlerInstances[soundKey].once('unlock', function() {
-              howlerInstances[soundKey].play();
-            });
-          }
-        }
-      });
-    }
-    if (howlerInstances[soundKey]) howlerInstances[soundKey].play();
-  } else {
-    if (howlerInstances[soundKey]) howlerInstances[soundKey].pause();
-  }
 };
 
 const startTimerWrapper = (isRestored = false) => {
@@ -404,32 +352,15 @@ const startTimerWrapper = (isRestored = false) => {
         showCustomAlert("¡Descanso terminado!", "¡Descanso terminado! Volvemos al trabajo.");
       }
     }
-    completePhase();
   }, isRestored);
-  
-  if (!isRestored) {
-    for (const key in howlerInstances) {
-      if (mixerState[key] && mixerState[key].active && howlerInstances[key]) {
-        howlerInstances[key].play();
-      }
-    }
-  }
 };
 
 const stopTimerWrapper = () => {
   stopTimerLogic();
-  for (const key in howlerInstances) {
-    if (mixerState[key] && mixerState[key].active && howlerInstances[key]) {
-      howlerInstances[key].pause();
-    }
-  }
 };
 
 const resetTimerWrapper = () => {
   resetTimerLogic();
-  for (const key in howlerInstances) {
-    if (howlerInstances[key]) howlerInstances[key].stop();
-  }
 };
 
 const pageTitle = computed(() => {
@@ -451,6 +382,14 @@ const phaseText = computed(() => {
 
 const aplicarCambioModo = (oscuro) => {
   isDarkMode.value = oscuro;
+  localStorage.setItem('cn-theme', oscuro ? 'dark' : 'light');
+  if (oscuro) {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.add('cn-body-dark');
+  } else {
+    document.body.classList.remove('cn-body-dark');
+    document.body.classList.add('cn-body-light');
+  }
 };
 
 // Removed legacy toggleSound logic
@@ -672,6 +611,56 @@ watch(selectedApunteId, (newVal) => {
   }
 });
 
+const contenidoEditor = ref(null);
+const ideasEditor = ref(null);
+const resumenEditor = ref(null);
+
+const handleContenidoInput = (e) => {
+  noteForm.contenidoApunte = e.target.innerHTML;
+};
+
+const handleIdeasInput = (e) => {
+  noteForm.ideasApunte = e.target.innerHTML;
+};
+
+const handleResumenInput = (e) => {
+  noteForm.resumenApunte = e.target.innerHTML;
+};
+
+watch(() => noteForm.contenidoApunte, (newVal) => {
+  if (contenidoEditor.value && contenidoEditor.value.innerHTML !== newVal) {
+    contenidoEditor.value.innerHTML = newVal || '';
+  }
+});
+
+watch(() => noteForm.ideasApunte, (newVal) => {
+  if (ideasEditor.value && ideasEditor.value.innerHTML !== newVal) {
+    ideasEditor.value.innerHTML = newVal || '';
+  }
+});
+
+watch(() => noteForm.resumenApunte, (newVal) => {
+  if (resumenEditor.value && resumenEditor.value.innerHTML !== newVal) {
+    resumenEditor.value.innerHTML = newVal || '';
+  }
+});
+
+watch(showNotesWidget, async (newVal) => {
+  if (newVal) {
+    await nextTick();
+    if (contenidoEditor.value) contenidoEditor.value.innerHTML = noteForm.contenidoApunte || '';
+    if (ideasEditor.value) ideasEditor.value.innerHTML = noteForm.ideasApunte || '';
+    if (resumenEditor.value) resumenEditor.value.innerHTML = noteForm.resumenApunte || '';
+  }
+});
+
+watch(cornellTab, async () => {
+  await nextTick();
+  if (contenidoEditor.value) contenidoEditor.value.innerHTML = noteForm.contenidoApunte || '';
+  if (ideasEditor.value) ideasEditor.value.innerHTML = noteForm.ideasApunte || '';
+  if (resumenEditor.value) resumenEditor.value.innerHTML = noteForm.resumenApunte || '';
+});
+
 // Directives handle dragging now
 </script>
 
@@ -788,8 +777,28 @@ watch(selectedApunteId, (newVal) => {
         <div v-show="!isMinimized" class="timer-content" :class="{ 'with-setup': !localSesionActiva }">
           
           <template v-if="localSesionActiva">
-            <div class="phase-indicator">{{ phaseText }} <span v-if="currentPhase === 'work'">- Ciclo {{ currentCycle }}</span></div>
+            <div class="phase-indicator">{{ phaseText }}</div>
             <div v-if="localSesionActiva.tituloTarea" class="task-badge">{{ localSesionActiva.tituloTarea }}</div>
+            
+            <!-- Indicador de Ciclos con Emojis de Tomate -->
+            <div class="cycles-indicator mt-2">
+              <span class="cycles-text">Ciclo {{ currentCycle }} de {{ localSesionActiva.sesionesPrevioDescansoLargo }}</span>
+              <div class="d-flex align-items-center gap-1 ms-2">
+                <span 
+                  v-for="index in localSesionActiva.sesionesPrevioDescansoLargo" 
+                  :key="index" 
+                  class="tomato-emoji"
+                  :class="{ 
+                    'tomato-completed': index < currentCycle, 
+                    'tomato-active': index === currentCycle,
+                    'tomato-pending': index > currentCycle 
+                  }"
+                  :title="`Ciclo ${index}`"
+                >
+                  🍅
+                </span>
+              </div>
+            </div>
             
             <div class="timer-controls mt-2">
               <button v-show="!isRunning" @click="startTimerWrapper(false)" class="control-btn" aria-label="Iniciar">
@@ -801,11 +810,6 @@ watch(selectedApunteId, (newVal) => {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="4" width="4" height="16"></rect>
                   <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-              </button>
-              <button @click="resetTimerWrapper" class="control-btn" aria-label="Reiniciar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 </svg>
               </button>
             </div>
@@ -1037,28 +1041,34 @@ watch(selectedApunteId, (newVal) => {
           <!-- Textarea Editors -->
           <div class="notes-editor-container">
             <!-- Normal Note / Cornell Notes Tab -->
-            <textarea 
+            <div 
               v-show="noteForm.tipoApunte === 'normal' || (noteForm.tipoApunte === 'cornell' && cornellTab === 'notas')"
-              v-model="noteForm.contenidoApunte" 
-              class="notes-textarea" 
-              placeholder="Escribí acá tus apuntes..."
-            ></textarea>
+              contenteditable="true"
+              class="notes-textarea editor-area" 
+              data-placeholder="Escribí acá tus apuntes..."
+              @input="handleContenidoInput"
+              ref="contenidoEditor"
+            ></div>
 
             <!-- Cornell Ideas Tab -->
-            <textarea 
+            <div 
               v-show="noteForm.tipoApunte === 'cornell' && cornellTab === 'ideas'"
-              v-model="noteForm.ideasApunte" 
-              class="notes-textarea" 
-              placeholder="Ideas y conceptos clave..."
-            ></textarea>
+              contenteditable="true"
+              class="notes-textarea editor-area" 
+              data-placeholder="Ideas y conceptos clave..."
+              @input="handleIdeasInput"
+              ref="ideasEditor"
+            ></div>
 
             <!-- Cornell Resumen Tab -->
-            <textarea 
+            <div 
               v-show="noteForm.tipoApunte === 'cornell' && cornellTab === 'resumen'"
-              v-model="noteForm.resumenApunte" 
-              class="notes-textarea" 
-              placeholder="Resumen de la sesión..."
-            ></textarea>
+              contenteditable="true"
+              class="notes-textarea editor-area" 
+              data-placeholder="Resumen de la sesión..."
+              @input="handleResumenInput"
+              ref="resumenEditor"
+            ></div>
           </div>
 
           <!-- Footer Status -->
@@ -2437,15 +2447,15 @@ body.dark-mode .zen-custom-modal {
 
 /* Notes Widget Glassmorphic Styles */
 .notes-widget {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(107, 76, 63, 0.25);
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(107, 76, 63, 0.15);
   padding: 16px 20px 20px 20px; /* slightly less padding top for custom header balance */
   transition: all 0.3s ease;
-  color: #6b4c3f;
+  color: #4a3025;
 }
 
 .pomodoro-zen-container.dark-mode .notes-widget {
@@ -2462,7 +2472,7 @@ body.dark-mode .zen-custom-modal {
   align-items: center;
   padding-bottom: 8px;
   margin-bottom: 12px;
-  border-bottom: 1px solid rgba(107, 76, 63, 0.12);
+  border-bottom: 1px solid rgba(107, 76, 63, 0.2);
 }
 
 .pomodoro-zen-container.dark-mode .notes-header {
@@ -2480,7 +2490,7 @@ body.dark-mode .zen-custom-modal {
   align-items: center;
   justify-content: center;
   cursor: grab;
-  color: rgba(107, 76, 63, 0.45);
+  color: rgba(107, 76, 63, 0.7);
 }
 
 .pomodoro-zen-container.dark-mode .notes-drag-handle {
@@ -2490,7 +2500,7 @@ body.dark-mode .zen-custom-modal {
 .notes-header-title {
   font-size: 13px;
   font-weight: 700;
-  color: #6b4c3f;
+  color: #4a3025;
   user-select: none;
 }
 
@@ -2512,7 +2522,7 @@ body.dark-mode .zen-custom-modal {
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  color: rgba(107, 76, 63, 0.6);
+  color: rgba(107, 76, 63, 0.85);
   cursor: pointer;
   border-radius: 6px;
   width: 24px;
@@ -2522,7 +2532,7 @@ body.dark-mode .zen-custom-modal {
 
 .notes-header-btn:hover {
   background: rgba(107, 76, 63, 0.08);
-  color: #6b4c3f;
+  color: #4a3025;
 }
 
 .pomodoro-zen-container.dark-mode .notes-header-btn {
@@ -2535,7 +2545,7 @@ body.dark-mode .zen-custom-modal {
 }
 
 .notes-header-btn.close-btn {
-  color: rgba(220, 53, 69, 0.7);
+  color: rgba(220, 53, 69, 0.8);
 }
 
 .notes-header-btn.close-btn:hover {
@@ -2557,7 +2567,7 @@ body.dark-mode .zen-custom-modal {
   padding: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b4c3f;
+  color: #4a3025;
 }
 
 .pomodoro-zen-container.dark-mode .notes-minimized-view {
@@ -2565,9 +2575,9 @@ body.dark-mode .zen-custom-modal {
 }
 
 .notes-select {
-  border: 1px solid rgba(107, 76, 63, 0.2);
-  background: rgba(255, 255, 255, 0.6);
-  color: #6b4c3f;
+  border: 1px solid rgba(107, 76, 63, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: #4a3025;
   outline: none;
   font-size: 12px;
   border-radius: 8px;
@@ -2576,7 +2586,8 @@ body.dark-mode .zen-custom-modal {
 
 .notes-select:focus {
   border-color: #69342e;
-  background: rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(105, 52, 46, 0.15);
 }
 
 .pomodoro-zen-container.dark-mode .notes-select {
@@ -2594,9 +2605,9 @@ body.dark-mode .zen-custom-modal {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: 1px solid rgba(107, 76, 63, 0.2);
-  background: rgba(255, 255, 255, 0.6);
-  color: #6b4c3f;
+  border: 1px solid rgba(107, 76, 63, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: #4a3025;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2605,8 +2616,8 @@ body.dark-mode .zen-custom-modal {
 }
 
 .btn-new-note:hover {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #6b4c3f;
+  background: #ffffff;
+  border-color: #4a3025;
 }
 
 .pomodoro-zen-container.dark-mode .btn-new-note {
@@ -2621,7 +2632,7 @@ body.dark-mode .zen-custom-modal {
 }
 
 .note-title-container {
-  border-bottom: 2px solid rgba(107, 76, 63, 0.1);
+  border-bottom: 2px solid rgba(107, 76, 63, 0.2);
   margin-bottom: 12px !important;
 }
 
@@ -2635,7 +2646,7 @@ body.dark-mode .zen-custom-modal {
   background: transparent;
   font-size: 15px;
   font-weight: 700;
-  color: #6b4c3f;
+  color: #4a3025;
   outline: none;
   padding: 4px 0;
 }
@@ -2666,7 +2677,7 @@ body.dark-mode .zen-custom-modal {
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 8px;
-  color: rgba(107, 76, 63, 0.7);
+  color: #6b4c3f;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
@@ -2678,8 +2689,8 @@ body.dark-mode .zen-custom-modal {
 
 .method-tab-btn.active, .cornell-tab-btn.active {
   background: #ffffff;
-  color: #6b4c3f;
-  box-shadow: 0 2px 8px rgba(107, 76, 63, 0.15);
+  color: #4a3025;
+  box-shadow: 0 2px 8px rgba(107, 76, 63, 0.25);
 }
 
 .pomodoro-zen-container.dark-mode .method-tab-btn.active,
@@ -2690,8 +2701,8 @@ body.dark-mode .zen-custom-modal {
 }
 
 .notes-editor-container {
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(107, 76, 63, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(107, 76, 63, 0.38);
   border-radius: 10px;
   padding: 10px;
   margin-top: 8px;
@@ -2707,23 +2718,31 @@ body.dark-mode .zen-custom-modal {
   height: 180px;
   background: transparent;
   border: none;
-  resize: none;
   outline: none;
   font-size: 13px;
   line-height: 1.5;
-  color: #6b4c3f;
+  color: #311d15;
   padding: 4px 6px;
+  overflow-y: auto;
 }
 
 .pomodoro-zen-container.dark-mode .notes-textarea {
   color: #ffffff;
 }
 
-.notes-textarea::placeholder {
-  color: rgba(107, 76, 63, 0.5);
+.notes-textarea::placeholder,
+.notes-textarea:empty::before {
+  color: rgba(107, 76, 63, 0.78);
 }
 
-.pomodoro-zen-container.dark-mode .notes-textarea::placeholder {
+.notes-textarea:empty::before {
+  content: attr(data-placeholder);
+  pointer-events: none;
+  display: block;
+}
+
+.pomodoro-zen-container.dark-mode .notes-textarea::placeholder,
+.pomodoro-zen-container.dark-mode .notes-textarea:empty::before {
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -2757,5 +2776,57 @@ body.dark-mode .zen-custom-modal {
   background: #ffb5b5 !important;
   color: #612c2d !important;
   box-shadow: 0 4px 15px rgba(255, 181, 181, 0.3) !important;
+}
+
+/* Tomato Cycles Indicator Styles */
+.cycles-indicator {
+  font-size: 11px;
+  color: #6b4c3f;
+  background: rgba(107, 76, 63, 0.06);
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  border: 1px solid rgba(107, 76, 63, 0.12);
+}
+
+.pomodoro-zen-container.dark-mode .cycles-indicator {
+  color: #fcd5b8;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cycles-text {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.tomato-emoji {
+  font-size: 14px;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.tomato-completed {
+  opacity: 1;
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+}
+
+.tomato-active {
+  opacity: 0.85;
+  animation: breathe-tomato 2s infinite ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.15));
+}
+
+.tomato-pending {
+  opacity: 0.25;
+  filter: grayscale(80%);
+}
+
+@keyframes breathe-tomato {
+  0%, 100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.18); opacity: 1; }
 }
 </style>

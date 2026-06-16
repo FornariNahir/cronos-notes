@@ -509,4 +509,113 @@ const eliminarCuenta = () => {
         max-width: calc(100% - 2rem);
     }
 }
-</style>
+
+/* Estilos en modo oscuro para PerfilUsuario.vue */
+body.cn-body-dark .main-layout-container h1 {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .main-layout-container p {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .card-ajustes {
+    background-color: #4d2323 !important;
+    border-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .card-ajustes h5.text-dark,
+body.cn-body-dark .card-ajustes .text-dark,
+body.cn-body-dark .card-ajustes h6,
+body.cn-body-dark .card-ajustes p {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .card-ajustes .text-secondary {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .card-ajustes .border-bottom,
+body.cn-body-dark .card-ajustes .border-top {
+    border-color: #7b413f !important;
+}
+
+body.cn-body-dark .input-custom {
+    background-color: #3b1717 !important;
+    border-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .input-custom::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+body.cn-body-dark .input-custom:focus {
+    border-color: #f4be95 !important;
+    box-shadow: 0 0 0 3px rgba(244, 190, 149, 0.2) !important;
+}
+
+body.cn-body-dark .input-custom:disabled {
+    background-color: #2b0c0c !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    border-color: #542627 !important;
+}
+
+body.cn-body-dark .btn-marron {
+    background-color: #f4be95 !important;
+    color: #612c2d !important;
+}
+
+body.cn-body-dark .btn-marron:hover,
+body.cn-body-dark .btn-marron:focus {
+    background-color: #fcd5b8 !important;
+    color: #612c2d !important;
+}
+
+/* MODIFICACIÓN CLAVE: Botón Cambiar Correo y Contraseña visible en modo oscuro */
+body.cn-body-dark .btn-outline-marron {
+    background-color: transparent !important;
+    border: 1px solid #f4be95 !important;
+    color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-outline-marron:hover {
+    background-color: #f4be95 !important;
+    color: #612c2d !important;
+}
+
+body.cn-body-dark .btn-light-custom {
+    background-color: #542627 !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-light-custom:hover {
+    background-color: #7b413f !important;
+}
+
+/* Modales */
+body.cn-body-dark .modal-content {
+    background-color: #4d2323 !important;
+    border: 1px solid #7b413f !important;
+    color: #ffffff !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.cn-body-dark .modal-header h5.modal-title,
+body.cn-body-dark .modal-header h5 i {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .modal-header .btn-close {
+    filter: invert(1) !important;
+}
+
+body.cn-body-dark .modal-body label {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .modal-body p.text-muted {
+    color: #fcd5b8 !important;
+}
+</style>

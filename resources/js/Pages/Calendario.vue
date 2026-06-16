@@ -567,4 +567,131 @@ function inicializarLogicaDOM() {
     .grid-mes-cuerpo { grid-auto-rows: minmax(90px, 1fr); }
     .modal-esbelto-vertical { margin: 1rem; max-width: calc(100% - 2rem); }
 }
+
+/* Dark Mode styles specifically for Calendario.vue to match calendarioOscuro.png */
+body.cn-body-dark .main-layout-calendario {
+    background-color: #4d2323 !important;
+}
+
+body.cn-body-dark .grid-semana-cabecera {
+    background-color: #e38e76 !important;
+    border-bottom: 1px solid #ffffff !important;
+}
+
+body.cn-body-dark .grid-semana-cabecera div {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .grid-mes-cuerpo {
+    background-color: #ffffff !important;
+}
+
+body.cn-body-dark .celda-dia {
+    background-color: #f4be95 !important;
+}
+
+body.cn-body-dark .celda-dia.dia-fuera-rango {
+    background-color: #fadfca !important;
+}
+
+body.cn-body-dark .celda-dia.dia-hoy-resaltado {
+    background-color: #fadfca !important;
+    border: 2px solid #e38e76 !important;
+}
+
+body.cn-body-dark .num-dia {
+    color: #4d2323 !important;
+}
+
+body.cn-body-dark .dia-fuera-rango .num-dia {
+    color: #a55e57 !important;
+}
+
+body.cn-body-dark .dia-hoy-resaltado .num-dia {
+    color: #4d2323 !important;
+    font-weight: 700;
+}
+
+body.cn-body-dark .btn-group.shadow-sm.bg-white {
+    background-color: #e38e76 !important;
+    border-color: #e38e76 !important;
+}
+
+body.cn-body-dark .btn-nav-mes {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-nav-mes:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.cn-body-dark .text-month-year,
+body.cn-body-dark #display-mes-año {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark #btn-abrir-crear {
+    background-color: #4d2323 !important;
+    color: #ffffff !important;
+    border: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark #btn-abrir-crear:hover {
+    background-color: #612c2d !important;
+}
+
+body.cn-body-dark .bloque-tarea-item {
+    background-color: #4d2323 !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .bloque-tarea-item:hover {
+    background-color: #612c2d !important;
+}
+
+body.cn-body-dark .t-alta {
+    border-left: 3px solid #ef4444 !important;
+}
+
+body.cn-body-dark .t-media {
+    border-left: 3px solid #f59e0b !important;
+}
+
+body.cn-body-dark .t-baja {
+    border-left: 3px solid #3b82f6 !important;
+}
+
+body.cn-body-dark .input-custom-style,
+body.cn-body-dark .select-custom-style {
+    background-color: #612c2d !important;
+    color: #ffffff !important;
+    border-color: #7b413f !important;
+}
+
+body.cn-body-dark .input-custom-style:focus,
+body.cn-body-dark .select-custom-style:focus {
+    border-color: #f4be95 !important;
+    box-shadow: 0 0 0 2px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .btn-cancelar-modal {
+    background-color: #612c2d !important;
+    color: #fcd5b8 !important;
+    border: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .btn-cancelar-modal:hover {
+    background-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-guardar-modal {
+    background-color: #f4be95 !important;
+    color: #4d2323 !important;
+    font-weight: 600 !important;
+}
+
+body.cn-body-dark .btn-guardar-modal:hover {
+    background-color: #fbe8da !important;
+}
 </style>

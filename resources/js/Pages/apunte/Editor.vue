@@ -1,7 +1,7 @@
 <template>
   <Head :title="pageTitle" />
   <AppLayout>
-    <div class="flex flex-col bg-background text-foreground rounded-lg border border-border overflow-hidden" style="height: calc(100vh - 140px)">
+    <div class="notes-editor-page flex flex-col bg-background text-foreground rounded-lg border border-border overflow-hidden" style="height: calc(100vh - 140px)">
       <!-- Header -->
       <header class="flex items-center justify-between gap-4 border-b border-border px-4 py-4 sm:px-6 bg-card text-card-foreground">
         <div class="flex min-w-0 items-center gap-3 w-1/2">
@@ -353,8 +353,314 @@ const saveNote = () => {
   background: #c82333 !important;
 }
 
+<style>
+/* Forzar el color de marca #612c2d en lugar del azul */
+.bg-primary {
+  background-color: #612c2d !important;
+}
+.text-primary {
+  color: #612c2d !important;
+}
+.bg-primary\/10 {
+  background-color: rgba(97, 44, 45, 0.1) !important;
+}
+.hover\:bg-primary\/90:hover {
+  background-color: #4e2324 !important;
+}
+.text-primary-foreground {
+  color: #ffffff !important;
+}
+.text-primary-foreground\/90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.hover\:bg-primary-foreground\/10:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+.focus\:ring-ring:focus {
+  --tw-ring-color: #612c2d !important;
+}
+
+/* Modal de Confirmación Estilo Zen */
+.zen-custom-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+.zen-custom-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.zen-modal-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+.zen-modal-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #333;
+}
+.zen-modal-text {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 25px;
+}
+.zen-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+.zen-btn-secondary {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  background: transparent;
+  color: #666;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn-secondary:hover {
+  background: #f0f0f0;
+}
+.zen-btn-primary {
+  flex: 1;
+  padding: 10px;
+  background: #dc3545 !important;
+  color: white !important;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.zen-btn-primary:hover {
+  background: #c82333 !important;
+}
+
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.9) translateY(20px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Estilos de modo oscuro específicos para la vista de edición de Apuntes (Editor.vue) */
+body.cn-body-dark .notes-editor-page {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page header {
+  background-color: #4d2323 !important;
+  border-bottom-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page header input {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page header input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+body.cn-body-dark .notes-editor-page header button.bg-primary {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .notes-editor-page header button.bg-primary:hover {
+  background-color: #fcd5b8 !important;
+  color: #612c2d !important;
+}
+
+/* Modal Zen Modo Oscuro */
+body.cn-body-dark .zen-custom-modal {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .zen-modal-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .zen-modal-text {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .zen-btn-secondary {
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .zen-btn-secondary:hover {
+  background-color: #542627 !important;
+}
+
+/* Barra de herramientas */
+body.cn-body-dark .notes-editor-page .border-b.bg-card {
+  background-color: #4d2323 !important;
+  border-bottom-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page select {
+  background-color: #3b1717 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page select option {
+  background-color: #3b1717 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page button.text-muted-foreground {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .notes-editor-page button.text-muted-foreground:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page button.bg-accent {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .notes-editor-page .bg-border {
+  background-color: #7b413f !important;
+}
+
+body.cn-body-dark .notes-editor-page button.ml-auto.bg-primary {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+  border: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark .notes-editor-page button.ml-auto.bg-primary:hover {
+  background-color: #612c2d !important;
+}
+
+/* Editor de Notas y Áreas del editor */
+body.cn-body-dark .notes-editor-page .editor-area {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .notes-editor-page .editor-area:empty::before {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Fondo para cajas del Método Cornell (Cajas clave, notas y resumen) */
+body.cn-body-dark .notes-editor-page .grid-cols-1 .editor-area {
+  background-color: #a55e57 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .notes-editor-page .grid-cols-1 .text-muted-foreground {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Fondo del área de Nota Normal */
+body.cn-body-dark .notes-editor-page .editor-area.mx-auto {
+  background-color: #4d2323 !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+/* Panel de Grabación de Audio */
+body.cn-body-dark aside {
+  background-color: #4d2323 !important;
+  border-left: 1px solid #7b413f !important;
+}
+
+body.cn-body-dark aside h3, 
+body.cn-body-dark aside h4 {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark aside .text-primary-foreground\/70,
+body.cn-body-dark aside .text-primary-foreground\/80,
+body.cn-body-dark aside .text-primary-foreground\/90 {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark aside .border-dashed {
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark aside .bg-primary-foreground\/10 {
+  background-color: rgba(244, 190, 149, 0.1) !important;
+}
+
+/* Tarjetas de grabaciones guardadas */
+body.cn-body-dark aside .bg-card {
+  background-color: #3b1717 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark aside .bg-card .text-muted-foreground {
+  color: #fcd5b8 !important;
+}
+
+/* Inversión de colores de control de audio nativo para modo oscuro */
+body.cn-body-dark aside audio {
+  filter: invert(0.9) hue-rotate(180deg) !important;
+}
+
+/* Botón descargar grabación */
+body.cn-body-dark aside a.block {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark aside a.block:hover {
+  background-color: #7b413f !important;
+}
+
+/* Botón de Grabar Audio (Micrófono) */
+body.cn-body-dark aside button.size-24.bg-card {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+  border: 2px solid #7b413f !important;
+}
+
+body.cn-body-dark aside button.size-24.bg-card:hover {
+  background-color: #7b413f !important;
+}
+
+body.cn-body-dark aside button.size-24.bg-card svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+body.cn-body-dark aside button.size-24.bg-card .animate-ping {
+  background-color: rgba(97, 44, 45, 0.4) !important;
+}
+
+/* Botón flotante para abrir panel */
+body.cn-body-dark button.fixed.bottom-6.right-6 {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+  border: none !important;
+}
+
+body.cn-body-dark button.fixed.bottom-6.right-6 svg {
+  stroke: #612c2d !important;
 }
 </style>

@@ -25,7 +25,7 @@
     --radius: 0.625rem;
   }
 
-  .dark {
+  .dark, body.cn-body-dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
@@ -54,6 +54,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  body.cn-body-dark {
+    color-scheme: dark;
+  }
+  body.cn-body-light {
+    color-scheme: light;
+  }
 }
 
 .editor-area:empty::before {
@@ -61,3 +67,93 @@
   color: var(--muted-foreground);
   pointer-events: none;
 }
+
+/* Global placeholder and input styling for dark mode */
+body.cn-body-dark input::placeholder,
+body.cn-body-dark textarea::placeholder,
+body.cn-body-dark select::placeholder,
+body.cn-body-dark .form-control::placeholder,
+body.cn-body-dark [contenteditable]::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1 !important;
+}
+
+body.cn-body-dark .editor-area:empty::before {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.cn-body-dark input,
+body.cn-body-dark textarea,
+body.cn-body-dark select,
+body.cn-body-dark .form-control {
+  color: #ffffff !important;
+}
+
+/* Sobrescribir el borde celeste predeterminado en foco para selects e inputs (Modo Claro) */
+select:focus,
+.form-select:focus,
+.select-custom:focus,
+.select-custom-style:focus,
+.form-select-zen:focus,
+.select-perfil-header:focus,
+input:focus,
+textarea:focus,
+.form-control:focus,
+[contenteditable]:focus {
+  outline: none !important;
+  border-color: #69342e !important;
+  box-shadow: 0 0 0 3px rgba(105, 52, 46, 0.25) !important;
+}
+
+/* Sobrescribir el borde celeste predeterminado en foco para selects e inputs (Modo Oscuro) */
+body.cn-body-dark select:focus,
+body.cn-body-dark .form-select:focus,
+body.cn-body-dark .select-custom:focus,
+body.cn-body-dark .select-custom-style:focus,
+body.cn-body-dark .form-select-zen:focus,
+body.cn-body-dark .select-perfil-header:focus,
+body.cn-body-dark input:focus,
+body.cn-body-dark textarea:focus,
+body.cn-body-dark .form-control:focus,
+body.cn-body-dark [contenteditable]:focus {
+  outline: none !important;
+  border-color: #f4be95 !important;
+  box-shadow: 0 0 0 3px rgba(244, 190, 149, 0.35) !important;
+}
+
+/* Estilo y color de fondo para selectores/dropdowns en Modo Oscuro */
+body.cn-body-dark select,
+body.cn-body-dark .form-select,
+body.cn-body-dark .select-custom,
+body.cn-body-dark .select-custom-style,
+body.cn-body-dark .form-select-zen,
+body.cn-body-dark .select-perfil-header {
+  background-color: #3b1717 !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+/* Flecha de dropdowns blanca en Modo Oscuro */
+body.cn-body-dark select,
+body.cn-body-dark .form-select,
+body.cn-body-dark .select-custom,
+body.cn-body-dark .select-custom-style,
+body.cn-body-dark .form-select-zen {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 16px 12px !important;
+}
+
+/* Opciones de selects con fondo oscuro en Modo Oscuro */
+body.cn-body-dark select option,
+body.cn-body-dark .form-select option,
+body.cn-body-dark .select-custom option,
+body.cn-body-dark .select-custom-style option,
+body.cn-body-dark .form-select-zen option {
+  background-color: #3b1717 !important;
+  color: #ffffff !important;
+}
+
+
+

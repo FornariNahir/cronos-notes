@@ -543,3 +543,191 @@ const confirmDelete = () => {
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 </style>
+
+<style>
+/* Estilos en modo oscuro para la página de Apuntes */
+body.cn-body-dark .notes-page {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .page-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .page-subtitle {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .page-subtitle b {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-create {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .btn-create:hover {
+  background-color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .note-card {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .note-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.cn-body-dark .note-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .note-date {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .note-preview {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .note-card-actions {
+  background-color: #3b1717 !important;
+  border-top-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-action.edit {
+  color: #ffffff !important;
+  border-right-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-action.edit:hover {
+  background-color: #542627 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-action.delete {
+  color: #ff8b8b !important;
+}
+
+body.cn-body-dark .btn-action.delete:hover {
+  background-color: #7b413f !important;
+  color: #ff8b8b !important;
+}
+
+body.cn-body-dark .empty-state {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .empty-state:hover {
+  border-color: #f4be95 !important;
+  background-color: #542627 !important;
+}
+
+body.cn-body-dark .empty-icon {
+  color: #7b413f !important;
+}
+
+body.cn-body-dark .empty-state h3 {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .empty-state p {
+  color: #fcd5b8 !important;
+}
+
+/* Badges */
+body.cn-body-dark .badge.bg-light {
+  background-color: #3b1717 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .badge.bg-warning-subtle {
+  background-color: rgba(244, 190, 149, 0.2) !important;
+  color: #f4be95 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .badge.bg-secondary-subtle {
+  background-color: #3b1717 !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .badge.bg-danger-subtle {
+  background-color: rgba(220, 53, 69, 0.2) !important;
+  color: #ff8b8b !important;
+  border-color: #7b413f !important;
+}
+
+/* Modals */
+body.cn-body-dark .zen-custom-modal {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .zen-modal-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .zen-modal-text {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .zen-btn-secondary {
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .zen-btn-secondary:hover {
+  background-color: #542627 !important;
+}
+
+body.cn-body-dark .profile-selection-modal-overlay {
+  background: rgba(18, 9, 9, 0.8) !important;
+}
+
+body.cn-body-dark .profile-selection-modal {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.cn-body-dark .profile-selection-modal::before {
+  display: none !important;
+}
+
+body.cn-body-dark .profile-selection-modal .modal-header h2 {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .profile-selection-modal .modal-header p {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .profile-option {
+  background-color: #3b1717 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .profile-option:hover {
+  background-color: #542627 !important;
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .profile-icon {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .profile-info h4 {
+  color: #ffffff !important;
+}
+</style>
+

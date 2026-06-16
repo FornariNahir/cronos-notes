@@ -1047,7 +1047,7 @@ body.cn-body-light .cn-quienes-page .btn-outline-premium:hover {
 
 body.cn-body-dark .cn-navbar-logo,
 body.cn-body-dark .cn-footer-logo {
-  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.8)) brightness(1.25);
+  filter: brightness(0) invert(1) !important;
 }
 
 /* ===================== FOOTER ===================== */

@@ -184,3 +184,36 @@ const maxWidthClass = computed(() => {
   transform: scale(0.98);
 }
 </style>
+
+<style>
+/* Estilos en modo oscuro globales para AlertModal */
+body.cn-body-dark .alert-card {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.cn-body-dark .alert-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .alert-message {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .alert-icon {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .alert-card .btn-primary {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .alert-card .btn-primary:hover {
+  background-color: #fcd5b8 !important;
+  color: #612c2d !important;
+}
+</style>
+

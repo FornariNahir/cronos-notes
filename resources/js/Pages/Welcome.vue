@@ -978,7 +978,7 @@ h1, h2, h3, .cn-brand-text { font-family: 'Fraunces', Georgia, serif; }
 
 body.cn-body-dark .cn-navbar-logo,
 body.cn-body-dark .cn-footer-logo {
-  filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.8)) brightness(1.25);
+  filter: brightness(0) invert(1) !important;
 }
 
 body.cn-body-dark .accordion-button::after {

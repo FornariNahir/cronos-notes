@@ -465,12 +465,20 @@ body.cn-body-dark .form-panel h1 {
 }
 
 body.cn-body-dark .input-group input {
-    background-color: #f3f0ed;
-    color: #2b211f;
+    background-color: rgba(0, 0, 0, 0.25);
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.cn-body-dark .input-group .icon {
+    color: rgba(255, 255, 255, 0.5);
 }
 
 body.cn-body-dark .input-group input:focus {
-    background-color: #ffffff;
+    background-color: rgba(0, 0, 0, 0.35);
     box-shadow: 0 0 0 2px rgba(227, 142, 118, 0.4);
 }
 

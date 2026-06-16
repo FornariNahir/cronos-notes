@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted, onUnmounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
 defineProps({
@@ -16,92 +17,101 @@ const submit = () => {
 };
 
 const setFocus = (event) => {
-    event.target.parentElement.querySelector('.icon').style.color = '#8b5a4b';
+    const color = localStorage.getItem('cn-theme') === 'dark' ? '#e38e76' : '#8b5a4b';
+    event.target.parentElement.querySelector('.icon').style.color = color;
 };
 
 const removeFocus = (event) => {
     event.target.parentElement.querySelector('.icon').style.color = '#888';
 };
+
+onMounted(() => {
+    const isDark = localStorage.getItem('cn-theme') === 'dark';
+    if (isDark) {
+        document.body.classList.add('cn-body-dark');
+    } else {
+        document.body.classList.add('cn-body-light');
+    }
+});
+
+onUnmounted(() => {
+    document.body.classList.remove('cn-body-light');
+    document.body.classList.remove('cn-body-dark');
+});
 </script>
 
 <template>
     <Head title="Recuperar contraseña" />
 
-    <!-- Formas decorativas -->
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
-    <div class="shape shape-3"></div>
-    <div class="shape shape-4"></div>
+    <div class="cn-auth-wrapper">
+        <!-- Formas decorativas -->
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
 
-    <div class="container">
-        <div class="illustration-panel">
-            <img src="/img/login.png" alt="Ilustración Recuperar Contraseña">
-        </div>
-
-        <div class="form-panel">
-            <div class="avatar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+        <div class="container">
+            <div class="illustration-panel">
+                <img src="/img/login.png" alt="Ilustración Recuperar Contraseña">
             </div>
 
-            <h1>Recuperar contraseña</h1>
-            
-            <p class="description-text">
-                ¿Olvidaste tu contraseña? No te preocupes. Ingresá tu correo electrónico y te enviaremos un enlace para restablecerla.
-            </p>
-            
-            <div v-if="status" class="status-msg">
-                {{ status }}
-            </div>
-
-            <form @submit.prevent="submit">
-                <div class="input-group" :style="{ marginBottom: form.errors.email ? '5px' : '18px' }">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="4"/>
-                        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+            <div class="form-panel">
+                <div class="avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
-                    <input 
-                        type="email" 
-                        v-model="form.email" 
-                        placeholder="Correo electrónico" 
-                        required
-                        autofocus
-                        @focus="setFocus"
-                        @blur="removeFocus"
-                    >
                 </div>
-                <div v-if="form.errors.email" class="error-msg">{{ form.errors.email }}</div>
 
-                <button 
-                    type="submit" 
-                    class="btn-login"
-                    :class="{ 'opacity-50': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Enviar enlace
-                </button>
-            </form>
+                <h1>Recuperar contraseña</h1>
+                
+                <p class="description-text">
+                    ¿Olvidaste tu contraseña? No te preocupes. Ingresá tu correo electrónico y te enviaremos un enlace para restablecerla.
+                </p>
+                
+                <div v-if="status" class="status-msg">
+                    {{ status }}
+                </div>
 
-            <p class="login-link">
-                <Link :href="route('login')">Volver al inicio de sesión</Link>
-            </p>
+                <form @submit.prevent="submit">
+                    <div class="input-group" :style="{ marginBottom: form.errors.email ? '5px' : '18px' }">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+                        </svg>
+                        <input 
+                            type="email" 
+                            v-model="form.email" 
+                            placeholder="Correo electrónico" 
+                            required
+                            autofocus
+                            @focus="setFocus"
+                            @blur="removeFocus"
+                        >
+                    </div>
+                    <div v-if="form.errors.email" class="error-msg">{{ form.errors.email }}</div>
+
+                    <button 
+                        type="submit" 
+                        class="btn-login"
+                        :class="{ 'opacity-50': form.processing }"
+                        :disabled="form.processing"
+                    >
+                        Enviar enlace
+                    </button>
+                </form>
+
+                <p class="login-link">
+                    <Link :href="route('login')">Volver al inicio de sesión</Link>
+                </p>
+            </div>
         </div>
     </div>
 </template>
 
 <style>
-html, body {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    min-height: 100vh;
-    background-color: #e8e5e1;
-}
-
-#app {
+/* Estilos del wrapper exclusivo de autenticación para evitar leaks globales */
+.cn-auth-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,6 +120,14 @@ html, body {
     position: relative;
     overflow: hidden;
     width: 100%;
+    background-color: #e8e5e1;
+    transition: background-color 0.3s ease;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+body.cn-body-dark .cn-auth-wrapper {
+    background-color: #612c2d !important;
 }
 </style>
 
@@ -347,5 +365,102 @@ html, body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* Dark Mode Overrides */
+body.cn-body-dark .shape-1 {
+    background-color: #4c2521;
+    opacity: 0.8;
+}
+
+body.cn-body-dark .shape-2 {
+    background-color: #7b413f;
+    opacity: 0.4;
+}
+
+body.cn-body-dark .shape-3 {
+    background-color: #7b413f;
+    opacity: 0.3;
+}
+
+body.cn-body-dark .shape-4 {
+    background-color: #8a4a3f;
+    opacity: 0.2;
+}
+
+body.cn-body-dark .container {
+    background-color: rgba(76, 37, 33, 0.75);
+    border: 1px solid rgba(244, 190, 149, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+body.cn-body-dark .avatar {
+    background-color: transparent !important;
+    width: auto;
+    height: auto;
+    margin: 0 auto 20px;
+}
+
+body.cn-body-dark .avatar svg {
+    width: 65px;
+    height: 65px;
+    color: #ffffff;
+    stroke-width: 1.2px;
+}
+
+body.cn-body-dark .form-panel h1 {
+    color: #ffffff;
+}
+
+body.cn-body-dark .description-text {
+    color: #fcd5b8;
+}
+
+body.cn-body-dark .input-group input {
+    background-color: rgba(0, 0, 0, 0.25);
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.cn-body-dark .input-group .icon {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+body.cn-body-dark .input-group input:focus {
+    background-color: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 0 0 2px rgba(227, 142, 118, 0.4);
+}
+
+body.cn-body-dark .btn-login {
+    background-color: #e38e76;
+    color: #ffffff;
+}
+
+body.cn-body-dark .btn-login:hover {
+    background-color: #a55e57;
+    box-shadow: 0 4px 12px rgba(227, 142, 118, 0.3);
+}
+
+body.cn-body-dark .login-link {
+    color: #fcd5b8;
+}
+
+body.cn-body-dark .login-link a {
+    color: #ffffff;
+    text-decoration: underline;
+    font-weight: 700;
+}
+
+body.cn-body-dark .login-link a:hover {
+    color: #e38e76;
+}
+
+body.cn-body-dark .illustration-panel {
+    background-color: #e38e76;
 }
 </style>

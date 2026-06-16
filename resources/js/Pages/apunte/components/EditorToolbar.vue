@@ -40,7 +40,6 @@
 
     <span class="mx-1 hidden h-6 w-px bg-border sm:block"></span>
 
-    <button type="button" @mousedown.prevent @click="printWindow" class="flex size-8 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"><Printer class="size-4" /></button>
     <button type="button" @mousedown.prevent @click="$emit('exec', 'copy')" class="flex size-8 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"><Copy class="size-4" /></button>
 
     <button
@@ -54,7 +53,7 @@
 </template>
 
 <script setup>
-import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Printer, Copy, ChevronDown } from 'lucide-vue-next'
+import { Bold, Italic, Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Copy, ChevronDown } from 'lucide-vue-next'
 
 const props = defineProps({
   font: String,
@@ -67,8 +66,4 @@ const emit = defineEmits(['update:font', 'update:size', 'exec', 'toggleCornell']
 
 const FONTS = ["Arial", "Times New Roman", "Georgia", "Courier New", "Verdana"]
 const SIZES = ["8", "9", "10", "11", "12", "14", "18", "24", "36"]
-
-const printWindow = () => {
-  window.print()
-}
 </script>

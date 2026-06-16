@@ -139,7 +139,7 @@ onUnmounted(() => {
 
                     <button 
                         type="submit" 
-                        class="btn-login"
+                        class="btn-register"
                         :class="{ 'opacity-50': form.processing }"
                         :disabled="form.processing"
                     >

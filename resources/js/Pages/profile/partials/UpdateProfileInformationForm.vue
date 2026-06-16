@@ -124,14 +124,14 @@ watch(isNameOrSurnameChanged, (changed) => {
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
                 <p class="mt-2 text-sm text-gray-800">
-                    Your email address is unverified.
+                    Tu dirección de correo electrónico no está verificada.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
                         class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Click here to re-send the verification email.
+                        Hacé clic acá para reenviar el correo de verificación.
                     </Link>
                 </p>
 
@@ -139,12 +139,12 @@ watch(isNameOrSurnameChanged, (changed) => {
                     v-show="status === 'verification-link-sent'"
                     class="mt-2 text-sm font-medium text-green-600"
                 >
-                    A new verification link has been sent to your email address.
+                    Se ha enviado un nuevo enlace de verificación a tu dirección de correo electrónico.
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <PrimaryButton :disabled="form.processing">Guardar</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -156,7 +156,7 @@ watch(isNameOrSurnameChanged, (changed) => {
                         v-if="form.recentlySuccessful"
                         class="text-sm text-gray-600"
                     >
-                        Saved.
+                        Guardado.
                     </p>
                 </Transition>
             </div>

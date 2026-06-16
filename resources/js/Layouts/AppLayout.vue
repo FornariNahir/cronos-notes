@@ -417,6 +417,7 @@ body.cn-body-dark .btn-collapse-sidebar:hover {
   border-radius: 0;
   margin: -20px -20px 24px -20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-bottom: 1px solid transparent; /* Evita desplazamiento de 1px entre modos */
 }
 
 .search-container {
@@ -726,12 +727,6 @@ body.cn-body-dark .streak-card-with-accent {
   color: #ffffff !important;
 }
 
-body.cn-body-dark .profile-card {
-  position: relative !important;
-  overflow: hidden !important;
-  padding-bottom: 55px !important;
-}
-
 body.cn-body-dark .profile-card:hover,
 body.cn-body-dark .task-card-light:hover,
 body.cn-body-dark .info-card:hover,
@@ -741,7 +736,7 @@ body.cn-body-dark .rounded-xl:hover {
 }
 
 body.cn-body-dark .profile-card.active-card {
-  border: 2px solid #f4be95 !important;
+  border-color: #f4be95 !important;
   box-shadow: 0 2px 8px rgba(244, 190, 149, 0.25) !important;
 }
 
@@ -752,23 +747,11 @@ body.cn-body-dark .profile-icon {
 }
 
 body.cn-body-dark .profile-card .progress-bar {
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  height: 30px !important;
   background-color: #3b1717 !important;
-  border-radius: 0 !important;
-  margin: 0 !important;
-  border-top: 1px solid #7b413f !important;
-  overflow: hidden !important;
 }
 
 body.cn-body-dark .profile-card .progress-fill {
-  height: 100% !important;
   background-color: #f4be95 !important;
-  border-radius: 0 !important;
-  transition: width 1s ease-out !important;
 }
 
 body.cn-body-dark .streak-number,

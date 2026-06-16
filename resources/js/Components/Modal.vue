@@ -112,7 +112,7 @@ const maxWidthClass = computed(() => {
             >
                 <div
                     v-show="show"
-                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full"
+                    class="mb-6 transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:mx-auto sm:w-full cn-modal-card"
                     :class="maxWidthClass"
                 >
                     <slot v-if="showSlot" />
@@ -121,3 +121,13 @@ const maxWidthClass = computed(() => {
         </div>
     </dialog>
 </template>
+
+<style>
+/* Estilos en modo oscuro globales para Modal.vue */
+body.cn-body-dark .cn-modal-card {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+</style>

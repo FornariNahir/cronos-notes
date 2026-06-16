@@ -233,3 +233,59 @@ const maxWidthClass = computed(() => {
   transform: scale(0.98);
 }
 </style>
+
+<style>
+/* Estilos en modo oscuro globales para ConfirmModal */
+body.cn-body-dark .confirm-card {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.cn-body-dark .confirm-title {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .confirm-message {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .confirm-icon {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .confirm-icon.text-danger-icon {
+  color: #dc3545 !important;
+}
+
+body.cn-body-dark .confirm-card .btn-confirm {
+  background-color: #f4be95 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .confirm-card .btn-confirm:hover {
+  background-color: #fcd5b8 !important;
+  color: #612c2d !important;
+}
+
+body.cn-body-dark .confirm-card .btn-confirm.btn-danger-confirm {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .confirm-card .btn-confirm.btn-danger-confirm:hover {
+  background-color: #bd2130 !important;
+}
+
+body.cn-body-dark .confirm-card .btn-secondary {
+  background-color: #612c2d !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .confirm-card .btn-secondary:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+</style>

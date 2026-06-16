@@ -5,15 +5,23 @@
       id="sidebarToggle" 
       aria-label="Toggle sidebar" 
       @click="toggleSidebar"
+      v-show="isSidebarClosed"
     >
       &#9776;
     </button>
 
     <aside class="sidebar" :class="{ 'closed': isSidebarClosed }">
-      <div class="logo-area">
+      <div class="logo-area d-flex align-items-center justify-content-between w-100">
         <div class="logo-icon">
           <img src="/img/logo-cronos.png" alt="Logo">
         </div>
+        <button 
+          class="btn-collapse-sidebar" 
+          @click="toggleSidebar" 
+          aria-label="Colapsar menú"
+        >
+          <i class="bi bi-chevron-left"></i>
+        </button>
       </div>
 
       <ul class="nav-menu">
@@ -147,7 +155,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 
-const isSidebarClosed = ref(true);
+const isSidebarClosed = ref(window.innerWidth <= 768);
 const isZenMode = ref(false);
 const isSettingsDropdownOpen = ref(false);
 const dropdownRef = ref(null);
@@ -208,7 +216,7 @@ const toggleSidebar = () => {
 };
 
 const closeSidebarOnMobile = () => {
-  if (window.innerWidth < 768) {
+  if (window.innerWidth <= 768) {
     isSidebarClosed.value = true;
   }
 };
@@ -344,9 +352,42 @@ const toggleMode = () => {
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 1100;
-  display: none; /* Oculto en pantallas grandes */
+  display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.sidebar.closed {
+  transform: translateX(-220px);
+}
+
+.btn-collapse-sidebar {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
+  margin-top: -15px;
+}
+
+.btn-collapse-sidebar:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+body.cn-body-dark .btn-collapse-sidebar {
+  color: #f4be95;
+}
+
+body.cn-body-dark .btn-collapse-sidebar:hover {
+  background-color: #7b413f;
+  color: #ffffff;
 }
 
 #content {
@@ -355,21 +396,18 @@ const toggleMode = () => {
   transition: margin-left 0.3s ease;
 }
 
+#content.expanded {
+  margin-left: 0;
+}
+
+/* Espacio para el botón flotante cuando el sidebar está colapsado */
+#content.expanded .top-bar {
+  padding-left: 64px;
+}
+
 @media (max-width: 768px) {
-  #sidebarToggle {
-    display: flex !important;
-  }
-  
-  .sidebar {
-    transform: translateX(-220px);
-  }
-  
-  .sidebar.closed {
-    transform: translateX(0);
-  }
-  
   #content {
-    margin-left: 0;
+    margin-left: 0 !important;
     padding-top: 70px;
   }
 
@@ -1113,5 +1151,35 @@ body.cn-body-dark .modal-body .text-marron-institucional {
 
 body.cn-body-dark .modal-body .border-top {
   border-color: #7b413f !important;
+}
+
+/* Alertas de Bootstrap en Modo Oscuro con Alto Contraste */
+body.cn-body-dark .alert-info {
+  background-color: rgba(13, 202, 240, 0.15) !important;
+  color: #6edff6 !important;
+  border-color: rgba(13, 202, 240, 0.3) !important;
+}
+
+body.cn-body-dark .alert-danger {
+  background-color: rgba(220, 53, 69, 0.15) !important;
+  color: #ea868f !important;
+  border-color: rgba(220, 53, 69, 0.3) !important;
+}
+
+body.cn-body-dark .alert-success {
+  background-color: rgba(40, 167, 69, 0.15) !important;
+  color: #75ec88 !important;
+  border-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+body.cn-body-dark .alert-warning {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+  color: #ffda6a !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+/* Inversión global de botones de cerrar en modo oscuro */
+body.cn-body-dark .btn-close {
+  filter: invert(1) !important;
 }
 </style>

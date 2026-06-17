@@ -24,11 +24,15 @@ const form = useForm({
     password: '',
 });
 
-const isNameOrSurnameChanged = computed(() => {
-    return form.nombre !== user.nombre || form.apellido !== user.apellido;
+const isProfileDataChanged = computed(() => {
+    return (
+        form.nombre !== user.nombre ||
+        form.apellido !== user.apellido ||
+        form.email !== user.email
+    );
 });
 
-watch(isNameOrSurnameChanged, (changed) => {
+watch(isProfileDataChanged, (changed) => {
     if (!changed) {
         form.password = '';
     }
@@ -105,15 +109,15 @@ watch(isNameOrSurnameChanged, (changed) => {
                 leave-from-class="transform translate-y-0 opacity-100"
                 leave-to-class="transform -translate-y-2 opacity-0"
             >
-                <div v-if="isNameOrSurnameChanged">
-                    <InputLabel for="password" value="Confirmar con contraseña para cambiar nombre o apellido" />
+                <div v-if="isProfileDataChanged">
+                    <InputLabel for="password" value="Confirmar con contraseña para guardar los cambios" />
 
                     <TextInput
                         id="password"
                         type="password"
                         class="mt-1 block w-full"
                         v-model="form.password"
-                        :required="isNameOrSurnameChanged"
+                        :required="isProfileDataChanged"
                         autocomplete="current-password"
                         placeholder="Ingresá tu contraseña para confirmar el cambio"
                     />

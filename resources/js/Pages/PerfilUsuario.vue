@@ -93,6 +93,7 @@ watch(() => page.props.auth?.user, (newUser) => {
 }, { deep: true });
 
 const inputNewEmail = ref('');
+const inputConfirmPassEmail = ref('');
 const inputOldPass = ref('');
 const inputNewPass = ref('');
 const inputConfirmPass = ref('');
@@ -165,11 +166,34 @@ const guardarDatosPersonales = () => {
 };
 
 const cambiarCorreo = () => {
-    showCustomAlert("Correo", `Solicitud procesada con éxito. Se ha enviado un enlace de confirmación a: ${inputNewEmail.value}`);
-    if (modalCorreoInstance) {
-        modalCorreoInstance.hide();
-    }
-    inputNewEmail.value = '';
+    if (!inputNewEmail.value || !inputConfirmPassEmail.value) return;
+
+    window.axios.post(route('profile.request-email-change'), {
+        email: inputNewEmail.value,
+        password: inputConfirmPassEmail.value
+    })
+    .then(response => {
+        // Cierra el modal primero usando el botón de descartar nativo de Bootstrap
+        const modalEl = document.getElementById('modalCambiarCorreo');
+        if (modalEl) {
+            const closeBtn = modalEl.querySelector('[data-bs-dismiss="modal"]');
+            if (closeBtn) {
+                closeBtn.click();
+            }
+        }
+
+        // Muestra la alerta después de un pequeño retardo para evitar superposición visual o de foco
+        setTimeout(() => {
+            const message = response.data?.message || `Solicitud procesada con éxito. Se ha enviado un enlace de confirmación a: ${inputNewEmail.value}`;
+            showCustomAlert("Correo", message);
+            inputNewEmail.value = '';
+            inputConfirmPassEmail.value = '';
+        }, 150);
+    })
+    .catch(error => {
+        const errorMsg = error.response?.data?.message || 'Hubo un problema al procesar la solicitud.';
+        showCustomAlert("Error de Validación", errorMsg);
+    });
 };
 
 const cambiarPassword = () => {
@@ -183,39 +207,25 @@ const cambiarPassword = () => {
         return;
     }
 
-    showCustomAlert("Contraseña Actualizada", "Seguridad: ¡Tu contraseña ha sido actualizada correctamente en el sistema!");
-    if (modalPasswordInstance) {
-        modalPasswordInstance.hide();
+    // Cierra el modal primero usando el botón de descartar nativo de Bootstrap
+    const modalEl = document.getElementById('modalCambiarPassword');
+    if (modalEl) {
+        const closeBtn = modalEl.querySelector('[data-bs-dismiss="modal"]');
+        if (closeBtn) {
+            closeBtn.click();
+        }
     }
-    inputOldPass.value = '';
-    inputNewPass.value = '';
-    inputConfirmPass.value = '';
+
+    // Muestra la alerta después de un pequeño retardo para evitar superposición visual o de foco
+    setTimeout(() => {
+        showCustomAlert("Contraseña Actualizada", "Seguridad: ¡Tu contraseña ha sido actualizada correctamente en el sistema!");
+        inputOldPass.value = '';
+        inputNewPass.value = '';
+        inputConfirmPass.value = '';
+    }, 150);
 };
 
-const eliminarCuenta = () => {
-    triggerConfirm({
-        title: 'Eliminar Cuenta',
-        message: '¿Estás seguro de que deseas eliminar permanentemente tu cuenta de Cronos Notes?',
-        confirmText: 'Continuar',
-        isDanger: true,
-        onConfirm: () => {
-            setTimeout(() => {
-                triggerConfirm({
-                    title: 'Confirmación Final',
-                    message: 'Esta acción es irreversible y borrará tus estadísticas de racha, apuntes y perfiles. ¿Proceder?',
-                    confirmText: 'Confirmar Eliminación',
-                    isDanger: true,
-                    onConfirm: () => {
-                        showCustomAlert("Cuenta Eliminada", "Cuenta dada de baja simuladamente.");
-                        setTimeout(() => {
-                          window.location.reload(); 
-                        }, 2000);
-                    }
-                });
-            }, 300);
-        }
-    });
-};
+// Función eliminarCuenta removida ya que la baja del sistema no está habilitada en esta pantalla.
 </script>
 
 <template>
@@ -308,11 +318,7 @@ const eliminarCuenta = () => {
                             </div>
                         </div>
 
-                        <div class="pt-4 border-top mt-5 border-danger border-opacity-25">
-                            <h6 class="text-danger fw-bold mb-1 small text-uppercase tracking-wider">Baja del Sistema</h6>
-                            <p class="text-secondary small mb-3">Si decidís darte de baja, se eliminarán permanentemente tus perfiles asignados, notas, temporizadores y estadísticas acumuladas.</p>
-                            <button class="btn btn-danger btn-sm px-3 py-2" @click="eliminarCuenta"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar mi cuenta definitivamente</button>
-                        </div>
+                        <!-- Sección de Baja del Sistema removida para la presentación -->
                     </div>
 
                 </div>
@@ -335,9 +341,13 @@ const eliminarCuenta = () => {
                                 <label class="form-label text-secondary small fw-medium">Dirección de correo actual</label>
                                 <input type="email" class="form-control input-custom" :value="email" disabled>
                             </div>
-                            <div class="mb-2">
+                            <div class="mb-3">
                                 <label class="form-label text-secondary small fw-medium">Nuevo correo electrónico *</label>
                                 <input type="email" class="form-control input-custom" v-model="inputNewEmail" placeholder="ejemplo@correo.com" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-secondary small fw-medium">Confirmar con tu contraseña *</label>
+                                <input type="password" class="form-control input-custom w-100" v-model="inputConfirmPassEmail" placeholder="Ingresá tu contraseña" required>
                             </div>
                             <p class="text-muted m-0" style="font-size: 0.78rem; line-height: 1.3;">Se enviará un enlace de verificación a la dirección especificada para validar los datos antes del cambio definitivo.</p>
                         </div>

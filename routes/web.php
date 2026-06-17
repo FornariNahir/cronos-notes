@@ -40,6 +40,7 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/request-email-change', [ProfileController::class, 'requestEmailChange'])->name('profile.request-email-change');
 
     // DASHBOARD (principalGestion.html)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -162,6 +163,9 @@ Route::middleware('auth.custom')->group(function () {
 
 // Invitación pública — ver invitación sin auth (para que el link del email funcione)
 Route::get('/invitacion/{token}', [PerfilCompartidoController::class, 'verInvitacion'])->name('invitacion.ver');
+
+// Confirmación pública de cambio de correo (firmada temporalmente)
+Route::get('/profile/confirm-email-change', [ProfileController::class, 'confirmEmailChange'])->name('profile.confirm-email-change');
 
 Route::get('/uso', function () {
     return Inertia::render('ModoUso');

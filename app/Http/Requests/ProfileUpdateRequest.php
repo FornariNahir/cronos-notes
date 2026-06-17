@@ -19,9 +19,10 @@ class ProfileUpdateRequest extends FormRequest
         $user = $this->user();
         $nombreChanged = $this->input('nombre') !== $user->nombre;
         $apellidoChanged = $this->input('apellido') !== $user->apellido;
+        $emailChanged = $this->input('email') !== $user->email;
 
         $passwordRules = ['nullable'];
-        if ($nombreChanged || $apellidoChanged) {
+        if ($nombreChanged || $apellidoChanged || $emailChanged) {
             $passwordRules = ['required', 'current_password'];
         }
 

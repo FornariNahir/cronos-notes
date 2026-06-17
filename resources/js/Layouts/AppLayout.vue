@@ -13,7 +13,7 @@
     <aside class="sidebar" :class="{ 'closed': isSidebarClosed }">
       <div class="logo-area d-flex align-items-center justify-content-between w-100">
         <div class="logo-icon">
-          <img src="/img/logo-cronos.png" alt="Logo">
+          <img src="/imagenes/logo-cronos.png" alt="Logo">
         </div>
         <button 
           class="btn-collapse-sidebar" 

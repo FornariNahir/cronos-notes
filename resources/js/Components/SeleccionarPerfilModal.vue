@@ -24,7 +24,7 @@ const selectProfile = (idPerfil) => {
 
     <div class="auth-card">
       <div class="illustration-panel">
-        <img src="/img/login.png" alt="Ilustración Selección de Perfil">
+        <img src="/imagenes/login.png" alt="Ilustración Selección de Perfil">
       </div>
 
       <div class="form-panel">

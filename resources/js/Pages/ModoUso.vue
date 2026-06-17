@@ -153,7 +153,7 @@ onUnmounted(() => {
         <nav class="navbar navbar-expand-lg fixed-top cn-navbar" id="cnNavbar">
             <div class="container">
                 <Link class="navbar-brand cn-brand" href="/">
-                    <img src="/img/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
+                    <img src="/imagenes/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
                 </Link>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#cnNav" aria-controls="cnNav" aria-expanded="false" aria-label="Abrir menú">
@@ -340,7 +340,7 @@ onUnmounted(() => {
                                 <div class="video-frame">
                                     <div class="video-badge"><i class="bi bi-broadcast"></i> Tutorial</div>
                                     <div class="video-placeholder">
-                                        <video id="tutorialVideo" class="w-100" loop muted playsinline poster="/imagenes/apuntes.png" src="/imagenes/videoPomodoro.mp4"></video>
+                                        <video id="tutorialVideo" class="w-100" loop muted playsinline poster="/imagenes/apuntes.png" src="/imagenes/videoPomodoro.webm"></video>
                                         <div class="video-overlay">
                                             <div class="play-btn" id="playBtn"><i class="bi bi-play-fill"></i></div>
                                             <div class="video-caption">Tutorial: Tu primera sesión Pomodoro</div>

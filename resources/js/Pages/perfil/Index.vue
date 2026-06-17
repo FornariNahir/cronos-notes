@@ -29,11 +29,11 @@
               </Link>
 
               <button class="btn-editar" @click="openEditModal(perfil)" aria-label="Editar">
-                <img src="/img/editar.png" alt="Editar" style="width: 24px; height: 24px;" />
+                <img src="/imagenes/editar.png" alt="Editar" style="width: 24px; height: 24px;" />
               </button>
 
               <button class="btn-kill" @click="openDeleteModal(perfil)" aria-label="Eliminar">
-                <img src="/img/eliminar.png" alt="Eliminar" style="width: 24px; height: 24px;" />
+                <img src="/imagenes/eliminar.png" alt="Eliminar" style="width: 24px; height: 24px;" />
               </button>
             </div>
 

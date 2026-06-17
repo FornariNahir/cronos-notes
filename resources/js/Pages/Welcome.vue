@@ -168,7 +168,7 @@ onUnmounted(() => {
     <nav class="navbar navbar-expand-lg fixed-top cn-navbar" id="cnNavbar">
         <div class="container">
             <a class="navbar-brand cn-brand" href="#hero">
-                <img src="/img/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
+                <img src="/imagenes/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#cnNav" aria-controls="cnNav" aria-expanded="false" aria-label="Abrir menú">
@@ -370,7 +370,7 @@ onUnmounted(() => {
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
                     <div class="cn-video-frame">
-                        <video class="cn-video" autoplay muted loop playsinline poster="/imagenes/feature-app.png" src="/imagenes/videoPomodoro.mp4"></video>
+                        <video class="cn-video" autoplay muted loop playsinline poster="/imagenes/feature-app.png" src="/imagenes/videoPomodoro.webm"></video>
                         <div class="cn-video-badge"><i class="bi bi-broadcast"></i> Demo en vivo</div>
                     </div>
                 </div>
@@ -476,7 +476,7 @@ onUnmounted(() => {
             <div class="row g-4 align-items-start justify-content-start">
                 <div class="col-lg-6">
                     <a class="navbar-brand cn-brand cn-brand-footer" href="#hero">
-                        <img src="/img/logo-cronos.png" alt="Cronos Notes Logo" class="cn-footer-logo" />
+                        <img src="/imagenes/logo-cronos.png" alt="Cronos Notes Logo" class="cn-footer-logo" />
                     </a>
                     <p class="cn-footer-text mt-3">El espacio inteligente donde tu tiempo y tus tareas trabajan a tu favor.</p>
                 </div>

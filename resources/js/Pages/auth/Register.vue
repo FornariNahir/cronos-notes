@@ -164,7 +164,7 @@ onUnmounted(() => {
 
             <!-- Panel de ilustración -->
             <div class="illustration-panel">
-                <img src="/img/registro.png" alt="Registro">
+                <img src="/imagenes/registro.png" alt="Registro">
             </div>
         </div>
     </div>

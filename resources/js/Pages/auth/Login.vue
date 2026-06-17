@@ -60,7 +60,7 @@ onUnmounted(() => {
         <div class="container">
             
             <div class="illustration-panel">
-                <img src="/img/login.png" alt="Ilustración Login">
+                <img src="/imagenes/login.png" alt="Ilustración Login">
             </div>
 
             <div class="form-panel">

@@ -42,7 +42,7 @@ onMounted(() => {
     <header class="header">
         <div class="nav-container">
             <div class="logo">
-                <img src="/img/logo-cronos.png" class="logo-img" alt="logo-cronos">
+                <img src="/imagenes/logo-cronos.png" class="logo-img" alt="logo-cronos">
             </div>
             <div class="nav-buttons">
                 <Link href="/" class="btn btn-outline">Página Principal</Link>
@@ -60,7 +60,7 @@ onMounted(() => {
                     <p>Pensamos en los perfiles como distintos espacios de trabajo: colocá tus materias, proyectos personales o trabajos.</p>
                 </div>
                 <div class="section-image">
-                    <img src="/img/perfiles.png" alt="Perfiles">
+                    <img src="/imagenes/perfiles_uso.png" alt="Perfiles">
                 </div>
             </section>
             <section class="section">
@@ -69,7 +69,7 @@ onMounted(() => {
                     <p>Cada perfil tiene su propia lista de tareas. Agregá, editá y marcá como completadas las actividades para mantenerte al día. Así, todo queda ordenado y enfocado en lo que necesitás.</p>
                 </div>
                 <div class="section-image">
-                    <img src="/img/tareas.png" alt="Tareas">
+                    <img src="/imagenes/tareas_uso.png" alt="Tareas">
                 </div>
             </section>
             <section class="section">
@@ -79,7 +79,7 @@ onMounted(() => {
                     <p>Podés crear tus propias configuraciones, eligiendo los tiempos que se adapten a vos.</p>
                 </div>
                 <div class="section-image">
-                    <img src="/img/sesiones.png" alt="Sesiones">
+                    <img src="/imagenes/sesiones.png" alt="Sesiones">
                 </div>
             </section>
             <section class="section">
@@ -88,7 +88,7 @@ onMounted(() => {
                     <p>Visualizá tu progreso con gráficos y datos útiles. Conocé cuántas tareas completaste, tu nivel de actividad y cómo usás tu tiempo en cada perfil.</p>
                 </div>
                 <div class="section-image">
-                    <img src="/img/estadísticas.png" alt="Perfiles">
+                    <img src="/imagenes/estadísticas.png" alt="Perfiles">
                 </div>
             </section>
             <section class="section">
@@ -97,7 +97,7 @@ onMounted(() => {
                     <p>Entrá todos los días para no perder el ritmo. Cada día activo suma a tu racha y te motiva a seguir avanzando.</p>
                 </div>
                 <div class="section-image">
-                    <img src="/img/racha.png" alt="Racha">
+                    <img src="/imagenes/racha.png" alt="Racha">
                 </div>
             </section>
         </div>
@@ -106,7 +106,7 @@ onMounted(() => {
     <footer class="ml-footer">
         <div class="ml-grid">
             <div class="img">
-                <img src="/img/logo-cronos.png" class="logo-img" alt="logo-cronos">
+                <img src="/imagenes/logo-cronos.png" class="logo-img" alt="logo-cronos">
             </div>
         </div>
     </footer>

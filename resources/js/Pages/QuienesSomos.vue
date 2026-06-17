@@ -129,7 +129,7 @@ onMounted(async () => {
         <nav class="navbar navbar-expand-lg fixed-top cn-navbar" id="cnNavbar">
             <div class="container">
                 <Link class="navbar-brand cn-brand" href="/">
-                    <img src="/img/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
+                    <img src="/imagenes/logo-cronos.png" alt="Cronos Notes Logo" class="cn-navbar-logo" />
                 </Link>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#cnNav" aria-controls="cnNav" aria-expanded="false" aria-label="Abrir menú">

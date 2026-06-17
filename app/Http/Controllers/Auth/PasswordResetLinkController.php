@@ -30,24 +30,23 @@ class PasswordResetLinkController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email|exists:Usuario,email',
+        ], [
+            'email.exists' => 'No existe ninguna cuenta vinculada a este correo electrónico.',
         ]);
 
         $user = \App\Models\User::where('email', $request->email)->first();
 
-        if ($user) {
-            $token = \Illuminate\Support\Str::random(60);
+        $token = \Illuminate\Support\Str::random(60);
 
-            $user->recuperacionesPassword()->create([
-                'tokenRecuperacion' => \Illuminate\Support\Facades\Hash::make($token),
-                'fechaGeneracion' => now(),
-                'utilizado' => false,
-            ]);
+        $user->recuperacionesPassword()->create([
+            'tokenRecuperacion' => \Illuminate\Support\Facades\Hash::make($token),
+            'fechaGeneracion' => now(),
+            'utilizado' => false,
+        ]);
 
-            $user->notify(new \App\Notifications\CustomResetPassword($token));
-        }
+        $user->notify(new \App\Notifications\CustomResetPassword($token));
 
-        // Devolvemos success siempre para evitar enumeración de correos
         return back()->with('status', trans(\Illuminate\Support\Facades\Password::RESET_LINK_SENT));
     }
 }

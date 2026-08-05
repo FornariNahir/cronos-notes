@@ -28,7 +28,9 @@ Route::get('/pomodoro/invitado', function () {
         'isGuest' => true,
         'configs' => [],
         'tareas' => [],
-        'apuntes' => []
+        'apuntes' => [],
+        'tenorApiKey' => env('TENOR_API_KEY'),
+        'giphyApiKey' => env('GIPHY_API_KEY')
     ]);
 })->name('pomodoro.invitado');
 

@@ -40,7 +40,9 @@ class PomodoroController extends Controller
             'tareas' => $tareas,
             'perfilActivo' => Perfil::find($perfilActivoId),
             'sesionActiva' => $sesionActiva,
-            'apuntes' => $apuntes
+            'apuntes' => $apuntes,
+            'tenorApiKey' => env('TENOR_API_KEY'),
+            'giphyApiKey' => env('GIPHY_API_KEY')
         ]);
     }
 

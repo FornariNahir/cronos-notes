@@ -8,6 +8,11 @@ export const vDraggable = {
       // Ignore if clicking on interactive elements like buttons, inputs, selects, switches, links, etc.
       if (e.target.closest('button, input, select, textarea, a, [contenteditable], .toggle-switch, .settings-panel, .control-btn, .btn-zen-primary, .btn-zen-secondary, .btn-cancel-session, .dock-audio-pill')) return;
 
+      // Check if clicking near the bottom-right corner (resize handle)
+      const rect = el.getBoundingClientRect();
+      const isClickingResizeHandle = (e.clientX > rect.right - 20) && (e.clientY > rect.bottom - 20);
+      if (isClickingResizeHandle) return;
+
       isDragging = true;
       hasDragged = false;
       el.classList.add('dragging');

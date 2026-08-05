@@ -25,6 +25,14 @@ const props = defineProps({
   apuntes: {
     type: Array,
     default: () => []
+  },
+  tenorApiKey: {
+    type: String,
+    default: ''
+  },
+  giphyApiKey: {
+    type: String,
+    default: ''
   }
 });
 
@@ -416,6 +424,46 @@ const cerrarModalAvanzado = () => {
   modalAvanzadoOpen.value = false;
 };
 
+// --- WIDGET DE GIF LOGIC ---
+const showGifWidget = ref(false);
+const isGifMinimized = ref(false);
+const selectedGifUrl = ref('https://media.giphy.com/media/j9MVR3yo539S0/giphy.gif');
+const gifSearchQuery = ref('');
+const gifResults = ref([]);
+const isSearchingGifs = ref(false);
+const hasSearchedGifs = ref(false);
+const gifWidget = ref(null);
+const showGifSearch = ref(false);
+
+const activeGiphyKey = computed(() => props.giphyApiKey || props.tenorApiKey || localStorage.getItem('cn_giphy_key') || localStorage.getItem('cn_tenor_key') || '');
+
+const quickGifsList = [
+  { name: 'Lofi Girl', url: 'https://media.giphy.com/media/j9MVR3yo539S0/giphy.gif' },
+  { name: 'Gatito', url: 'https://media.giphy.com/media/C9x8gX5j56C6C74QXA/giphy.gif' },
+  { name: 'Lluvia', url: 'https://media.giphy.com/media/PI3f2f84WNo88/giphy.gif' },
+  { name: 'Estudio', url: 'https://media.giphy.com/media/13HgwGsXF0PFK0/giphy.gif' },
+  { name: 'Fogata', url: 'https://media.giphy.com/media/3o6gb0F0aBiUA7ZG3C/giphy.gif' }
+];
+
+const toggleGifWidget = () => {
+  showGifWidget.value = !showGifWidget.value;
+};
+
+const searchGifs = async () => {
+  if (!gifSearchQuery.value.trim() || !activeGiphyKey.value) return;
+  isSearchingGifs.value = true;
+  hasSearchedGifs.value = true;
+  try {
+    const response = await fetch(`https://api.giphy.com/v1/gifs/search?q=${encodeURIComponent(gifSearchQuery.value)}&api_key=${activeGiphyKey.value}&limit=6`);
+    const data = await response.json();
+    gifResults.value = data.data || [];
+  } catch (error) {
+    console.error("Error fetching GIFs from Giphy:", error);
+  } finally {
+    isSearchingGifs.value = false;
+  }
+};
+
 // --- WIDGET DE APUNTES LOGIC ---
 const localApuntes = ref([...props.apuntes]);
 const showNotesWidget = ref(false);
@@ -711,6 +759,14 @@ watch(cornellTab, async () => {
               :title="showNotesWidget ? 'Ocultar Bloc de Apuntes' : 'Mostrar Bloc de Apuntes'"
             >
               <i class="bi" :class="showNotesWidget ? 'bi-journal-richtext' : 'bi-journal'"></i>
+            </button>
+            <button 
+              @click="toggleGifWidget" 
+              class="floating-btn" 
+              :class="{ 'gif-active-btn': showGifWidget }"
+              :title="showGifWidget ? 'Ocultar Compañero GIF' : 'Mostrar Compañero GIF'"
+            >
+              <i class="bi" :class="showGifWidget ? 'bi-image-fill' : 'bi-image'"></i>
             </button>
             <Link 
               href="/dashboard" 
@@ -1091,6 +1147,118 @@ watch(cornellTab, async () => {
         </div>
       </div>
 
+      <!-- Draggable GIF Widget -->
+      <div 
+        v-if="showGifWidget" 
+        v-draggable 
+        ref="gifWidget" 
+        class="widget gif-widget" 
+        :class="{ 'minimized': isGifMinimized, 'dark-mode': isDarkMode }"
+        style="right: 40px; top: 540px; width: 340px;"
+      >
+        <div class="gif-header">
+          <div class="gif-header-left">
+            <div class="gif-drag-handle">
+              <svg width="12" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="9" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="9" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="9" cy="18" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="6" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="15" cy="18" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </div>
+            <span class="gif-header-title">Compañero GIF</span>
+          </div>
+          <div class="gif-header-actions">
+            <button 
+              v-if="!isGifMinimized" 
+              type="button" 
+              class="gif-header-btn me-1" 
+              :class="{ 'gif-active-btn': showGifSearch }"
+              @click="showGifSearch = !showGifSearch" 
+              title="Buscar o Cambiar GIF"
+            >
+              <i class="bi" :class="showGifSearch ? 'bi-image' : 'bi-search'"></i>
+            </button>
+            <button type="button" class="gif-header-btn" @click="isGifMinimized = !isGifMinimized" :title="isGifMinimized ? 'Maximizar' : 'Minimizar'">
+              <i class="bi" :class="isGifMinimized ? 'bi-plus-lg' : 'bi-dash'"></i>
+            </button>
+            <button type="button" class="gif-header-btn close-btn" @click="showGifWidget = false" title="Cerrar">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Minimized View -->
+        <div v-show="isGifMinimized" class="gif-minimized-view" @click="isGifMinimized = false" style="cursor: pointer;">
+          <span class="mini-icon"><i class="bi bi-image"></i> Ver GIF</span>
+        </div>
+
+        <!-- Expanded View -->
+        <div v-show="!isGifMinimized" class="gif-content">
+          <!-- GIF Display -->
+          <div class="gif-display-area" :class="{ 'mb-2': showGifSearch }">
+            <img v-if="selectedGifUrl" :src="selectedGifUrl" alt="Background GIF" class="gif-img" />
+            <div v-else class="gif-placeholder">
+              <i class="bi bi-image" style="font-size: 2rem; opacity: 0.5;"></i>
+              <p style="font-size: 12px; margin-top: 5px;">No hay un GIF seleccionado</p>
+            </div>
+          </div>
+
+          <!-- Selector / Searcher -->
+          <div v-if="showGifSearch" class="gif-search-container">
+            <div v-if="activeGiphyKey">
+              <!-- Search inputs -->
+              <div class="d-flex gap-1 mb-2">
+                <input 
+                  type="text" 
+                  v-model="gifSearchQuery" 
+                  class="form-control form-control-sm input-zen" 
+                  placeholder="Buscar GIFs (ej: anime study)..." 
+                  style="height: 30px;"
+                  @keyup.enter="searchGifs"
+                />
+                <button @click="searchGifs" class="btn btn-sm btn-zen-primary" style="padding: 4px 10px; height: 30px;">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+
+              <!-- Search Results -->
+              <div v-if="isSearchingGifs" class="text-center py-2">
+                <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+              </div>
+              <div v-else-if="gifResults.length > 0" class="gif-results-grid">
+                <div 
+                  v-for="gif in gifResults" 
+                  :key="gif.id" 
+                  @click="selectedGifUrl = gif.images.original.url; showGifSearch = false;"
+                  class="gif-result-item"
+                >
+                  <img :src="gif.images.fixed_width_small.url || gif.images.fixed_width.url" alt="Giphy GIF result" />
+                </div>
+              </div>
+              <div v-else-if="gifSearchQuery && hasSearchedGifs" class="text-center text-muted py-2" style="font-size: 11px;">
+                No se encontraron resultados
+              </div>
+            </div>
+
+            <!-- Predefined Quick GIFs -->
+            <div class="quick-gifs d-flex gap-1 mb-1 overflow-x-auto py-1">
+              <button 
+                v-for="g in quickGifsList" 
+                :key="g.name"
+                @click="selectedGifUrl = g.url; showGifSearch = false;"
+                class="btn btn-xs btn-outline-zen text-nowrap"
+                style="font-size: 11px; padding: 2px 8px;"
+              >
+                {{ g.name }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Bottom Audio Dock for Zen Mode -->
       <transition name="slide-up">
         <div v-if="isDistractionFree" class="zen-bottom-audio-dock">
@@ -1434,6 +1602,33 @@ watch(cornellTab, async () => {
   background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-radius: 20px; padding: 20px 24px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.timer-widget:not(.minimized) {
+  resize: both;
+  overflow: hidden;
+  min-width: 280px;
+  min-height: 200px;
+}
+.timer-widget.minimized {
+  width: auto !important;
+  height: auto !important;
+  resize: none !important;
+}
+.timer-widget:not(.minimized) .timer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+.timer-widget:not(.minimized) .timer-content.with-setup {
+  align-items: stretch;
+  justify-content: flex-start;
 }
 .timer-content { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .timer-controls { display: flex; gap: 8px; }
@@ -2456,6 +2651,42 @@ body.dark-mode .zen-custom-modal {
   padding: 16px 20px 20px 20px; /* slightly less padding top for custom header balance */
   transition: all 0.3s ease;
   color: #4a3025;
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-widget:not(.minimized) {
+  resize: both;
+  overflow: hidden;
+  min-width: 340px;
+  min-height: 380px;
+  height: 400px; /* Establece una altura inicial fija para evitar que crezca automáticamente con el texto */
+}
+
+.notes-widget.minimized {
+  width: auto !important;
+  height: auto !important;
+  resize: none !important;
+}
+
+.notes-widget:not(.minimized) .notes-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.notes-widget:not(.minimized) .notes-editor-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.notes-widget:not(.minimized) .notes-textarea {
+  height: 100% !important;
+  flex: 1;
+  min-height: 0;
 }
 
 .pomodoro-zen-container.dark-mode .notes-widget {
@@ -2724,6 +2955,8 @@ body.dark-mode .zen-custom-modal {
   color: #311d15;
   padding: 4px 6px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .pomodoro-zen-container.dark-mode .notes-textarea {
@@ -2828,5 +3061,233 @@ body.dark-mode .zen-custom-modal {
 @keyframes breathe-tomato {
   0%, 100% { transform: scale(1); opacity: 0.7; }
   50% { transform: scale(1.18); opacity: 1; }
+}
+
+/* GIF Widget Glassmorphic Styles */
+.gif-widget {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(107, 76, 63, 0.25);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(107, 76, 63, 0.15);
+  padding: 16px 20px 20px 20px;
+  transition: all 0.3s ease;
+  color: #4a3025;
+  display: flex;
+  flex-direction: column;
+}
+
+.gif-widget:not(.minimized) {
+  resize: both;
+  overflow: hidden;
+  min-width: 300px;
+  min-height: 280px;
+  height: 380px;
+}
+
+.gif-widget.minimized {
+  width: auto !important;
+  height: auto !important;
+  resize: none !important;
+}
+
+.gif-widget:not(.minimized) .gif-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.gif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(107, 76, 63, 0.2);
+}
+
+.gif-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gif-drag-handle {
+  cursor: grab;
+  color: #8a7065;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+}
+
+.gif-drag-handle:hover {
+  opacity: 1;
+}
+
+.gif-header-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.gif-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gif-header-btn {
+  background: transparent;
+  border: none;
+  color: #8a7065;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.gif-header-btn:hover {
+  color: #6b4c3f;
+}
+
+.gif-minimized-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  font-weight: 700;
+  color: #6b4c3f;
+  font-size: 12px;
+}
+
+.gif-display-area {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(107, 76, 63, 0.15);
+}
+
+.gif-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gif-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a7065;
+}
+
+.gif-search-container {
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.gif-results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  max-height: 110px;
+  overflow-y: auto;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+.gif-result-item {
+  aspect-ratio: 4/3;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.gif-result-item:hover {
+  border-color: #6b4c3f;
+  transform: scale(1.05);
+}
+
+.gif-result-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-outline-zen {
+  background: transparent;
+  border: 1px solid rgba(107, 76, 63, 0.3);
+  color: #6b4c3f;
+  transition: all 0.2s;
+}
+
+.btn-outline-zen:hover {
+  background: rgba(107, 76, 63, 0.08);
+  color: #6b4c3f;
+}
+
+/* Dark mode overrides for GIF Widget */
+.pomodoro-zen-container.dark-mode .gif-widget {
+  background: rgba(97, 44, 45, 0.94) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-drag-handle,
+.pomodoro-zen-container.dark-mode .gif-header-btn {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-drag-handle:hover,
+.pomodoro-zen-container.dark-mode .gif-header-btn:hover {
+  color: #ffffff !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-minimized-view {
+  color: #ffffff !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-display-area {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.pomodoro-zen-container.dark-mode .btn-outline-zen {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.pomodoro-zen-container.dark-mode .btn-outline-zen:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.gif-active-btn {
+  background: rgba(107, 76, 63, 0.2) !important;
+  color: #6b4c3f !important;
+  border-color: #6b4c3f !important;
+}
+
+.pomodoro-zen-container.dark-mode .gif-active-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
 }
 </style>

@@ -25,7 +25,7 @@ COPY . .
 
 # Install PHP and Node dependencies & build frontend assets
 RUN composer install --no-dev --optimize-autoloader \
-    && npm install -g pnpm \
+    && npm install -g pnpm@9 \
     && pnpm install \
     && pnpm run build
 

@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    nodejs \
-    npm \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -23,11 +23,13 @@ WORKDIR /app
 # Copy application files
 COPY . .
 
-# Install PHP and Node dependencies & build frontend assets
-RUN composer install --no-dev --optimize-autoloader \
-    && npm install -g pnpm@9 \
-    && pnpm install \
-    && pnpm run build
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Install Node dependencies & build frontend assets
+RUN npm install -g pnpm@9
+RUN pnpm install --prod=false
+RUN pnpm run build
 
 # Expose default port
 EXPOSE 10000

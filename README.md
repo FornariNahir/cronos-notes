@@ -215,6 +215,14 @@ Este flujo permite tanto a usuarios nuevos registrarse al instante como a usuari
 
 ---
 
+## Flujo de Trabajo y Ramas
+
+Para conocer la metodología de trabajo en parejas, la convención de ramas (`feature/*`), el flujo de Pull Requests y la integración con agentes de IA, consulta la:
+
+👉 [**Guía de Flujo de Trabajo con Ramas (CONTRIBUTING.md)**](CONTRIBUTING.md)
+
+---
+
 ## Autores
 
 Proyecto desarrollado por:
@@ -225,3 +233,4 @@ Proyecto desarrollado por:
 
 ---
 2026 - Ingeniería de Software II & Programación en Ambientes Web.
+

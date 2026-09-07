@@ -1,8 +1,8 @@
 # Tecnologías y Dependencias del Sistema
 
-Este documento recopila las tecnologías, frameworks y librerías que conforman el stack técnico de **Cronos Notes**, detallando su definición, propósito en el proyecto y su funcionamiento interno.
+Este documento recopila las tecnologías, frameworks, APIs y librerías que conforman el stack técnico integral de **Cronos Notes**, detallando su definición, propósito en el proyecto y su funcionamiento interno tanto para el núcleo del sistema como para las mejoras de escalado (*Season 2*).
 
-Las dependencias principales se encuentran registradas y gestionadas en los archivos [composer.json](/composer.json) (Backend) y [package.json](/package.json) (Frontend).
+Las dependencias principales se encuentran registradas y gestionadas en los archivos [composer.json](/composer.json) (Backend), [package.json](/package.json) (Frontend) y [docker-compose.yml](/docker-compose.yml) (Infraestructura).
 
 ---
 
@@ -10,61 +10,96 @@ Las dependencias principales se encuentran registradas y gestionadas en los arch
 
 ### PHP & Laravel Framework
 * **¿Qué es?** Un framework de desarrollo web para PHP bajo el patrón de arquitectura MVC (Modelo-Vista-Controlador).
-* **Uso en el Proyecto:** Actúa como nuestro motor de Backend. Se encarga de la seguridad, el enrutamiento web, la lógica de negocio pesada, la interacción con la base de datos (MySQL), el envío de notificaciones y la integración con la API de Inteligencia Artificial (Gemini).
+* **Uso en el Proyecto:** Actúa como nuestro motor de Backend. Se encarga de la seguridad, el enrutamiento web, la lógica de negocio pesada, la interacción con la base de datos (MySQL), el envío de notificaciones y la integración con las APIs de Inteligencia Artificial (Gemini y Whisper).
 * **Funcionamiento Clave:**
-  * **Eloquent ORM (Object-Relational Mapping):** Es la herramienta que nos permite interactuar con la base de datos MySQL como si fueran objetos de PHP, sin escribir SQL a mano. Sigue el patrón *Active Record*, lo que significa que cada modelo (como `app/Models/Tarea.php` o `app/Models/Perfil.php`) representa una tabla de la base de datos, y cada instancia de ese modelo representa un registro físico.
-  * **Laravel Socialite:** Librería oficial utilizada para el inicio de sesión con Google (OAuth 2.0). Simplifica la comunicación con los servidores de Google para autenticar al usuario y traer sus datos básicos de forma segura.
+  * **Eloquent ORM (Object-Relational Mapping):** Permite interactuar con la base de datos MySQL mediante objetos PHP bajo el patrón *Active Record* (`app/Models/Tarea.php`, `app/Models/Perfil.php`, `app/Models/Apunte.php`, `app/Models/SalaEstudio.php`).
+  * **Laravel Socialite:** Librería oficial utilizada para los flujos de autorización OAuth 2.0 (Google Auth, Google Calendar, Google Meet y Spotify).
 
 ### Vue 3 (Frontend Framework)
-* **¿Qué es?** Un framework progresivo de JavaScript utilizado para construir interfaces de usuario interactivas y dinámicas.
-* **Uso en el Proyecto:** Define la interfaz visual de Cronos Notes. Gracias a su reactividad, permite que pantallas como el temporizador Pomodoro se actualicen segundo a segundo en tiempo real sin recargar la página.
+* **¿Qué es?** Un framework progresivo de JavaScript utilizado para construir interfaces de usuario interactivas y reactivas.
+* **Uso en el Proyecto:** Define toda la interfaz visual de Cronos Notes, gestionando temporizadores en tiempo real, editores de notas, reproductores multimedia y ventanas flotantes.
 * **Funcionamiento Clave:**
-  * **Composition API:** Permite estructurar el código de las pantallas organizando la lógica por funciones reactivas (en lugar de opciones fijas), facilitando la creación de **Composables** reutilizables (ej. para el manejo del estado del audio o del temporizador).
-  * **Sistema de Reactividad:** Vue utiliza un sistema basado en Proxies de JavaScript. Cuando el estado del temporizador cambia, Vue detecta automáticamente la modificación y repinta en el DOM únicamente el texto de los minutos y segundos, optimizando el rendimiento.
+  * **Composition API:** Permite estructurar el código mediante funciones reactivas y crear **Composables** reutilizables (`usePomodoroTimer`, `useFloatingTimer`, `useZenMixer`, `usePomodoroAudioAlerts`).
+  * **Sistema de Reactividad:** Basado en Proxies de JavaScript para actualizar eficientemente solo los nodos del DOM modificados en cada segundo del temporizador.
 
-### Inertia.js (El Puente)
-* **¿Qué es?** Un framework de embridado (glue framework) que permite conectar un backend monolítico (como Laravel) con un frontend de componentes SPA (como Vue) sin necesidad de crear una API REST compleja con enrutamiento duplicado.
-* **Uso en el Proyecto:** Conecta nuestros controladores de Laravel directamente con las páginas Vue en [resources/js/Pages/](/resources/js/Pages/).
-* **Funcionamiento Clave:** Intercepta todos los clics en enlaces dentro de la aplicación. En lugar de hacer una recarga completa del navegador, Inertia realiza una petición AJAX al servidor. El controlador de Laravel responde con un objeto JSON que contiene los datos (las `props`) y el nombre de la página Vue que debe cargarse. Inertia reemplaza dinámicamente la vista actual en el navegador, ofreciendo una experiencia SPA fluida.
+### Inertia.js (El Puente Monolítico)
+* **¿Qué es?** Un glue framework que conecta Laravel (Backend) con Vue 3 (Frontend) como una SPA sin necesidad de construir APIs REST duplicadas.
+* **Uso en el Proyecto:** Conecta nuestros controladores de Laravel directamente con las vistas en [resources/js/Pages/](/resources/js/Pages/).
+* **Funcionamiento Clave:** Intercepta peticiones de navegación y envía payloads JSON con las `props` necesarias para renderizar la vista correspondiente de forma instantánea.
 
 ### Tailwind CSS
-* **¿Qué es?** Un framework CSS utilitario orientado al diseño directo en las etiquetas HTML/Vue.
-* **Uso en el Proyecto:** Estilizado visual de toda la plataforma (diseño adaptativo, colores, bordes, Modo Zen y Modo Oscuro).
-* **Funcionamiento Clave:** En lugar de escribir hojas de estilos separadas (`.css`), aplicamos clases preexistentes en los componentes de Vue (ej. `class="flex items-center justify-between p-4 bg-gray-800 text-white"`). Al momento de compilar para producción, el motor de Tailwind analiza los archivos y genera un archivo CSS compilado ultraligero que contiene estrictamente las clases que usamos.
+* **¿Qué es?** Un framework CSS utilitario orientado al diseño directo en las plantillas HTML/Vue.
+* **Uso en el Proyecto:** Estilizado visual de toda la plataforma, soportando diseño adaptativo, Modo Zen, Modo Oscuro y componentes flotantes compactos.
 
 ---
 
-## 2. Librerías Específicas y Utilidades
+## 2. Inteligencia Artificial y Procesamiento Multimedia
 
-### Howler.js
-* **¿Qué es?** Una librería de JavaScript para el control de audio en navegadores web que simplifica el uso de la API nativa *Web Audio API*.
-* **Uso en el Proyecto:** Motor de audio del **Mezclador de Sonidos Ambientales** en el Modo Zen.
-* **Funcionamiento Clave:** Permite cargar múltiples pistas de audio (lluvia, teclado, café, bosque) de forma asíncrona, reproducirlas en loop de forma concurrente (simultánea) y controlar el volumen de cada canal de forma independiente mediante deslizadores (*sliders*).
+### Google Gemini API (`gemini-2.0-flash`)
+* **¿Qué es?** Modelo multimodal de lenguaje avanzado de Google.
+* **Uso en el Proyecto:**
+  1. **Priorización Inteligente de Tareas ([RF-M04](docs/rf_m04_procesamiento_ia_prioridad.md)):** Clasifica tareas según plazos de entrega y criticidad.
+  2. **Desglose Automático de Tareas ([RF-M16](docs/rf_m16_desglose_automatico_tareas.md)):** Descompone objetivos complejos en subtareas jerárquicas con estimaciones en Pomodoros.
+  3. **Resumen Inteligente Cornell ([RF-M14](docs/rf_m14_transcripcion_resumen_audios.md)):** Estructura transcripciones de audio en notas, ideas clave y resúmenes de estudio.
+
+### OpenAI Whisper API / Gemini Multimodal Audio
+* **¿Qué es?** Modelos de reconocimiento automático del habla (Speech-to-Text) de alta precisión multilingüe.
+* **Uso en el Proyecto:** Transcripción automática de notas de voz y clases grabadas en el editor de apuntes ([RF-M14](docs/rf_m14_transcripcion_resumen_audios.md)).
+
+---
+
+## 3. Integraciones Externas y Colaboración
+
+### Google Workspace APIs (Calendar & Meet)
+* **¿Qué es?** Suite de servicios en la nube de Google accesibles mediante REST APIs.
+* **Uso en el Proyecto:**
+  * **Google Calendar API ([RF-M15](docs/rf_m15_sincronizacion_calendar_spotify.md)):** Sincroniza bloques de estudio y tareas con el calendario personal del usuario.
+  * **Google Meet API ([RF-M17](docs/rf_m17_salas_estudio_virtuales_meet.md)):** Genera salas de videollamada dinámicas para sesiones de estudio grupal sincronizadas.
+
+### Spotify Web API & Web Playback SDK
+* **¿Qué es?** Plataforma de streaming de música y APIs de control de reproducción de Spotify.
+* **Uso en el Proyecto:** Permite escuchar playlists de concentración (Lofi, Clásica, Ruido Marrón) y controlar la reproducción directamente desde el widget del Modo Zen ([RF-M15](docs/rf_m15_sincronizacion_calendar_spotify.md)).
+
+---
+
+## 4. Automatización e Infraestructura
+
+### N8N (Workflow Automation)
+* **¿Qué es?** Plataforma de automatización de flujos de trabajo basada en nodos y de código abierto.
+* **Uso en el Proyecto:** Orquesta recordatorios externos (Telegram, Email, Discord), backups periódicos y reportes semanales de productividad sin sobrecargar el servidor web ([RF-M18](docs/rf_m18_orquestacion_automatizacion_n8n.md)).
+
+### Docker & Docker Compose
+* **¿Qué es?** Plataforma de contenerización para desplegar aplicaciones y servicios aislados.
+* **Uso en el Proyecto:** Orquestación de los contenedores de MySQL, Laravel App y la instancia de N8N.
+
+---
+
+## 5. APIs Web Avanzadas del Navegador
+
+### Document Picture-in-Picture API & HTML5 Canvas
+* **¿Qué es?** Nueva API estándar de la web que permite abrir ventanas flotantes *Always-on-Top* con contenido HTML/CSS arbitrario.
+* **Uso en el Proyecto:** Permite desanclar el temporizador Pomodoro en un **Mini-Timer Flotante** para monitorear el tiempo mientras se usan otras aplicaciones ([RF-M19](docs/rf_m19_minitimer_flotante.md)).
+
+### Web Audio API & Howler.js
+* **¿Qué es?** API nativa de JavaScript y librería especializada para la manipulación y reproducción de audio espacial multicanal.
+* **Uso en el Proyecto:**
+  * **Mezclador de Sonidos Ambientales ([RF-M06](docs/rf_m06_mezclador_sonidos.md)):** Reproducción concurrente en loop con volumen independiente (lluvia, fogata, cafetería).
+  * **Notificaciones Auditivas ([RF-M20](docs/rf_m20_notificaciones_sonoras.md)):** Campanas y alertas sonoras para cambios de ciclo de Pomodoro.
+
+### HTML5 Notifications API
+* **¿Qué es?** Interfaz nativa para emitir notificaciones push del sistema operativo.
+* **Uso en el Proyecto:** Avisos al completar sesiones Pomodoro y descansos cuando la pestaña está en segundo plano.
+
+---
+
+## 6. Utilidades de Frontend y Construcción
 
 ### Chart.js & Vue-Chartjs
-* **¿Qué es?** Una librería de gráficos HTML5 basada en Canvas, junto con su envoltorio oficial para Vue.
-* **Uso en el Proyecto:** Generación de gráficos interactivos en la pantalla de **Estadísticas de Usuario** (ej. horas de estudio diarias, pomodoros finalizados, tareas completadas por perfil).
-* **Funcionamiento Clave:** Recibe los datos procesados desde [app/Http/Controllers/EstadisticaController.php](/app/Http/Controllers/EstadisticaController.php) como `props`, y dibuja en un elemento `<canvas>` del navegador gráficos de barra y dona que responden dinámicamente al pasar el mouse por encima.
+* **Uso:** Generación de gráficos interactivos de horas de estudio y sesiones por perfil ([RF-06](docs/rf_6_sistema_estadisticas.md) y [RF-M13](docs/rf_m13_cambios_estadisticas.md)).
 
-### Ziggy (tightenco/ziggy)
-* **¿Qué es?** Una librería que expone las rutas del backend de Laravel al frontend de JavaScript.
-* **Uso en el Proyecto:** Permite llamar a la función helper de Laravel `route()` dentro de nuestros archivos `.vue`.
-* **Funcionamiento Clave:** Ziggy genera un archivo de configuración dinámico en JS con la tabla de enrutamiento de Laravel. Esto nos permite escribir cosas como `route('tareas.store')` en el frontend, evitando hardcodear URLs manuales como `/tareas/crear`. Si mañana cambiamos la URL en Laravel, el frontend se actualiza automáticamente.
+### Lucide Icons (`lucide-vue-next`)
+* **Uso:** Iconografía vectorial SVG optimizada para interfaces web modernas.
 
-### Lucide Icons (lucide-vue-next)
-* **¿Qué es?** Un set de iconos vectoriales SVG de código abierto optimizado para Vue.
-* **Uso en el Proyecto:** Provee toda la iconografía visual (los iconos del reproductor de audio, los perfiles de estudio, configuración de pomodoros, etc.).
-* **Funcionamiento Clave:** Se importan de forma modular únicamente los iconos necesarios (ej. `import { Play, Pause } from 'lucide-vue-next'`), reduciendo el tamaño final de la aplicación compilada.
-
----
-
-## 3. Herramientas de Construcción y Base de Datos
-
-### Vite
-* **¿Qué es?** Un empaquetador de frontend de última generación enfocado en la velocidad de desarrollo.
-* **Uso en el Proyecto:** Compila y procesa nuestro JavaScript, Vue, Tailwind CSS y recursos estáticos durante el desarrollo y la preparación para producción.
-* **Funcionamiento Clave:** En desarrollo, no realiza una compilación completa de todo el código. En su lugar, sirve los archivos utilizando módulos nativos de ES del navegador (ESM) y actualiza instantáneamente en pantalla únicamente el archivo que editamos (*Hot Module Replacement* - HMR) sin necesidad de recargar el navegador.
-
-### MySQL
-* **¿Qué es?** Un sistema de gestión de bases de datos relacionales (RDBMS).
-* **Uso en el Proyecto:** Motor de persistencia del sistema. Almacena usuarios, perfiles, tareas, sesiones pomodoro y configuraciones de personalización.
+### Vite & MySQL
+* **Vite:** Empaquetador ultrarrápido con Hot Module Replacement (HMR).
+* **MySQL:** Base de datos relacional para persistencia de usuarios, tareas, apuntes, salas y estadísticas.

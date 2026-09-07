@@ -1,88 +1,97 @@
 # Estructura del Proyecto y Arquitectura
 
-Este documento describe la organización de carpetas del proyecto **Cronos Notes** y detalla las decisiones arquitectónicas que justifican esta estructura.
+Este documento describe la organización de carpetas del proyecto **Cronos Notes** y detalla las decisiones arquitectónicas que justifican esta estructura, incluyendo los módulos de escalado (*Season 2*).
 
 ---
 
-## 1. Patrón Arquitectónico: Monolito Híbrido
+## 1. Patrón Arquitectónico: Monolito Híbrido con Servicios Asíncronos
 
-Cronos Notes está construido bajo el patrón de **Monolito Híbrido** utilizando **Inertia.js** como puente entre **Laravel (Backend)** y **Vue 3 (Frontend)**. 
+Cronos Notes está construido bajo el patrón de **Monolito Híbrido** utilizando **Inertia.js** como puente entre **Laravel (Backend)** y **Vue 3 (Frontend)**, complementado con un motor de automatización contenerizado (**N8N en Docker**) y micro-integraciones con APIs de Inteligencia Artificial y servicios de Google y Spotify.
 
-### ¿Por qué esta arquitectura?
-En el desarrollo web moderno, es común separar completamente el Frontend (SPA independiente) del Backend (API REST). Sin embargo, para Cronos Notes se decidió por un monolito híbrido debido a las siguientes ventajas:
-
-1. **Desarrollo Ágil y Programación en Parejas (XP):** Al no tener que sincronizar dos repositorios distintos, el flujo de trabajo es mucho más rápido. Las rutas se definen únicamente en el backend (`routes/web.php`).
-2. **Seguridad Nativa Simplificada:** La autenticación se maneja mediante cookies y sesiones nativas de Laravel. Esto elimina la necesidad de tokens JWT (que son más propensos a ataques XSS si se guardan en `localStorage`) y provee protección automática contra ataques CSRF.
-3. **Paso de Datos Transparente:** Inertia.js permite inyectar datos del backend al componente Vue directamente como `props` desde el controlador, evitando tener que realizar peticiones AJAX manuales (`fetch` o `axios`) para la carga inicial de las pantallas.
+### Ventajas de esta Arquitectura:
+1. **Desarrollo Ágil y Programación en Parejas (XP):** Todo el código vive en un único repositorio sincronizado. Las rutas principales se definen en el backend (`routes/web.php` y `routes/api.php`).
+2. **Seguridad y Gestión de Sesiones:** Autenticación protegida mediante cookies `HttpOnly` y sesiones de Laravel, protegiendo las credenciales de integraciones OAuth (Google y Spotify) en el servidor.
+3. **Paso de Datos Reactivo:** Inertia.js inyecta el estado y las propiedades del backend directamente a los componentes Vue como `props` sin requerir endpoints REST intermedios redundantes.
+4. **Desacoplamiento de Procesos Pesados:** Los flujos de recordatorios externos y automatizaciones periódicas se delegan a un contenedor de **N8N** mediante webhooks.
 
 ---
 
 ## 2. Mapa del Directorio Principal
 
-A continuación se detallan las carpetas clave del proyecto y sus responsabilidades:
-
 ```
 Cronos-Notes/
-├── app/                      # Capa Lógica del Backend (PHP)
-│   ├── Http/                 # Controladores, Middleware y Requests HTTP
-│   ├── Models/               # Modelos de Datos (Eloquent ORM)
-│   ├── Services/             # Servicios de Lógica de Negocio (Integraciones, IA)
-│   └── Providers/            # Service Providers de Laravel
-├── bootstrap/                # Configuración de inicio del Framework
-├── config/                   # Archivos de configuración de Laravel
-├── contexto/                 # Documentación inicial y archivos SQL (PDFs, esquemas)
-├── database/                 # Persistencia y Esquemas
-│   ├── migrations/           # Definición de tablas de la Base de Datos
-│   └── seeders/              # Datos de prueba para desarrollo
-├── docs/                     # Documentación técnica del sistema
-├── public/                   # Recursos estáticos compilados y de acceso público
-├── resources/                # Capa Frontend y Vistas
-│   ├── js/                   # Código de la aplicación Vue.js
-│   │   ├── Components/       # Componentes Vue reutilizables (Botones, Modals, etc.)
-│   │   ├── Composables/      # Lógica reactiva reutilizable de Vue (Composition API)
-│   │   ├── Layouts/          # Estructuras de página comunes (Sidebar, Zen view, etc.)
-│   │   └── Pages/            # Pantallas/Vistas completas renderizadas por Inertia
-│   └── css/                  # Estilos globales y configuración de Tailwind CSS
-├── routes/                   # Rutas de la Aplicación
-│   └── web.php               # Rutas web del sistema (manejadas por Inertia)
-├── temp-audio-page/          # Prototipo/Maqueta temporal para la vista de audio
-├── tests/                    # Pruebas automatizadas (PHPUnit)
-└── vite.config.js            # Configuración del empaquetador Vite
+├── app/                              # Capa Lógica del Backend (PHP / Laravel)
+│   ├── Http/                         # Controladores, Middleware y Requests HTTP
+│   │   ├── Controllers/              # Controladores de dominio (Pomodoro, Tareas, Apuntes, Salas)
+│   │   │   ├── Api/                  # Controladores de Webhooks (N8N)
+│   │   │   └── Auth/                 # Controladores de Autenticación y OAuth
+│   │   └── Middleware/               # Filtros de sesión y autorización
+│   ├── Models/                       # Modelos de Datos (Eloquent ORM)
+│   ├── Notifications/                # Notificaciones por correo (Invitaciones, Alertas)
+│   ├── Policies/                     # Reglas de autorización (PerfilPolicy)
+│   ├── Providers/                    # Service Providers de Laravel
+│   └── Services/                     # Capa de Lógica de Negocio e Integraciones
+│       ├── AudioTranscriptionService.php  # Whisper / Gemini STT & Resumen
+│       ├── GoogleCalendarService.php     # Sincronización con Google Calendar
+│       ├── GoogleMeetService.php         # Generación de reuniones de Meet
+│       ├── SpotifyService.php            # Control de reproducción de Spotify
+│       ├── TaskBreakdownService.php      # Desglose de tareas con Gemini API
+│       ├── N8nService.php                # Emisión de webhooks hacia N8N
+│       └── EstadisticaService.php        # Cómputo de horas, sesiones y rachas
+├── docker/                           # Configuración de Contenedores
+│   └── n8n/                          # Workflows y configuración del motor N8N
+├── docker-compose.yml                # Orquestación de servicios (App, MySQL, N8N)
+├── docs/                             # Documentación técnica y especificaciones (RFs / RF-Ms)
+│   ├── agents/                       # Directivas y contexto para agentes de IA
+│   ├── rf_1_*.md a rf_6_*.md         # Requerimientos Funcionales Base
+│   └── rf_m01_*.md a rf_m20_*.md     # Requerimientos Funcionales de Mejora
+├── public/                           # Recursos estáticos de acceso público
+│   ├── audios/                       # Pistas de sonido ambiental (Lluvia, Fogata, Café)
+│   └── sounds/alerts/                # Campanas y alertas sonoras del Pomodoro
+├── resources/                        # Capa Frontend (Vue 3 / JavaScript / CSS)
+│   ├── js/                           # Código de la aplicación Vue.js
+│   │   ├── Components/               # Componentes Vue reutilizables (Modals, Botones, UI)
+│   │   ├── Composables/              # Hooks reactivos (usePomodoroTimer, useFloatingTimer, etc.)
+│   │   ├── Layouts/                  # Estructuras de página (AppLayout, GuestLayout)
+│   │   └── Pages/                    # Vistas completas renderizadas por Inertia
+│   │       ├── apunte/               # Editor Cornell, panel de audio y transcripción
+│   │       ├── auth/                 # Login, Registro, Recuperación y Google Sign-In
+│   │       ├── pomodoro/             # Sesión Zen, mezclador y reproductor Spotify
+│   │       ├── sala-estudio/         # Salas virtuales con Google Meet
+│   │       ├── Calendario.vue        # Vista visual de tareas y Google Calendar
+│   │       ├── Dashboard.vue         # Panel principal de productividad
+│   │       ├── Estadisticas.vue      # Gráficos y métricas de concentración
+│   │       ├── GestionPerfil.vue     # Administración de perfiles y colaboradores
+│   │       └── GestionTareas.vue     # Panel de tareas, priorización y desglose IA
+│   └── css/                          # Estilos globales y configuración de Tailwind CSS
+├── routes/                           # Definición de Rutas
+│   ├── web.php                       # Rutas web SPA manejadas por Inertia
+│   ├── api.php                       # Rutas de webhooks (N8N) y servicios REST
+│   └── auth.php                      # Rutas de autenticación y callbacks OAuth
+└── tests/                            # Pruebas automatizadas (PHPUnit)
 ```
 
 ---
 
-## 3. Justificación de los Directorios Específicos
+## 3. Justificación de los Módulos Específicos
 
-### Capa Backend: [app/](/app/)
-- **[app/Http/Controllers/](/app/Http/Controllers/):** Actúan como orquestadores. Su única responsabilidad es recibir la petición del frontend, llamar a los servicios correspondientes para procesar la información y retornar una respuesta Inertia.
-- **[app/Services/](/app/Services/):** Para evitar sobrecargar a los controladores o modelos con lógica de negocio compleja, se crearon clases de servicio dedicadas (ej. llamadas a la API de Gemini o integraciones externas). Esto permite reutilizar lógica y facilita las pruebas unitarias aisladas.
-- **[app/Models/](/app/Models/):** Representa nuestro modelo de dominio. Utiliza Eloquent ORM para que la interacción con la base de datos sea mediante objetos, abstrayendo las consultas SQL crudas.
+### Capa de Servicios del Backend: [app/Services/](/app/Services/)
+- **AudioTranscriptionService:** Centraliza la comunicación con Whisper API y Gemini Multimodal para convertir audio a texto y estructurar el resumen en formato Cornell.
+- **TaskBreakdownService:** Construye prompts con restricciones de formato JSON para que Gemini API devuelva listas de subtareas jerárquicas con estimaciones en Pomodoros.
+- **GoogleCalendarService & SpotifyService:** Encapsulan los llamados autorizados mediante tokens OAuth 2.0 evitando acoplar las APIs externas a los controladores.
+- **GoogleMeetService:** Genera dinámicamente enlaces de videoconferencia para las salas de estudio en vivo.
+- **N8nService:** Envía eventos del sistema (tareas por vencer, resúmenes semanales) hacia los webhooks de N8N en Docker.
 
-### Capa Frontend: [resources/js/](/resources/js/)
-- **[resources/js/Pages/](/resources/js/Pages/):** Contiene las vistas completas (ej. Dashboard, Calendario, apunte). Cada archivo aquí mapea 1-a-1 con un retorno del controlador Laravel mediante `Inertia::render('Pages/NombrePagina')`.
-- **[resources/js/Components/](/resources/js/Components/):** Sigue principios de diseño atómico. Componentes pequeños y reutilizables en múltiples páginas para asegurar la consistencia visual y reducir la duplicación de código.
-- **[resources/js/Layouts/](/resources/js/Layouts/):** Define la estructura exterior de la aplicación (ej. la barra lateral de navegación y la racha del usuario). Las páginas se inyectan dentro de estos layouts, lo que evita renderizar la barra lateral individualmente en cada vista.
-- **[resources/js/Composables/](/resources/js/Composables/):** Abstrae la lógica reactiva del frontend (ej. el conteo del temporizador Pomodoro o el control del reproductor de sonido) para que pueda ser importado en cualquier componente que lo requiera.
-
-### Base de Datos y Configuración
-- **[database/migrations/](/database/migrations/):** Control de versiones para nuestra base de datos. En lugar de compartir archivos SQL crudos que se desincronizan rápidamente entre desarrolladores, las migraciones permiten que cualquiera configure la estructura de la base de datos local ejecutando `php artisan migrate`.
-- **`vite.config.js` y Tailwind:** Se utiliza **Vite** para compilar los recursos de Vue de forma extremadamente veloz en desarrollo gracias a su Hot Module Replacement (HMR). **Tailwind CSS** permite escribir estilos directamente sobre el HTML/Vue, eliminando la necesidad de mantener hojas de estilo gigantes y asegurando que el diseño sea consistente a nivel de componentes.
+### Capa de Composables del Frontend: [resources/js/Composables/](/resources/js/Composables/)
+- **`usePomodoroTimer.js`:** Motor reactivo central del temporizador de concentración y descansos.
+- **`useFloatingTimer.js`:** Administra el ciclo de vida de la ventana flotante *Always-on-Top* mediante la API de Document Picture-in-Picture.
+- **`useZenMixer.js`:** Controla la reproducción multicanal concurrente de sonidos ambientales con Howler.js.
+- **`usePomodoroAudioAlerts.js`:** Ejecuta campanas y alertas sonoras de transición de ciclo y emite notificaciones push nativas.
 
 ---
 
 ## 4. Estándar de Nomenclatura del Proyecto
 
-Para mantener una base de código prolija, consistente y evitar problemas de *case-sensitivity* en distintos sistemas operativos (especialmente en entornos de producción y CI/CD), se estableció el siguiente estándar de nomenclatura:
-
-### 4.1 Nombres de Carpetas (Directorios)
-* **Lógica del Dominio / Frontend:** Todas las carpetas dentro de [resources/js/Pages/](/resources/js/Pages/) y subcarpetas lógicas en `Components/` deben nombrarse en **`kebab-case`**, en **singular** y en **español** (ej. `apunte/`, `perfil-compartido/`, `configuracion-pomodoro/`, `tarea/`, `perfil/`).
-* **Defaults del Framework / Estructuras Técnicas:** Las carpetas nativas de Laravel/Inertia o sus componentes base se mantienen en **inglés** y en **minúsculas** (ej. `auth/`, `profile/`, `partials/`, `ui/`).
-* **Carpetas del Proyecto (Raíz):** Todo directorio auxiliar o de documentación debe seguir el estilo de minúsculas y `kebab-case` (ej. `contexto/`, `temp-audio-page/`).
-
-### 4.2 Nombres de Archivos
-* **Componentes Vue (.vue):** Todos los archivos de componentes y páginas Vue deben nombrarse en **`PascalCase`** (ej. `SesionZen.vue`, `Editor.vue`, `ConfirmModal.vue`).
-* **Idioma en Componentes:**
-  * **Español:** Para componentes que representen entidades o acciones del dominio de negocio (ej. `AgregarTareaModal.vue`, `EliminarPerfilModal.vue`, `VerTareaModal.vue`, `CompartirPerfilModal.vue`).
-  * **Inglés:** Únicamente para componentes genéricos o de UI base reutilizables (ej. `PrimaryButton.vue`, `TextInput.vue`, `Dropdown.vue`, `Modal.vue`).
-* **Archivos Backend (PHP):** Siguen las convenciones estándar de Laravel y PSR-12 en **`PascalCase`** (ej. `ApunteController.php`, `Tarea.php`, `EstadisticaService.php`).
+* **Directorios de Dominio:** En minúsculas, kebab-case y en singular en español (`apunte/`, `sala-estudio/`, `perfil-compartido/`).
+* **Componentes Vue (.vue):** En `PascalCase` con nombres representativos (`FloatingTimer.vue`, `TranscriptionModal.vue`, `SubtaskBreakdownModal.vue`, `SpotifyPlayer.vue`).
+* **Clases Backend (PHP):** PSR-12 y `PascalCase` (`SalaEstudioController.php`, `AudioTranscriptionService.php`, `Subtarea.php`).

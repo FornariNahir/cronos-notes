@@ -6,26 +6,31 @@
 
 ## Sobre el Proyecto
 
-**Cronos Notes** es una plataforma web integral diseñada para la gestión del tiempo y la mejora de la productividad. Desarrollada como un proyecto intercátedra para la Licenciatura en Sistemas de Información (Universidad de la Cuenca del Plata), busca combatir la procrastinación y el agotamiento mediante la integración de herramientas de estudio y trabajo en un solo lugar.
+**Cronos Notes** es una plataforma web integral diseñada para la gestión del tiempo y la mejora de la productividad. Iniciada a principios de año como un proyecto intercátedra para la Licenciatura en Sistemas de Información (Universidad de la Cuenca del Plata), actualmente se encuentra en su **segunda etapa de desarrollo y escalado (Season 2)**.
 
-El sistema evoluciona el concepto de una agenda tradicional hacia una herramienta de alto rendimiento que combina la planificación de actividades con el control efectivo del tiempo.
+El sistema evoluciona el concepto de una agenda tradicional hacia un ecosistema de alto rendimiento que combina la planificación de actividades, la técnica Pomodoro, inteligencia artificial generativa y multimodal, automatización de flujos y salas de estudio colaborativas en tiempo real.
 
 ---
 
 ## Pilares Fundamentales
 
-- **Técnica Pomodoro:** Temporizador personalizable para gestionar ciclos de concentración profunda y descansos.
-- **Gestión Inteligente de Tareas:** Clasificación por prioridades y organización mediante perfiles personalizados (Estudio, Trabajo, Personal, etc.).
-- **Inteligencia Artificial:** Motor de IA para la priorización automática de tareas según fechas límite y relevancia.
-- **Toma de Apuntes Estructurada:** Módulo de notas con soporte para el Método Cornell y grabación de audio.
-- **Entorno Inmersivo:** Modo Zen minimalista con mezclador de sonidos ambientales e integración con Spotify y Google Calendar.
+- **Técnica Pomodoro & Mini-Timer Flotante (PiP):** Temporizador personalizable para gestionar ciclos de concentración profunda y descansos, con ventana flotante *Always-on-Top* (Document Picture-in-Picture) y notificaciones sonoras configurables.
+- **Gestión Inteligente de Tareas & Desglose con IA:** Clasificación por prioridades y descomposición asistida de metas complejas en subtareas jerárquicas con estimación de esfuerzo en Pomodoros vía Gemini API.
+- **Toma de Apuntes Cornell con Transcripción y Resumen IA:** Módulo de notas con soporte Cornell, grabación de audio, transcripción automática (Speech-to-Text con Whisper/Gemini) y síntesis inteligente de conceptos clave.
+- **Salas de Estudio Virtuales en Tiempo Real:** Espacios de concentración grupal (*Body Doubling*) con temporizadores Pomodoro sincronizados e integración directa con Google Meet.
+- **Entorno Inmersivo & Spotify:** Modo Zen minimalista con mezclador de pistas ambientales simultáneas y reproductor embebido de Spotify.
+- **Sincronización con Google Calendar:** Exportación e importación de bloques de estudio y eventos de calendario para evitar superposiciones.
+- **Automatización de Flujos con N8N (Docker):** Orquestación desacoplada de recordatorios multicanal (Telegram, Discord, Email), copias de seguridad y reportes periódicos de productividad.
 
 ---
 
 ## Stack Tecnológico
 
-- **Backend:** [Laravel](https://laravel.com) (PHP)
-- **Frontend:** [Vue.js](https://vuejs.org) + [Inertia.js](https://inertiajs.com) + [Tailwind CSS](https://tailwindcss.com)
+- **Backend:** [Laravel](https://laravel.com) (PHP 8.2+)
+- **Frontend:** [Vue.js 3](https://vuejs.org) + [Inertia.js](https://inertiajs.com) + [Tailwind CSS](https://tailwindcss.com)
+- **Inteligencia Artificial:** Google Gemini API (`gemini-2.0-flash`) & OpenAI Whisper API
+- **Integraciones:** Google Calendar API, Google Meet API, Spotify Web Playback SDK / Web API
+- **Automatización & Infraestructura:** [N8N](https://n8n.io) & Docker / Docker Compose
 - **Base de Datos:** MySQL
 - **Gestores de paquetes:** Composer (PHP) y PNPM (Node.js)
 
@@ -161,8 +166,13 @@ Para ver el sitio web en funcionamiento, debes mantener corriendo dos procesos e
    ```bash
    php artisan serve
    ```
+3. **(Opcional) Orquestador N8N (Docker)**: Para probar los flujos de recordatorios multicanal y automatizaciones:
+   ```bash
+   docker compose up -d n8n
+   ```
+   Accede al panel de N8N en [http://localhost:5678](http://localhost:5678).
 
-¡Listo! Abre tu navegador e ingresa a la dirección que te proporcione el comando anterior (normalmente [http://127.0.0.1:8000](http://127.0.0.1:8000)).
+¡Listo! Abre tu navegador e ingresa a la dirección que te proporcione el servidor local (normalmente [http://127.0.0.1:8000](http://127.0.0.1:8000)).
 
 ---
 
@@ -219,7 +229,7 @@ Este flujo permite tanto a usuarios nuevos registrarse al instante como a usuari
 
 Para conocer la metodología de trabajo en parejas, la convención de ramas (`feature/*`), el flujo de Pull Requests y la integración con agentes de IA, consulta la:
 
-👉 [**Guía de Flujo de Trabajo con Ramas (CONTRIBUTING.md)**](CONTRIBUTING.md)
+👉 [**Guía de Estrategia de Ramas (GUIA_DE_RAMAS.md)**](contexto/GUIA_DE_RAMAS.md) / [**Normas de Contribución (CONTRIBUTING.md)**](CONTRIBUTING.md)
 
 ---
 

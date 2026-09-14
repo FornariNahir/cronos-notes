@@ -1,4 +1,4 @@
-# Guía de Estrategia de Ramas (Git Flow) y Colaboración en Equipo — Cronos Notes
+# Guía de Estrategia de Ramas (Git Flow) — Cronos Notes
 ## Proyecto: Sistema Inteligente de Gestión de Tareas, Apuntes y Productividad Pomodoro
 **Cátedra:** Ingeniería de Software II (ISW II) & Programación en Ambientes Web (PAW) – UCP Sede Formosa  
 

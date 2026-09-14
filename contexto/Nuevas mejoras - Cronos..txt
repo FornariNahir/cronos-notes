@@ -1,0 +1,9 @@
+En esta segunda mitad del año 2026 realizaremos un plan de mejoras a implementar como un proyecto de mejora (o una nueva version de cronos), en la que queremos desarrollar las siguientes mejoras:
+
+- Un mini timer que funcione como un pop up que permita seguir visualizando el timer de la sesión pomodoro aun si salimos del apartado de sesión. Inclusive de ser posible que se abra como un pop up que aparezca en otras pestañas del navegador.
+
+- Notificaciones y alertas de sonido cuando el timer llegue a 0, tanto en la finalización de una sesión pomodoro como la finalización del descanso. 
+
+- Salas de estudio: Esto es con lo que mas dudas tenemos de como implementarlo. Necesitamos ideas que permitan usar cronos también como una web ciertamente social. Para ello tenemos pensado mediante la api de google implementar scripts que creen automáticamente salas de google meet con la cuenta del usuario para que se reúnan los equipos a trabajar. Ahora, ¿Cómo podemos implementar esto? ¿Los usuarios compartidos deberían poder acceder al link desde cronos? Creo que seria ideal que funcione masomenos como una sala virtual que de la sensación de que el equipo esta conectado.
+
+- N8N: Pensamos automatizar una función con n8n en la que un bot envie recordatorios un dia antes, de que cierta tarea esta por vencer su plazo de entrega.

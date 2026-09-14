@@ -148,12 +148,15 @@
       <slot />
     </main>
 
+    <MiniTimerFlotante />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
+import MiniTimerFlotante from '@/Components/Pomodoro/MiniTimerFlotante.vue';
 
 const isSidebarClosed = ref(window.innerWidth <= 768);
 const isZenMode = ref(false);

@@ -1,6 +1,10 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { useZenMixer } from './useZenMixer';
+import { Howl } from 'howler';
+
+const soundWorkComplete = new Howl({ src: ['/audios/tibetan-meditation.mp3'], volume: 0.8 });
+const soundBreakComplete = new Howl({ src: ['/audios/meditative-tiger.mp3'], volume: 0.8 });
 
 // Module-level shared states (persistent across page navigations in SPA)
 const isRunning = ref(false);
@@ -243,11 +247,20 @@ export function usePomodoroTimer(props) {
     stopAllSounds();
   };
 
+  const showNotification = (title, body) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body, icon: '/imagenes/logo-cronos.png' });
+    }
+  };
+
   const completePhase = () => {
     stopTimer();
     let currentMinutos = Math.floor((totalSeconds.value - timeLeft.value) / 60);
     
     if (currentPhase.value === 'work') {
+      soundWorkComplete.play();
+      showNotification("Pomodoro Completado", "Gran trabajo. Tómate un respiro.");
+      
       if (localSesionActiva.value && !props?.isGuest) {
         const minutosRestantes = currentMinutos - minutesRegisteredInCurrentPhase.value;
         window.axios.post(route('pomodoro.registrar'), { 
@@ -266,6 +279,9 @@ export function usePomodoroTimer(props) {
         }
       }
     } else if (currentPhase.value === 'shortBreak' || currentPhase.value === 'longBreak') {
+      soundBreakComplete.play();
+      showNotification("Descanso Terminado", "Es hora de volver a enfocarse.");
+      
       if (currentPhase.value === 'longBreak') {
         currentCycle.value = 1;
       }

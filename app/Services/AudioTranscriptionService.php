@@ -83,15 +83,17 @@ class AudioTranscriptionService
             . "Incluí puntuación adecuada y separación lógica de oraciones. "
             . "Devolvé únicamente el texto transcripto crudo, sin introducciones ni comentarios adicionales.";
 
-        $modelos = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+        $modelos = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
         $response = null;
         $ultimoError = '';
 
         foreach ($modelos as $modelo) {
             try {
-                $response = Http::retry(2, 500)->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
+                $response = Http::retry(2, 500)
+                    ->withOptions($this->getHttpOptions())
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
                     'contents' => [
                         'parts' => [
                             [
@@ -210,7 +212,7 @@ class AudioTranscriptionService
             throw new RuntimeException("La API Key de Google Gemini no está configurada en el servidor.");
         }
 
-        $modelos = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash-lite'];
+        $modelos = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
         $response = null;
         $ultimoError = '';
 
@@ -248,9 +250,11 @@ class AudioTranscriptionService
 
         foreach ($modelos as $modelo) {
             try {
-                $response = Http::retry(2, 500)->withHeaders([
-                    'Content-Type' => 'application/json',
-                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
+                $response = Http::retry(2, 500)
+                    ->withOptions($this->getHttpOptions())
+                    ->withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
                     'contents' => [
                         'parts' => [
                             ['text' => $prompt]
@@ -342,5 +346,32 @@ class AudioTranscriptionService
 
             throw $e;
         }
+    }
+
+    /**
+     * Obtiene opciones seguras de HTTP para llamadas salientes en Windows/Local.
+     */
+    private function getHttpOptions(): array
+    {
+        $options = [];
+        $certPaths = [
+            ini_get('curl.cainfo'),
+            ini_get('openssl.cafile'),
+            'C:\Users\della\AppData\Local\Microsoft\WinGet\Packages\PHP.PHP.8.2_Microsoft.Winget.Source_8wekyb3d8bbwe\cacert.pem',
+            'C:\Program Files\Git\mingw64\etc\ssl\certs\ca-bundle.crt',
+        ];
+
+        foreach ($certPaths as $path) {
+            if (!empty($path) && file_exists($path)) {
+                $options['verify'] = $path;
+                return $options;
+            }
+        }
+
+        if (app()->isLocal()) {
+            $options['verify'] = false;
+        }
+
+        return $options;
     }
 }

@@ -61,7 +61,7 @@ class AudioTranscriptionController extends Controller
                 'error' => 'Error al procesar la transcripción del audio.',
                 'detalle' => $e->getMessage(),
                 'estado' => 'fallido',
-            ], 500);
+            ], 503);
         }
     }
 }

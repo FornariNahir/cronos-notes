@@ -144,6 +144,173 @@ class AudioTranscriptionTest extends TestCase
         $this->assertCount(2, $audio->resumen_ia['ideas_clave']);
     }
 
+    public function test_fallback_automatico_a_gemini_multimodal_cuando_whisper_falla(): void
+    {
+        Storage::fake('public');
+        $fakeAudioPath = 'apuntes_audios/clase_fallback.mp3';
+        Storage::disk('public')->put($fakeAudioPath, 'dummy-audio-fallback');
+
+        $geminiCornellPayload = [
+            'titulo_sugerido' => 'Conceptos Resilientes',
+            'ideas_clave' => ['Resiliencia', 'Alta Disponibilidad'],
+            'notas' => '### Apuntes\n- El fallback funcionó exitosamente.',
+            'resumen' => 'Resumen generado vía fallback a Gemini.',
+        ];
+
+        // Simulamos fallo en Whisper (500) y éxito en Gemini tanto para STT como para Cornell
+        Http::fake([
+            '*/asr*' => Http::response('Internal Server Error en Whisper', 500),
+            '*generativelanguage.googleapis.com*' => Http::sequence()
+                ->push([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => 'Transcripción obtenida gracias a Gemini Multimodal Audio.'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200)
+                ->push([
+                    'candidates' => [
+                        [
+                            'content' => [
+                                'parts' => [
+                                    ['text' => json_encode($geminiCornellPayload)],
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200),
+        ]);
+
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Clase Fallback',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => $fakeAudioPath,
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/transcribir");
+
+        $response->assertOk();
+        $response->assertJson([
+            'estado' => 'completado',
+            'transcripcion' => 'Transcripción obtenida gracias a Gemini Multimodal Audio.',
+            'motor_stt' => 'gemini_multimodal',
+        ]);
+
+        $audio->refresh();
+        $this->assertEquals('completado', $audio->estado);
+        $this->assertEquals('Transcripción obtenida gracias a Gemini Multimodal Audio.', $audio->transcripcion);
+    }
+
+    public function test_falla_con_503_si_whisper_falla_y_fallback_esta_deshabilitado(): void
+    {
+        Storage::fake('public');
+        $fakeAudioPath = 'apuntes_audios/clase_no_fallback.mp3';
+        Storage::disk('public')->put($fakeAudioPath, 'dummy-audio');
+
+        config(['services.whisper.fallback_to_gemini' => false]);
+
+        Http::fake([
+            '*/asr*' => Http::response('Whisper Down', 500),
+        ]);
+
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Clase No Fallback',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => $fakeAudioPath,
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/transcribir");
+
+        $response->assertStatus(503);
+        $response->assertJson([
+            'estado' => 'fallido',
+        ]);
+
+        $audio->refresh();
+        $this->assertEquals('fallido', $audio->estado);
+        $this->assertStringContainsString('fallback deshabilitado', $audio->error_mensaje);
+    }
+
+    public function test_falla_con_503_si_whisper_y_gemini_ambos_fallan(): void
+    {
+        Storage::fake('public');
+        $fakeAudioPath = 'apuntes_audios/clase_total_failure.mp3';
+        Storage::disk('public')->put($fakeAudioPath, 'dummy-audio');
+
+        Http::fake([
+            '*/asr*' => Http::response('Whisper Down', 500),
+            '*generativelanguage.googleapis.com*' => Http::response('Gemini Down', 500),
+        ]);
+
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Clase Total Failure',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => $fakeAudioPath,
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/transcribir");
+
+        $response->assertStatus(503);
+        $response->assertJson([
+            'estado' => 'fallido',
+        ]);
+
+        $audio->refresh();
+        $this->assertEquals('fallido', $audio->estado);
+    }
+
     public function test_transcripcion_maneja_error_si_archivo_no_existe(): void
     {
         Storage::fake('public');
@@ -172,7 +339,7 @@ class AudioTranscriptionTest extends TestCase
             ->withSession(['perfilActivo' => $perfil->idPerfil])
             ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/transcribir");
 
-        $response->assertStatus(500);
+        $response->assertStatus(503);
         $response->assertJson([
             'estado' => 'fallido',
         ]);
@@ -228,7 +395,7 @@ class AudioTranscriptionTest extends TestCase
             ->withSession(['perfilActivo' => $perfil->idPerfil])
             ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/transcribir");
 
-        $response->assertStatus(500);
+        $response->assertStatus(503);
         $response->assertJson([
             'estado' => 'fallido',
         ]);

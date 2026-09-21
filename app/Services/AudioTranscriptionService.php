@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ApunteAudio;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -16,7 +17,7 @@ class AudioTranscriptionService
      * @return string Texto completo desgrabado
      * @throws RuntimeException Si el archivo no existe o el microservicio falla
      */
-    public function transcribe(string $relativeAudioPath): string
+    public function transcribeWithWhisper(string $relativeAudioPath): string
     {
         if (!Storage::disk('public')->exists($relativeAudioPath)) {
             throw new RuntimeException("El archivo de audio no fue encontrado en el disco de almacenamiento: {$relativeAudioPath}");
@@ -40,7 +41,154 @@ class AudioTranscriptionService
             $text = trim($response->body());
         }
 
+        if (empty(trim($text))) {
+            throw new RuntimeException("El servicio Whisper devolvió una transcripción vacía.");
+        }
+
         return trim($text);
+    }
+
+    /**
+     * Transcribe un archivo de audio utilizando Google Gemini Multimodal Audio (STT en la nube).
+     *
+     * @param string $relativeAudioPath
+     * @return string
+     * @throws RuntimeException
+     */
+    public function transcribeWithGemini(string $relativeAudioPath): string
+    {
+        if (!Storage::disk('public')->exists($relativeAudioPath)) {
+            throw new RuntimeException("El archivo de audio no fue encontrado en el disco de almacenamiento: {$relativeAudioPath}");
+        }
+
+        $apiKey = config('services.gemini.key') ?? env('GEMINI_API_KEY');
+        if (empty($apiKey)) {
+            throw new RuntimeException("La API Key de Google Gemini no está configurada para el servicio multimodal.");
+        }
+
+        $extension = strtolower(pathinfo($relativeAudioPath, PATHINFO_EXTENSION));
+        $mimeTypeMap = [
+            'mp3' => 'audio/mp3',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'm4a' => 'audio/m4a',
+            'aac' => 'audio/aac',
+            'flac' => 'audio/flac',
+            'webm' => 'audio/webm',
+        ];
+        $mimeType = $mimeTypeMap[$extension] ?? 'audio/mp3';
+        $base64Audio = base64_encode(Storage::disk('public')->get($relativeAudioPath));
+
+        $prompt = "Transcribí de forma completa, fidedigna y textual el contenido del siguiente audio en español. "
+            . "Incluí puntuación adecuada y separación lógica de oraciones. "
+            . "Devolvé únicamente el texto transcripto crudo, sin introducciones ni comentarios adicionales.";
+
+        $modelos = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-1.5-flash'];
+        $response = null;
+        $ultimoError = '';
+
+        foreach ($modelos as $modelo) {
+            try {
+                $response = Http::retry(2, 500)->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        'parts' => [
+                            [
+                                'inlineData' => [
+                                    'mimeType' => $mimeType,
+                                    'data' => $base64Audio,
+                                ]
+                            ],
+                            [
+                                'text' => $prompt
+                            ]
+                        ]
+                    ]
+                ]);
+
+                if ($response->successful()) {
+                    break;
+                }
+
+                $ultimoError = "Modelo {$modelo} falló [{$response->status()}]: " . $response->body();
+            } catch (\Throwable $e) {
+                $ultimoError = "Excepción en modelo {$modelo}: " . $e->getMessage();
+            }
+        }
+
+        if (!$response || !$response->successful()) {
+            throw new RuntimeException("Fallo al transcribir con Gemini Multimodal Audio: " . $ultimoError);
+        }
+
+        $body = $response->json();
+        $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+        if (empty(trim($text))) {
+            throw new RuntimeException("Gemini Multimodal devolvió una transcripción de audio vacía.");
+        }
+
+        return trim($text);
+    }
+
+    /**
+     * Transcribe un archivo aplicando el patrón Driver y fallback resiliente según la configuración.
+     *
+     * @param string $relativeAudioPath
+     * @return array{text: string, motor: string}
+     */
+    public function transcribe(string $relativeAudioPath): array
+    {
+        if (!Storage::disk('public')->exists($relativeAudioPath)) {
+            throw new RuntimeException("El archivo de audio no fue encontrado en el disco de almacenamiento: {$relativeAudioPath}");
+        }
+
+        $driver = config('services.whisper.driver', 'whisper_local');
+        $fallbackEnabled = (bool) config('services.whisper.fallback_to_gemini', true);
+
+        if ($driver === 'gemini') {
+            $text = $this->transcribeWithGemini($relativeAudioPath);
+            return [
+                'text' => $text,
+                'motor' => 'gemini_multimodal',
+            ];
+        }
+
+        // Driver predeterminado: whisper_local con fallback automático
+        try {
+            $text = $this->transcribeWithWhisper($relativeAudioPath);
+            return [
+                'text' => $text,
+                'motor' => 'whisper_local',
+            ];
+        } catch (\Throwable $whisperException) {
+            Log::warning(
+                "Whisper Local no disponible: {$whisperException->getMessage()}." .
+                ($fallbackEnabled ? " Iniciando conmutación por fallback a Gemini Multimodal." : "")
+            );
+
+            if (!$fallbackEnabled) {
+                throw new RuntimeException(
+                    "Servicio Whisper Local no disponible y fallback deshabilitado: " . $whisperException->getMessage(),
+                    0,
+                    $whisperException
+                );
+            }
+
+            try {
+                $text = $this->transcribeWithGemini($relativeAudioPath);
+                return [
+                    'text' => $text,
+                    'motor' => 'gemini_multimodal',
+                ];
+            } catch (\Throwable $geminiException) {
+                throw new RuntimeException(
+                    "Error crítico de transcripción: Whisper Local falló ({$whisperException->getMessage()}) y el fallback a Gemini Multimodal también falló ({$geminiException->getMessage()}).",
+                    0,
+                    $geminiException
+                );
+            }
+        }
     }
 
     /**
@@ -163,7 +311,10 @@ class AudioTranscriptionService
         ]);
 
         try {
-            $transcription = $this->transcribe($audio->rutaAudio);
+            $sttResult = $this->transcribe($audio->rutaAudio);
+            $transcription = $sttResult['text'];
+            $usedMotor = $sttResult['motor'];
+
             $cornellSummary = $this->summarizeCornell($transcription);
 
             $audio->update([
@@ -179,7 +330,7 @@ class AudioTranscriptionService
                 'estado' => 'completado',
                 'transcripcion' => $transcription,
                 'resumen_cornell' => $cornellSummary,
-                'motor_stt' => 'whisper_local',
+                'motor_stt' => $usedMotor,
             ];
         } catch (\Throwable $e) {
             $audio->update([

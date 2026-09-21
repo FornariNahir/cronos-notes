@@ -10,4 +10,5 @@
 - [x] Modo `reemplazar`: Sobrescribe `ideasApunte`, `contenidoApunte` y `resumenApunte` y actualiza el título si es genérico.
 - [x] Modo `anexar`: Concatena de forma limpia y ordenada preservando el contenido preexistente del alumno.
 - [x] Validación de que usuarios con rol `Lector` reciben 403 Forbidden y validación de existencia previa de `resumen_ia` (422).
+- [x] Soporte para volcado unificado en `Modo Normal` (`formato: 'normal'`) con jerarquía secuencial: Preguntas Clave -> Notas -> Resumen.
 - [x] Pruebas automatizadas de integración para ambos modos y casos de seguridad en `tests/Feature/AudioTranscriptionTest.php`.

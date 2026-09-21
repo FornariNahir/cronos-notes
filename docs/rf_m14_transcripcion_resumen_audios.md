@@ -1,7 +1,9 @@
 # [RF-M14] Transcripción Automática y Resumen Inteligente de Audios
 
 ## 1. Descripción y Objetivo
+
 Este requerimiento expande las capacidades del módulo de toma de apuntes y grabaciones de audio mediante la incorporación de procesamiento de voz a texto (Speech-to-Text) e Inteligencia Artificial generativa:
+
 - **Transcripción Automática (Speech-to-Text)**: Convierte automáticamente grabaciones de clases, notas de voz o audios subidos en texto editable con puntuación y segmentación de oraciones. Soporta un esquema híbrido desacoplado mediante **Whisper Local** (para desarrollo/pruebas locales ilimitadas sin costo) y **Google Gemini 2.0 Multimodal** (para portabilidad inmediata en la nube con fallback configurable).
 - **Resumen Inteligente y Extracción de Conceptos (Método Cornell)**: Procesa la transcripción mediante **Google Gemini 2.0 Flash**, sintetizando los puntos esenciales, estructurando ideas clave y generando un resumen conciso que se integra directamente en los cuadrantes del **Método Cornell** (*Ideas Clave*, *Notas* y *Resumen*).
 - **Objetivo**: Reducir drásticamente el tiempo que los estudiantes invierten en desgravar manualmente clases grabadas, optimizando el proceso de repaso mediante síntesis estructuradas e interactivas.
@@ -23,6 +25,7 @@ Este requerimiento expande las capacidades del módulo de toma de apuntes y grab
 ## 3. Archivos Involucrados en el Requerimiento (Foco Backend)
 
 ### Backend & Controladores (Laravel)
+
 - [AudioTranscriptionController.php](/app/Http/Controllers/AudioTranscriptionController.php) - Controlador REST con endpoints:
   - `POST /apuntes/{id}/audios/{audioId}/transcribir`: Procesa la transcripción y el resumen.
   - `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell`: Aplica atómicamente el resumen al apunte en modo 'reemplazar' o 'anexar'.
@@ -33,11 +36,13 @@ Este requerimiento expande las capacidades del módulo de toma de apuntes y grab
 - [config/services.php](/config/services.php) - Configuración de endpoints y credenciales (`gemini.key`, `whisper.url`, `whisper.fallback_to_gemini`).
 
 ### Modelos y Datos (Eloquent ORM & Migraciones)
+
 - [ApunteAudio.php](/app/Models/ApunteAudio.php) - Modelo de persistencia que almacena la ruta del audio, su transcripción, el resumen Cornell en JSON, el estado del procesamiento y eventuales errores.
 - [Apunte.php](/app/Models/Apunte.php) - Modelo del apunte contenedor.
 - `database/migrations/2026_09_14_000001_add_transcription_fields_to_apunte_audios_table.php` - Migración para agregar `transcripcion`, `resumen_ia`, `estado` y `error_mensaje`.
 
 ### Pruebas Backend (PHPUnit / Pest)
+
 - `tests/Feature/AudioTranscriptionTest.php` - Pruebas de integración de endpoints, validaciones de permisos, fallback y simulación de respuestas (fakes/mocks) de Whisper y Gemini.
 
 ---
@@ -45,29 +50,38 @@ Este requerimiento expande las capacidades del módulo de toma de apuntes y grab
 ## 4. Flujo de Datos y Control
 
 ### Diagrama de Flujo del Backend
+
 ```mermaid
 graph TD
-    A[Frontend: POST /apuntes/{id}/audios/{audioId}/transcribir] --> B[Controller: Validar permisos perfil 'modificar' y rate limit]
-    B --> C[Controller: Invocar AudioTranscriptionService@processAudio]
-    C --> D{Driver STT Activo?}
-    D -- whisper_local --> E[HTTP Multipart a Whisper Local localhost:9000/asr]
-    E -- Error de Conexión / Timeout --> E1{Fallback Activo?}
-    E1 -- Sí --> F[Google Gemini Multimodal Audio API]
-    E1 -- No --> E2[Guardar estado 'fallido' y lanzar 503]
-    D -- gemini --> F
-    E -- Éxito --> G[Obtención de Transcripción Texto Plano]
-    F -- Éxito --> G
-    G --> H[AudioTranscriptionService: Enviar texto a Gemini con Prompt Cornell]
-    H --> I[Gemini: Respuesta JSON estructurada Ideas, Notas, Resumen]
-    I --> J[Persistencia: Actualizar ApunteAudio con transcripcion, resumen_ia y estado 'completado']
-    J --> K[Controller: Retornar HTTP 200 con payload estructurado]
+    A["Frontend: POST /apuntes/{id}/audios/{audioId}/transcribir"] --> B["Controller: Validar permisos perfil 'modificar' y rate limit"]
+    B --> C["Controller: Invocar AudioTranscriptionService@processAudio"]
+    C --> D{"Driver STT Activo?"}
     
-    L[Frontend: POST /apuntes/{id}/audios/{audioId}/aplicar-cornell] --> M[Controller: Validar modo 'reemplazar' | 'anexar']
-    M --> N[DB: Actualizar Apunte ideasApunte, contenidoApunte, resumenApunte]
-    N --> O[Controller: Retornar Apunte actualizado]
+    D -->|whisper_local| E["HTTP Multipart a Whisper Local localhost:9000/asr"]
+    D -->|gemini| F["Google Gemini Multimodal Audio API"]
+    
+    E -->|"Error de Conexión / Timeout"| E1{"Fallback Activo?"}
+    E1 -->|Sí| F
+    E1 -->|No| E2["Guardar estado 'fallido' y lanzar 503"]
+    
+    E -->|Éxito| G["Obtención de Transcripción Texto Plano"]
+    F -->|Éxito| G
+    
+    G --> H["AudioTranscriptionService: Enviar texto a Gemini con Prompt Cornell"]
+    H --> I["Gemini: Respuesta JSON estructurada Ideas, Notas, Resumen"]
+    I --> J["Persistencia: Actualizar ApunteAudio con transcripcion, resumen_ia y estado 'completado'"]
+    J --> K["Controller: Retornar HTTP 200 con payload estructurado"]
+
+    %% Conexión secuencial hacia el segundo endpoint
+    K -.->|"Acción usuario / Frontend: Confirmar aplicación"| L["Frontend: POST /apuntes/{id}/audios/{audioId}/aplicar-cornell"]
+
+    L --> M["Controller: Validar modo 'reemplazar' | 'anexar'"]
+    M --> N["DB: Actualizar Apunte ideasApunte, contenidoApunte, resumenApunte"]
+    N --> O["Controller: Retornar Apunte actualizado"]
 ```
 
 ### Contrato de Respuesta JSON (Transcripción y Resumen)
+
 ```json
 {
   "idApunteAudio": 12,
@@ -88,14 +102,19 @@ graph TD
 ```
 
 ### Contrato de Solicitud y Respuesta (Aplicar Cornell al Apunte)
+
 - **Endpoint**: `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell`
 - **Request Payload**:
-```json
-{
-  "modo": "reemplazar"
-}
-```
-*(Valores posibles para `modo`: `"reemplazar"` o `"anexar"`)*
+  
+  ```json
+  {
+    "modo": "reemplazar",
+    "formato": "cornell"
+  }
+  ```
+  
+  - `modo`: `"reemplazar"` o `"anexar"` (requerido).
+  - `formato`: `"cornell"` (distribuye en 3 columnas separadas) o `"normal"` (estructura secuencial: `### 💡 Preguntas Clave`, `### 📝 Notas`, `### 📌 Resumen` en lienzo único). Opcional, por defecto adopta el formato actual del apunte.
 - **Response**: `200 OK` con el modelo `Apunte` actualizado.
 
 ---

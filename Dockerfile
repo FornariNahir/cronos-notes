@@ -1,38 +1,28 @@
-FROM php:8.2-cli
+FROM php:8.2-apache
 
-# Install system dependencies and PHP extensions required by Laravel
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
+# Dependencias del sistema, Node.js y Composer
+RUN apt-get update && apt-get install -y git zip unzip \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && docker-php-ext-install pdo pdo_mysql \
+    && a2enmod rewrite
 
-# Install Composer
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /app
+WORKDIR /var/www/html
 
-# Copy application files
 COPY . .
 
-# Install PHP dependencies
+# Dependencias de PHP y Node, y compilación de los assets
 RUN composer install --no-dev --optimize-autoloader
+RUN npm install
+RUN npm run build
 
-# Install Node dependencies & build frontend assets
-RUN npm install -g pnpm@9
-RUN pnpm install --prod=false
-RUN pnpm run build
+# DocumentRoot de Apache a la carpeta public de Laravel
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Expose default port
-EXPOSE 10000
-
-# Start Laravel application server
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-10000}
+# Da permisos a las carpetas de Laravel
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache

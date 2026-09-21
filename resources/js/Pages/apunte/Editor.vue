@@ -66,8 +66,9 @@
           :apunte-id="props.apunte?.idApunte"
           :is-read-only="perfilActivo?.permisoCompartido === 'Lector'"
           @recorded="onAudioRecorded"
+          @uploaded="onAudioUploaded"
           @delete="onAudioDeleted"
-          @error="(msg) => showCustomAlert('Error de Micrófono', msg)"
+          @error="(msg) => showCustomAlert('Aviso de Audio', msg)"
         />
       </div>
     </div>
@@ -213,6 +214,25 @@ const onAudioRecorded = (blob) => {
     },
     onError: (errors) => {
       const msg = errors.audio || 'No se pudo guardar la grabación de audio.'
+      showCustomAlert('Error', msg)
+    }
+  })
+}
+
+const onAudioUploaded = (file) => {
+  if (!props.apunte?.idApunte) return
+
+  console.log("Audio file selected, uploading...", file)
+  const formData = new FormData()
+  formData.append('audio', file)
+
+  router.post(route('apuntes.audio.upload', props.apunte.idApunte), formData, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showCustomAlert('Éxito', 'Archivo de audio subido correctamente.')
+    },
+    onError: (errors) => {
+      const msg = errors.audio || 'No se pudo subir el archivo de audio.'
       showCustomAlert('Error', msg)
     }
   })

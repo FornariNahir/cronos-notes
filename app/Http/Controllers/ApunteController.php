@@ -214,7 +214,12 @@ class ApunteController extends Controller
         }
 
         $request->validate([
-            'audio' => 'required|file|max:10240' // max 10MB
+            'audio' => 'required|file|mimes:mp3,wav,ogg,m4a,aac,webm,flac|max:25600' // max 25MB
+        ], [
+            'audio.required' => 'El archivo de audio es obligatorio.',
+            'audio.file' => 'El archivo subido no es válido.',
+            'audio.mimes' => 'El formato debe ser MP3, WAV, M4A, OGG, WEBM o FLAC.',
+            'audio.max' => 'El archivo de audio no debe superar los 25 MB.'
         ]);
 
         $path = $request->file('audio')->store('apuntes_audios', 'public');

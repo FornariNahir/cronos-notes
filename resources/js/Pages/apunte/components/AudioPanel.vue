@@ -77,6 +77,25 @@
               <p v-if="recording" class="text-xs text-primary-foreground/80">Grabando...</p>
             </template>
           </div>
+
+          <!-- Opción de subir archivo de audio externo -->
+          <div v-if="audios.length < 5 && !recording" class="mt-4 w-full">
+            <input
+              ref="fileInput"
+              type="file"
+              accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.webm,.flac"
+              class="hidden"
+              @change="handleFileUpload"
+            />
+            <button
+              type="button"
+              @click="triggerFileInput"
+              class="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold rounded-md bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground transition-colors border border-primary-foreground/20 cursor-pointer"
+            >
+              <Upload class="size-4" />
+              Subir audio (máx 25 MB)
+            </button>
+          </div>
         </div>
 
         <div v-else-if="isReadOnly && (!audios || audios.length === 0)" class="flex flex-1 flex-col items-center justify-center text-center p-4">
@@ -122,7 +141,7 @@
 
 <script setup>
 import { ref, computed, onUnmounted, onMounted, watch } from 'vue'
-import { Mic, X, Square } from 'lucide-vue-next'
+import { Mic, X, Square, Upload } from 'lucide-vue-next'
 
 const props = defineProps({
   open: Boolean,
@@ -140,8 +159,9 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:open', 'recorded', 'delete', 'error'])
+const emit = defineEmits(['update:open', 'recorded', 'uploaded', 'delete', 'error'])
 
+const fileInput = ref(null)
 const recording = ref(false)
 const seconds = ref(0)
 let mediaRecorder = null
@@ -202,6 +222,26 @@ const formattedTimer = computed(() => {
   const secs = String(seconds.value % 60).padStart(2, '0')
   return `${mins}:${secs}`
 })
+
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+const handleFileUpload = (e) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  const maxBytes = 25 * 1024 * 1024 // 25 MB
+  if (file.size > maxBytes) {
+    const sizeMb = (file.size / (1024 * 1024)).toFixed(1)
+    emit('error', `El archivo seleccionado supera el límite de 25 MB (pesa ${sizeMb} MB).`)
+    e.target.value = ''
+    return
+  }
+
+  emit('uploaded', file)
+  e.target.value = ''
+}
 
 onUnmounted(() => {
   stopTimer()

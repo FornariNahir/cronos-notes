@@ -10,7 +10,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PomodoroController;
 use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
-
+use App\Http\Controllers\AudioTranscriptionController;
 use App\Http\Controllers\PerfilCompartidoController;
 
 Route::get('/', function () {
@@ -147,6 +147,9 @@ Route::middleware('auth.custom')->group(function () {
     Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
     Route::post('/apuntes/{id}/audio', [ApunteController::class, 'uploadAudio'])->name('apuntes.audio.upload');
     Route::delete('/apuntes/audio/{audioId}', [ApunteController::class, 'destroyAudio'])->name('apuntes.audio.destroy');
+    Route::post('/apuntes/{id}/audios/{audioId}/transcribir', [AudioTranscriptionController::class, 'transcribe'])
+        ->name('apuntes.audios.transcribe')
+        ->middleware('throttle:10,60');
 
     // PERFIL COMPARTIDO — Gestión del propietario
     Route::get('/perfiles/{idPerfil}/compartido', [PerfilCompartidoController::class, 'index'])->name('perfil-compartido.index');

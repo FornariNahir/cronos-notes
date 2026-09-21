@@ -1,74 +1,116 @@
 # [RF-M14] Transcripción Automática y Resumen Inteligente de Audios
 
 ## 1. Descripción y Objetivo
-Este requerimiento expande las capacidades del módulo de toma de apuntes y grabaciones de audio mediante la incorporación de procesamiento de lenguaje natural y modelos de voz a texto (Speech-to-Text):
-- **Transcripción Automática (Speech-to-Text)**: Convierte automáticamente grabaciones de clases, notas de voz o audios subidos en texto editable con puntuación y segmentación de oraciones.
-- **Resumen Inteligente y Extracción de Conceptos**: Utiliza la API de Gemini para analizar la transcripción completa, sintetizar los puntos esenciales, estructurar ideas clave y generar un resumen conciso que se integra directamente en la plantilla del **Método Cornell** (población automática de las secciones *Notas*, *Ideas/Palabras Clave* y *Resumen*).
+Este requerimiento expande las capacidades del módulo de toma de apuntes y grabaciones de audio mediante la incorporación de procesamiento de voz a texto (Speech-to-Text) e Inteligencia Artificial generativa:
+- **Transcripción Automática (Speech-to-Text)**: Convierte automáticamente grabaciones de clases, notas de voz o audios subidos en texto editable con puntuación y segmentación de oraciones. Soporta un esquema híbrido desacoplado mediante **Whisper Local** (para desarrollo/pruebas locales ilimitadas sin costo) y **Google Gemini 2.0 Multimodal** (para portabilidad inmediata en la nube con fallback configurable).
+- **Resumen Inteligente y Extracción de Conceptos (Método Cornell)**: Procesa la transcripción mediante **Google Gemini 2.0 Flash**, sintetizando los puntos esenciales, estructurando ideas clave y generando un resumen conciso que se integra directamente en los cuadrantes del **Método Cornell** (*Ideas Clave*, *Notas* y *Resumen*).
 - **Objetivo**: Reducir drásticamente el tiempo que los estudiantes invierten en desgravar manualmente clases grabadas, optimizando el proceso de repaso mediante síntesis estructuradas e interactivas.
 
 ---
 
-## 2. Tecnologías, Herramientas y Librerías
+## 2. Tecnologías, Herramientas y Librerías (Backend)
 
-- **OpenAI Whisper API / Gemini 2.0 Multimodal Audio**: Motores de transcripción y comprensión auditiva de alta precisión en español para convertir audio a texto y procesar contextos extensos.
-- **Google Gemini API (`gemini-2.0-flash`)**: Para la generación de resúmenes jerárquicos, extracción de conceptos clave y estructuración en formato Cornell.
-- **Laravel Storage & HTTP Client**: Gestión segura de archivos temporales de audio y despacho de peticiones multipart hacia los endpoints de transcripción e inferencia.
-- **Inertia.js & Vue 3 (Composition API)**: Componente modal de transcripción con barra de progreso, visor de texto generado y selector de inserción en el editor.
-- **MySQL / Eloquent ORM**: Campos `transcripcion` (LONGTEXT) y `resumen_ia` (LONGTEXT) en la tabla `apunte_audios` o `apunte`.
+- **PHP 8.2+ & Laravel 11 Framework**: Núcleo del backend, controladores, servicios y validación.
+- **Whisper Local (Microservicio STT / Docker)**: Servidor local de Whisper (vía FastAPI / `whisper-asr-webservice` en `http://localhost:9000/asr`) para transcribir audios en local de forma ilimitada sin consumo de cuotas de APIs externas.
+- **Google Gemini API (`gemini-2.0-flash`)**: Motor generativo para estructurar el texto transcrito bajo el esquema JSON estricto del Método Cornell, y driver alternativo de STT multimodal.
+- **Laravel HTTP Client (`Illuminate\Support\Facades\Http`)**: Para enviar peticiones multipart de audio al servidor Whisper local y peticiones JSON a la API de Google Gemini.
+- **MySQL & Eloquent ORM**:
+  - Tabla `ApunteAudio`: Ampliada con `transcripcion` (LONGTEXT, nullable), `resumen_ia` (JSON, nullable), `estado` (VARCHAR(30), default 'pendiente') y `error_mensaje` (TEXT, nullable).
+  - Tabla `Apunte`: Entidad principal que recibe la inserción/fusión de los bloques Cornell generados.
 
 ---
 
-## 3. Archivos Involucrados en el Requerimiento
-
-### Frontend (Vue 3)
-- [Editor.vue](/resources/js/Pages/apunte/Editor.vue) - Vista del editor donde se inserta el contenido transcrito y sintetizado.
-- [AudioPanel.vue](/resources/js/Pages/apunte/components/AudioPanel.vue) - Panel de grabación que añade el botón "Transcribir y Resumir con IA".
-- [TranscriptionModal.vue](/resources/js/Pages/apunte/components/TranscriptionModal.vue) - Modal interactivo que muestra el estado del procesamiento, la transcripción completa y las opciones de aplicar al apunte.
+## 3. Archivos Involucrados en el Requerimiento (Foco Backend)
 
 ### Backend & Controladores (Laravel)
-- [AudioTranscriptionController.php](/app/Http/Controllers/AudioTranscriptionController.php) - Controlador que recibe la solicitud de transcripción, valida el audio y coordina el flujo.
-- [AudioTranscriptionService.php](/app/Services/AudioTranscriptionService.php) - Servicio que interactúa con la API de Whisper/Gemini para la conversión de audio a texto y generación del resumen Cornell.
+- [AudioTranscriptionController.php](/app/Http/Controllers/AudioTranscriptionController.php) - Controlador REST con endpoints:
+  - `POST /apuntes/{id}/audios/{audioId}/transcribir`: Procesa la transcripción y el resumen.
+  - `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell`: Aplica atómicamente el resumen al apunte en modo 'reemplazar' o 'anexar'.
+- [AudioTranscriptionService.php](/app/Services/AudioTranscriptionService.php) - Servicio con métodos de alta cohesión:
+  - `transcribe(string $relativeAudioPath): string`: Invoca el driver STT configurado (Whisper Local / Gemini).
+  - `summarizeCornell(string $transcriptionText): array`: Genera el esquema Cornell mediante Gemini Flash.
+  - `processAudio(ApunteAudio $audio): array`: Orquesta el flujo completo y actualiza estados en DB.
+- [config/services.php](/config/services.php) - Configuración de endpoints y credenciales (`gemini.key`, `whisper.url`, `whisper.fallback_to_gemini`).
 
-### Modelos y Datos (Eloquent ORM)
-- [ApunteAudio.php](/app/Models/ApunteAudio.php) - Modelo de persistencia para almacenar el archivo, su transcripción cruda y el resumen generado.
-- [Apunte.php](/app/Models/Apunte.php) - Modelo del apunte enriquecido.
+### Modelos y Datos (Eloquent ORM & Migraciones)
+- [ApunteAudio.php](/app/Models/ApunteAudio.php) - Modelo de persistencia que almacena la ruta del audio, su transcripción, el resumen Cornell en JSON, el estado del procesamiento y eventuales errores.
+- [Apunte.php](/app/Models/Apunte.php) - Modelo del apunte contenedor.
+- `database/migrations/2026_09_14_000001_add_transcription_fields_to_apunte_audios_table.php` - Migración para agregar `transcripcion`, `resumen_ia`, `estado` y `error_mensaje`.
+
+### Pruebas Backend (PHPUnit / Pest)
+- `tests/Feature/AudioTranscriptionTest.php` - Pruebas de integración de endpoints, validaciones de permisos, fallback y simulación de respuestas (fakes/mocks) de Whisper y Gemini.
 
 ---
 
 ## 4. Flujo de Datos y Control
 
-### Diagrama de Flujo del Requerimiento
+### Diagrama de Flujo del Backend
 ```mermaid
 graph TD
-    A[Usuario: Graba o sube audio en Apuntes] --> B[Usuario: Clic en 'Transcribir y Resumir con IA']
-    B --> C[Frontend: Envía ID del audio / archivo a Laravel]
-    C --> D[Backend: AudioTranscriptionService envía audio a Whisper/Gemini]
-    D --> E[Motor STT: Devuelve transcripción completa en texto]
-    E --> F[Backend: Envía transcripción a Gemini con prompt estructurado Cornell]
-    F --> G[Gemini: Genera Ideas, Notas y Resumen en JSON]
-    G --> H[Backend: Guarda transcripción y resumen en DB]
-    H --> I[Frontend: Muestra modal con resultado y permite insertar en el Editor]
+    A[Frontend: POST /apuntes/{id}/audios/{audioId}/transcribir] --> B[Controller: Validar permisos perfil 'modificar' y rate limit]
+    B --> C[Controller: Invocar AudioTranscriptionService@processAudio]
+    C --> D{Driver STT Activo?}
+    D -- whisper_local --> E[HTTP Multipart a Whisper Local localhost:9000/asr]
+    E -- Error de Conexión / Timeout --> E1{Fallback Activo?}
+    E1 -- Sí --> F[Google Gemini Multimodal Audio API]
+    E1 -- No --> E2[Guardar estado 'fallido' y lanzar 503]
+    D -- gemini --> F
+    E -- Éxito --> G[Obtención de Transcripción Texto Plano]
+    F -- Éxito --> G
+    G --> H[AudioTranscriptionService: Enviar texto a Gemini con Prompt Cornell]
+    H --> I[Gemini: Respuesta JSON estructurada Ideas, Notas, Resumen]
+    I --> J[Persistencia: Actualizar ApunteAudio con transcripcion, resumen_ia y estado 'completado']
+    J --> K[Controller: Retornar HTTP 200 con payload estructurado]
+    
+    L[Frontend: POST /apuntes/{id}/audios/{audioId}/aplicar-cornell] --> M[Controller: Validar modo 'reemplazar' | 'anexar']
+    M --> N[DB: Actualizar Apunte ideasApunte, contenidoApunte, resumenApunte]
+    N --> O[Controller: Retornar Apunte actualizado]
 ```
 
-### Detalle del Flujo de Control (Pasos)
-1. **Frontend:** El usuario graba una nota de voz o selecciona un archivo de audio existente en el apunte y presiona "Transcribir con IA".
-2. **Controlador:** `AudioTranscriptionController@transcribe` valida la pertenencia del archivo y despacha el trabajo a `AudioTranscriptionService`.
-3. **Transcripción (STT):** El servicio envía el archivo binario a la API de Whisper o Gemini Multimodal, obteniendo el texto completo transcrito.
-4. **Resumen Estructurado (Gemini):** El backend ejecuta un segundo prompt a Gemini solicitando:
-   - *Sección Notas:* Desarrollo de los puntos explicados.
-   - *Sección Ideas/Claves:* Palabras clave y preguntas de repaso.
-   - *Sección Resumen:* Síntesis final de 3 a 5 oraciones.
-5. **Persistencia:** Se guardan los resultados en la base de datos vinculados al registro de `ApunteAudio`.
-6. **Frontend:** El modal `TranscriptionModal.vue` recibe el resultado. El usuario puede seleccionar "Aplicar al método Cornell", reemplazando o anexando los bloques directamente en el editor.
+### Contrato de Respuesta JSON (Transcripción y Resumen)
+```json
+{
+  "idApunteAudio": 12,
+  "idApunte": 5,
+  "estado": "completado",
+  "transcripcion": "Texto completo desgrabado...",
+  "resumen_cornell": {
+    "titulo_sugerido": "Conceptos Básicos de Redes Neuronales",
+    "ideas_clave": [
+      "Definición de Perceptrón",
+      "Función de activación Sigmoide vs ReLU"
+    ],
+    "notas": "Desarrollo ordenado del contenido de la clase en formato Markdown...",
+    "resumen": "Síntesis final del tema en 3 a 5 oraciones estructuradas."
+  },
+  "motor_stt": "whisper_local"
+}
+```
+
+### Contrato de Solicitud y Respuesta (Aplicar Cornell al Apunte)
+- **Endpoint**: `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell`
+- **Request Payload**:
+```json
+{
+  "modo": "reemplazar"
+}
+```
+*(Valores posibles para `modo`: `"reemplazar"` o `"anexar"`)*
+- **Response**: `200 OK` con el modelo `Apunte` actualizado.
 
 ---
 
-## 5. Pruebas y Validación (QA)
+## 5. Pruebas y Validación (QA Backend)
 
-1. **Precondición:** Iniciar sesión, ingresar a "Mis Apuntes" y abrir o crear un apunte con plantilla Cornell.
-2. **Paso 1:** Grabar una nota de voz de al menos 15 segundos explicando un concepto (o subir un archivo `.mp3`/`.webm`).
-3. **Paso 2:** Hacer clic en el botón con ícono de varita mágica "Transcribir y Resumir con IA".
-4. **Resultado Esperado 1:** Debe abrirse un modal indicando el estado del proceso (*"Transcribiendo audio..."* y *"Generando resumen inteligente..."*).
-5. **Resultado Esperado 2:** Una vez finalizado, el modal muestra la transcripción textual exacta y una previsualización de las columnas Cornell generadas.
-6. **Paso 3:** Pulsar "Insertar en mi apunte".
-7. **Resultado Esperado 3:** Las columnas de Ideas, Notas Principales y Resumen del editor se completan automáticamente con la información generada, sin pérdida de formato.
+1. **Prueba de Autenticación y Autorización**:
+   - Usuario sin autenticar recibe `401 Unauthorized`.
+   - Usuario con rol `Lector` en perfil compartido recibe `403 Forbidden`.
+   - Usuario con rol `Editor` o `Administrador` (propietario) procesa exitosamente.
+2. **Prueba de Driver Whisper Local**:
+   - Con el microservicio local activo en el puerto 9000, un audio enviado genera transcripción y resumen en DB.
+3. **Prueba de Resiliencia y Fallback**:
+   - Con Whisper apagado y `WHISPER_FALLBACK_TO_GEMINI=true`, el servicio realiza fallback transparente a Gemini y completa el procesamiento.
+   - Con Whisper apagado y fallback deshabilitado, se retorna `503 Service Unavailable` y se persiste `estado = 'fallido'` con mensaje de error en `error_mensaje`.
+4. **Prueba de Aplicación Cornell (`aplicar-cornell`)**:
+   - En modo `reemplazar`: Los campos de `Apunte` se sustituyen por los del audio.
+   - En modo `anexar`: El contenido previo del `Apunte` se preserva y se concatenan los nuevos bloques con saltos de línea ordenados.

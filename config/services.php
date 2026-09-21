@@ -45,5 +45,11 @@ return [
         'key' => env('GEMINI_API_KEY'),
     ],
 
+    'whisper' => [
+        'url' => env('WHISPER_LOCAL_URL', 'http://localhost:9000/asr'),
+        'driver' => env('TRANSCRIPTION_DRIVER', 'whisper_local'),
+        'fallback_to_gemini' => env('WHISPER_FALLBACK_TO_GEMINI', true),
+    ],
+
 ];
 

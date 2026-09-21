@@ -13,11 +13,16 @@ class ApunteAudio extends Model
     protected $fillable = [
         'idApunte',
         'rutaAudio',
-        'fechaCreacion'
+        'fechaCreacion',
+        'transcripcion',
+        'resumen_ia',
+        'estado',
+        'error_mensaje',
     ];
 
     protected $casts = [
-        'fechaCreacion' => 'datetime'
+        'fechaCreacion' => 'datetime',
+        'resumen_ia' => 'array',
     ];
 
     public function apunte()

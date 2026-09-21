@@ -44,7 +44,113 @@ class AudioTranscriptionService
     }
 
     /**
-     * Orquesta el procesamiento de transcripción de un ApunteAudio.
+     * Sintetiza y estructura el texto transcrito bajo el Método Cornell utilizando Google Gemini Flash.
+     *
+     * @param string $transcriptionText
+     * @return array{titulo_sugerido: string, ideas_clave: array<string>, notas: string, resumen: string}
+     * @throws RuntimeException
+     */
+    public function summarizeCornell(string $transcriptionText): array
+    {
+        $cleanText = trim($transcriptionText);
+        if (empty($cleanText)) {
+            throw new RuntimeException("El texto a sintetizar no puede estar vacío.");
+        }
+
+        $apiKey = config('services.gemini.key') ?? env('GEMINI_API_KEY');
+        if (empty($apiKey)) {
+            throw new RuntimeException("La API Key de Google Gemini no está configurada en el servidor.");
+        }
+
+        $modelos = ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash-lite'];
+        $response = null;
+        $ultimoError = '';
+
+        $prompt = "A partir de la siguiente transcripción de una clase o grabación de audio, estructurá un apunte de estudio siguiendo con rigurosidad pedagógica el Método Cornell.\n\n"
+            . "Estructura requerida:\n"
+            . "1. titulo_sugerido: Un título académico, claro y representativo del contenido.\n"
+            . "2. ideas_clave: Lista ordenada con las preguntas de repaso fundamentales, términos conceptuales y definiciones clave asociadas al tema.\n"
+            . "3. notas: Desarrollo completo y ordenado de los temas explicados, redactado en formato Markdown (empleando títulos secundarios, viñetas, negritas para conceptos relevantes y ejemplos).\n"
+            . "4. resumen: Síntesis conceptual integradora de cierre redactada en un párrafo conciso de entre 3 a 5 oraciones.\n\n"
+            . "Transcripción:\n" . $cleanText;
+
+        $schema = [
+            'type' => 'OBJECT',
+            'properties' => [
+                'titulo_sugerido' => [
+                    'type' => 'STRING',
+                    'description' => 'Título sugerido para la nota de estudio.'
+                ],
+                'ideas_clave' => [
+                    'type' => 'ARRAY',
+                    'items' => ['type' => 'STRING'],
+                    'description' => 'Preguntas de repaso, palabras clave y conceptos clave.'
+                ],
+                'notas' => [
+                    'type' => 'STRING',
+                    'description' => 'Desarrollo detallado de los temas en formato Markdown.'
+                ],
+                'resumen' => [
+                    'type' => 'STRING',
+                    'description' => 'Síntesis de cierre integradora en 3 a 5 oraciones.'
+                ]
+            ],
+            'required' => ['titulo_sugerido', 'ideas_clave', 'notas', 'resumen']
+        ];
+
+        foreach ($modelos as $modelo) {
+            try {
+                $response = Http::retry(2, 500)->withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post("https://generativelanguage.googleapis.com/v1beta/models/{$modelo}:generateContent?key={$apiKey}", [
+                    'contents' => [
+                        'parts' => [
+                            ['text' => $prompt]
+                        ]
+                    ],
+                    'systemInstruction' => [
+                        'parts' => [
+                            ['text' => "Sos un asistente pedagógico universitario de excelencia especializado en el Método Cornell de toma de apuntes. Debes procesar transcripciones orales y transformarlas en apuntes de alto valor académico. Debes responder estrictamente en formato JSON utilizando el esquema estricto proporcionado, sin texto adicional ni bloques fuera del JSON."]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'responseMimeType' => 'application/json',
+                        'responseSchema' => $schema,
+                    ]
+                ]);
+
+                if ($response->successful()) {
+                    break;
+                }
+
+                $ultimoError = "Modelo {$modelo} falló [{$response->status()}]: " . $response->body();
+            } catch (\Throwable $e) {
+                $ultimoError = "Excepción en modelo {$modelo}: " . $e->getMessage();
+            }
+        }
+
+        if (!$response || !$response->successful()) {
+            throw new RuntimeException("Error al generar resumen Cornell con Gemini: " . $ultimoError);
+        }
+
+        $body = $response->json();
+        $rawJson = $body['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
+        $data = json_decode($rawJson, true);
+
+        if (!is_array($data) || !isset($data['titulo_sugerido'], $data['ideas_clave'], $data['notas'], $data['resumen'])) {
+            throw new RuntimeException("La respuesta de Gemini no contiene el esquema Cornell esperado: " . $rawJson);
+        }
+
+        return [
+            'titulo_sugerido' => (string) $data['titulo_sugerido'],
+            'ideas_clave' => (array) $data['ideas_clave'],
+            'notas' => (string) $data['notas'],
+            'resumen' => (string) $data['resumen'],
+        ];
+    }
+
+    /**
+     * Orquesta el procesamiento de transcripción y generación de resumen Cornell de un ApunteAudio.
      *
      * @param ApunteAudio $audio
      * @return array
@@ -58,9 +164,11 @@ class AudioTranscriptionService
 
         try {
             $transcription = $this->transcribe($audio->rutaAudio);
+            $cornellSummary = $this->summarizeCornell($transcription);
 
             $audio->update([
                 'transcripcion' => $transcription,
+                'resumen_ia' => $cornellSummary,
                 'estado' => 'completado',
                 'error_mensaje' => null,
             ]);
@@ -70,6 +178,7 @@ class AudioTranscriptionService
                 'idApunte' => $audio->idApunte,
                 'estado' => 'completado',
                 'transcripcion' => $transcription,
+                'resumen_cornell' => $cornellSummary,
                 'motor_stt' => 'whisper_local',
             ];
         } catch (\Throwable $e) {

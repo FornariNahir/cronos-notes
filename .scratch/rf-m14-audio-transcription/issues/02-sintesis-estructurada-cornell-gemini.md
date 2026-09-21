@@ -4,9 +4,9 @@
 
 **Blocked by:** 01: Transcripción STT con Whisper Local de Punta a Punta
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] `AudioTranscriptionService` implementa `summarizeCornell(string $text): array` usando Google Gemini 2.0 Flash.
-- [ ] El payload de respuesta sigue estrictamente el esquema JSON con `titulo_sugerido`, `ideas_clave`, `notas` y `resumen`.
-- [ ] El JSON resultante se persiste en `ApunteAudio.resumen_ia`.
-- [ ] Pruebas automatizadas con `Http::fake()` validan el contrato de respuesta y la persistencia estructurada.
+- [x] `AudioTranscriptionService` implementa `summarizeCornell(string $text): array` usando Google Gemini 2.0 Flash (con fallback a 2.5 y flash-lite).
+- [x] El payload de respuesta sigue estrictamente el esquema JSON con `titulo_sugerido`, `ideas_clave`, `notas` y `resumen`.
+- [x] El JSON resultante se persiste en `ApunteAudio.resumen_ia`.
+- [x] Pruebas automatizadas con `Http::fake()` validan el contrato de respuesta y la persistencia estructurada en `tests/Feature/AudioTranscriptionTest.php`.

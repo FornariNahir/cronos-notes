@@ -218,6 +218,7 @@ class ApunteController extends Controller
         ], [
             'audio.required' => 'El archivo de audio es obligatorio.',
             'audio.file' => 'El archivo subido no es válido.',
+            'audio.uploaded' => 'El archivo no se pudo subir. Puede que supere el tamaño máximo permitido por el servidor.',
             'audio.mimes' => 'El formato debe ser MP3, WAV, M4A, OGG, WEBM o FLAC.',
             'audio.max' => 'El archivo de audio no debe superar los 25 MB.'
         ]);

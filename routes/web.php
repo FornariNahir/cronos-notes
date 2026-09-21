@@ -150,6 +150,8 @@ Route::middleware('auth.custom')->group(function () {
     Route::post('/apuntes/{id}/audios/{audioId}/transcribir', [AudioTranscriptionController::class, 'transcribe'])
         ->name('apuntes.audios.transcribe')
         ->middleware('throttle:10,60');
+    Route::post('/apuntes/{id}/audios/{audioId}/aplicar-cornell', [AudioTranscriptionController::class, 'aplicarCornell'])
+        ->name('apuntes.audios.aplicar-cornell');
 
     // PERFIL COMPARTIDO — Gestión del propietario
     Route::get('/perfiles/{idPerfil}/compartido', [PerfilCompartidoController::class, 'index'])->name('perfil-compartido.index');

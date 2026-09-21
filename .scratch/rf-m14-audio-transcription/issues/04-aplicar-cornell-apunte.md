@@ -4,10 +4,10 @@
 
 **Blocked by:** 02: Síntesis Estructurada Cornell con Google Gemini Flash
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Endpoint `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell` creado y protegido bajo sesión y perfil con permiso de modificación.
-- [ ] Modo `reemplazar`: Sobrescribe `ideasApunte`, `contenidoApunte` y `resumenApunte`.
-- [ ] Modo `anexar`: Concatena de forma limpia y ordenada preservando el contenido preexistente.
-- [ ] Validación de que usuarios con rol `Lector` reciben 403 Forbidden.
-- [ ] Pruebas automatizadas de integración para ambos modos y casos de seguridad.
+- [x] Endpoint `POST /apuntes/{id}/audios/{audioId}/aplicar-cornell` creado en `AudioTranscriptionController@aplicarCornell` y protegido bajo sesión y perfil con permiso de modificación.
+- [x] Modo `reemplazar`: Sobrescribe `ideasApunte`, `contenidoApunte` y `resumenApunte` y actualiza el título si es genérico.
+- [x] Modo `anexar`: Concatena de forma limpia y ordenada preservando el contenido preexistente del alumno.
+- [x] Validación de que usuarios con rol `Lector` reciben 403 Forbidden y validación de existencia previa de `resumen_ia` (422).
+- [x] Pruebas automatizadas de integración para ambos modos y casos de seguridad en `tests/Feature/AudioTranscriptionTest.php`.

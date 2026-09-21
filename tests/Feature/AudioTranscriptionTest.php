@@ -157,7 +157,6 @@ class AudioTranscriptionTest extends TestCase
             'resumen' => 'Resumen generado vía fallback a Gemini.',
         ];
 
-        // Simulamos fallo en Whisper (500) y éxito en Gemini tanto para STT como para Cornell
         Http::fake([
             '*/asr*' => Http::response('Internal Server Error en Whisper', 500),
             '*generativelanguage.googleapis.com*' => Http::sequence()
@@ -403,5 +402,191 @@ class AudioTranscriptionTest extends TestCase
         $audio->refresh();
         $this->assertEquals('fallido', $audio->estado);
         $this->assertNotNull($audio->error_mensaje);
+    }
+
+    public function test_aplicar_cornell_requiere_autenticacion(): void
+    {
+        $response = $this->postJson('/apuntes/1/audios/1/aplicar-cornell', ['modo' => 'reemplazar']);
+        $response->assertUnauthorized();
+    }
+
+    public function test_aplicar_cornell_bloquea_a_usuario_con_rol_lector(): void
+    {
+        $owner = User::factory()->create();
+        $reader = User::factory()->create();
+
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Perfil Compartido',
+        ]);
+
+        PerfilCompartido::create([
+            'idUsuario' => $reader->idUsuario,
+            'idPerfil' => $perfil->idPerfil,
+            'permiso' => 'Lector',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Nota Compartida',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => 'apuntes_audios/audio.mp3',
+            'resumen_ia' => [
+                'titulo_sugerido' => 'Título IA',
+                'ideas_clave' => ['Idea 1'],
+                'notas' => 'Notas IA',
+                'resumen' => 'Resumen IA',
+            ],
+            'estado' => 'completado',
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($reader)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/aplicar-cornell", [
+                'modo' => 'reemplazar',
+            ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_aplicar_cornell_valida_existencia_de_resumen(): void
+    {
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Nota Sin Resumen',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => 'apuntes_audios/sin_resumen.mp3',
+            'resumen_ia' => null,
+            'estado' => 'pendiente',
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/aplicar-cornell", [
+                'modo' => 'reemplazar',
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_aplicar_cornell_en_modo_reemplazar_sobrescribe_columnas_correctamente(): void
+    {
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Sin título',
+            'ideasApunte' => 'Viejas ideas',
+            'contenidoApunte' => 'Viejas notas de clase',
+            'resumenApunte' => 'Viejo resumen',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => 'apuntes_audios/clase.mp3',
+            'resumen_ia' => [
+                'titulo_sugerido' => 'Introducción a Algoritmos Voraces',
+                'ideas_clave' => ['Estrategia Greedy', 'Elección óptima local'],
+                'notas' => "### Algoritmos Voraces\nDesarrollo detallado del tema.",
+                'resumen' => 'Un algoritmo voraz toma la decisión óptima en cada paso.',
+            ],
+            'estado' => 'completado',
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/aplicar-cornell", [
+                'modo' => 'reemplazar',
+            ]);
+
+        $response->assertOk();
+
+        $apunte->refresh();
+        $this->assertEquals('Introducción a Algoritmos Voraces', $apunte->tituloApunte);
+        $this->assertStringContainsString('- Estrategia Greedy', $apunte->ideasApunte);
+        $this->assertStringContainsString('### Algoritmos Voraces', $apunte->contenidoApunte);
+        $this->assertEquals('Un algoritmo voraz toma la decisión óptima en cada paso.', $apunte->resumenApunte);
+    }
+
+    public function test_aplicar_cornell_en_modo_anexar_concatena_sin_perder_contenido_previo(): void
+    {
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'cornell',
+            'tituloApunte' => 'Mi Título Preexistente',
+            'ideasApunte' => 'Idea Previa 1',
+            'contenidoApunte' => 'Notas escritas a mano por el alumno.',
+            'resumenApunte' => 'Resumen previo del estudiante.',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => 'apuntes_audios/clase_parte_2.mp3',
+            'resumen_ia' => [
+                'titulo_sugerido' => 'Parte 2 de la Clase',
+                'ideas_clave' => ['Nueva Idea 2'],
+                'notas' => 'Segunda parte explicada por el profesor.',
+                'resumen' => 'Resumen de la segunda parte.',
+            ],
+            'estado' => 'completado',
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/aplicar-cornell", [
+                'modo' => 'anexar',
+            ]);
+
+        $response->assertOk();
+
+        $apunte->refresh();
+        // El título no se pisa en modo anexar
+        $this->assertEquals('Mi Título Preexistente', $apunte->tituloApunte);
+        // Las ideas se concatenaron
+        $this->assertStringContainsString('Idea Previa 1', $apunte->ideasApunte);
+        $this->assertStringContainsString('- Nueva Idea 2', $apunte->ideasApunte);
+        // Las notas se concatenaron preservando el texto anterior
+        $this->assertStringContainsString('Notas escritas a mano por el alumno.', $apunte->contenidoApunte);
+        $this->assertStringContainsString('Segunda parte explicada por el profesor.', $apunte->contenidoApunte);
+        // El resumen se concatenó
+        $this->assertStringContainsString('Resumen previo del estudiante.', $apunte->resumenApunte);
+        $this->assertStringContainsString('Resumen de la segunda parte.', $apunte->resumenApunte);
     }
 }

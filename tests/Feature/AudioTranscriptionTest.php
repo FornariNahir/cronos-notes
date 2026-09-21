@@ -19,7 +19,7 @@ class AudioTranscriptionTest extends TestCase
     public function test_usuario_no_autenticado_no_puede_transcribir(): void
     {
         $response = $this->postJson('/apuntes/1/audios/1/transcribir');
-        $response->assertUnauthorized();
+        $response->assertRedirect(route('login'));
     }
 
     public function test_usuario_con_rol_lector_recibe_403_al_transcribir(): void
@@ -407,7 +407,7 @@ class AudioTranscriptionTest extends TestCase
     public function test_aplicar_cornell_requiere_autenticacion(): void
     {
         $response = $this->postJson('/apuntes/1/audios/1/aplicar-cornell', ['modo' => 'reemplazar']);
-        $response->assertUnauthorized();
+        $response->assertRedirect(route('login'));
     }
 
     public function test_aplicar_cornell_bloquea_a_usuario_con_rol_lector(): void

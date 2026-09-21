@@ -62,6 +62,10 @@
   }
 }
 
+.editor-area {
+  white-space: pre-wrap;
+}
+
 .editor-area:empty::before {
   content: attr(data-placeholder);
   color: var(--muted-foreground);

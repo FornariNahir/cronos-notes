@@ -71,6 +71,7 @@ class AudioTranscriptionController extends Controller
     {
         $request->validate([
             'modo' => 'required|in:reemplazar,anexar',
+            'formato' => 'nullable|in:normal,cornell',
         ]);
 
         $apunte = Apunte::findOrFail($idApunte);
@@ -88,6 +89,7 @@ class AudioTranscriptionController extends Controller
         }
 
         $modo = $request->input('modo');
+        $formato = $request->input('formato', $apunte->tipoApunte ?? 'normal');
 
         // Formatear ideas_clave si viene como array
         $nuevasIdeas = '';
@@ -102,30 +104,58 @@ class AudioTranscriptionController extends Controller
         $nuevasNotas = (string) ($resumen['notas'] ?? '');
         $nuevoResumen = (string) ($resumen['resumen'] ?? '');
 
+        // Estructura lineal y pedagógica para Modo Normal (Preguntas Clave -> Notas -> Resumen)
+        $contenidoNormal = "### 💡 Preguntas Clave\n" . trim($nuevasIdeas) . "\n\n"
+            . "---\n\n"
+            . "### 📝 Notas\n" . trim($nuevasNotas) . "\n\n"
+            . "---\n\n"
+            . "### 📌 Resumen\n" . trim($nuevoResumen);
+
         if ($modo === 'reemplazar') {
-            $apunte->ideasApunte = $nuevasIdeas;
-            $apunte->contenidoApunte = $nuevasNotas;
-            $apunte->resumenApunte = $nuevoResumen;
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = $contenidoNormal;
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->contenidoApunte = $nuevasNotas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'cornell';
+            }
 
             // Si el título es genérico o vacío, sugerir el título de la IA
             if (!empty($resumen['titulo_sugerido']) && (empty($apunte->tituloApunte) || $apunte->tituloApunte === 'Sin título')) {
                 $apunte->tituloApunte = mb_substr($resumen['titulo_sugerido'], 0, 100);
             }
         } else { // anexar
-            $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
-                ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
-                : trim($nuevasIdeas);
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . $contenidoNormal
+                    : $contenidoNormal;
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
 
-            $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
-                ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . trim($nuevasNotas)
-                : trim($nuevasNotas);
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . trim($nuevasNotas)
+                    : trim($nuevasNotas);
 
-            $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
-                ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
-                : trim($nuevoResumen);
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'cornell';
+            }
         }
 
-        $apunte->tipoApunte = 'cornell';
         $apunte->save();
 
         return response()->json($apunte->fresh(), 200);

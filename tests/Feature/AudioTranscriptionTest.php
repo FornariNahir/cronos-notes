@@ -589,4 +589,69 @@ class AudioTranscriptionTest extends TestCase
         $this->assertStringContainsString('Resumen previo del estudiante.', $apunte->resumenApunte);
         $this->assertStringContainsString('Resumen de la segunda parte.', $apunte->resumenApunte);
     }
+
+    public function test_aplicar_cornell_en_modo_normal_estructura_preguntas_notas_resumen(): void
+    {
+        $owner = User::factory()->create();
+        $perfil = Perfil::create([
+            'idUsuario' => $owner->idUsuario,
+            'tituloPerfil' => 'Mi Perfil Normal',
+        ]);
+
+        $apunte = Apunte::create([
+            'idPerfil' => $perfil->idPerfil,
+            'tipoApunte' => 'normal',
+            'tituloApunte' => 'Sin título',
+            'contenidoApunte' => '',
+            'fechaCreacion' => now(),
+        ]);
+
+        $audio = ApunteAudio::create([
+            'idApunte' => $apunte->idApunte,
+            'rutaAudio' => 'apuntes_audios/clase_normal.mp3',
+            'resumen_ia' => [
+                'titulo_sugerido' => 'Estructura Lineal de Datos',
+                'ideas_clave' => ['Pilas (LIFO)', 'Colas (FIFO)'],
+                'notas' => 'Las pilas y colas son colecciones secuenciales.',
+                'resumen' => 'Este tema cubre los fundamentos de estructuras lineales.',
+            ],
+            'estado' => 'completado',
+            'fechaCreacion' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->postJson("/apuntes/{$apunte->idApunte}/audios/{$audio->idApunteAudio}/aplicar-cornell", [
+                'modo' => 'reemplazar',
+                'formato' => 'normal',
+            ]);
+
+        $response->assertOk();
+
+        $apunte->refresh();
+        $this->assertEquals('normal', $apunte->tipoApunte);
+        $this->assertEquals('Estructura Lineal de Datos', $apunte->tituloApunte);
+
+        // Verifica que en contenidoApunte las 3 secciones estén ordenadas: Preguntas -> Notas -> Resumen
+        $contenido = $apunte->contenidoApunte;
+        $this->assertStringContainsString('### 💡 Preguntas Clave', $contenido);
+        $this->assertStringContainsString('- Pilas (LIFO)', $contenido);
+        $this->assertStringContainsString('### 📝 Notas', $contenido);
+        $this->assertStringContainsString('Las pilas y colas son colecciones secuenciales.', $contenido);
+        $this->assertStringContainsString('### 📌 Resumen', $contenido);
+        $this->assertStringContainsString('Este tema cubre los fundamentos de estructuras lineales.', $contenido);
+
+        // Verifica el orden lineal: Preguntas antes que Notas, y Notas antes que Resumen
+        $posPreguntas = strpos($contenido, '### 💡 Preguntas Clave');
+        $posNotas = strpos($contenido, '### 📝 Notas');
+        $posResumen = strpos($contenido, '### 📌 Resumen');
+
+        $this->assertTrue($posPreguntas < $posNotas, 'Las Preguntas Clave deben aparecer antes que las Notas.');
+        $this->assertTrue($posNotas < $posResumen, 'Las Notas deben aparecer antes que el Resumen.');
+
+        // Verifica que los campos para Modo Cornell también queden sincronizados por si el usuario cambia de modo
+        $this->assertStringContainsString('- Pilas (LIFO)', $apunte->ideasApunte);
+        $this->assertEquals('Este tema cubre los fundamentos de estructuras lineales.', $apunte->resumenApunte);
+    }
 }

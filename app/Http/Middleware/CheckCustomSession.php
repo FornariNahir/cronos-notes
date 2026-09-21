@@ -21,7 +21,9 @@ class CheckCustomSession
             return $next($request);
         }
 
-        $token = $request->cookie('cronos_session_token');
+        $token = $request->cookie('cronos_session_token') 
+            ?? $request->header('X-Session-Token') 
+            ?? $request->bearerToken();
 
         if ($token) {
             $sesion = SesionUsuario::where('tokenSesionUsuario', $token)->first();

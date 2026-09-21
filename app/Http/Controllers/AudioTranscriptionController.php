@@ -24,9 +24,9 @@ class AudioTranscriptionController extends Controller
     /**
      * Verifica que el usuario tenga acceso y los permisos requeridos sobre el perfil activo.
      */
-    private function verificarAccesoPerfil(string $permiso = 'modificar'): Perfil
+    private function verificarAccesoPerfil(string $permiso = 'modificar', ?Apunte $apunte = null): Perfil
     {
-        $perfilActivoId = session('perfilActivo');
+        $perfilActivoId = session('perfilActivo') ?? $apunte?->idPerfil;
         if (!$perfilActivoId) {
             abort(403, 'Selecciona un perfil primero');
         }
@@ -42,11 +42,10 @@ class AudioTranscriptionController extends Controller
      */
     public function transcribe(Request $request, $idApunte, $idAudio): JsonResponse
     {
-        $perfil = $this->verificarAccesoPerfil('modificar');
+        @set_time_limit(300);
 
-        $apunte = Apunte::where('idApunte', $idApunte)
-            ->where('idPerfil', $perfil->idPerfil)
-            ->firstOrFail();
+        $apunte = Apunte::findOrFail($idApunte);
+        $perfil = $this->verificarAccesoPerfil('modificar', $apunte);
 
         $audio = ApunteAudio::where('idApunteAudio', $idAudio)
             ->where('idApunte', $apunte->idApunte)
@@ -66,19 +65,16 @@ class AudioTranscriptionController extends Controller
     }
 
     /**
-     * Aplica atómicamente el resumen Cornell generado al apunte principal en modo 'reemplazar' o 'anexar'.
+     * Aplica el resumen Cornell generado a las columnas del apunte (reemplazar o anexar).
      */
     public function aplicarCornell(Request $request, $idApunte, $idAudio): JsonResponse
     {
-        $perfil = $this->verificarAccesoPerfil('modificar');
-
         $request->validate([
-            'modo' => 'required|string|in:reemplazar,anexar',
+            'modo' => 'required|in:reemplazar,anexar',
         ]);
 
-        $apunte = Apunte::where('idApunte', $idApunte)
-            ->where('idPerfil', $perfil->idPerfil)
-            ->firstOrFail();
+        $apunte = Apunte::findOrFail($idApunte);
+        $perfil = $this->verificarAccesoPerfil('modificar', $apunte);
 
         $audio = ApunteAudio::where('idApunteAudio', $idAudio)
             ->where('idApunte', $apunte->idApunte)

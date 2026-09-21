@@ -305,6 +305,8 @@ class AudioTranscriptionService
      */
     public function processAudio(ApunteAudio $audio): array
     {
+        @set_time_limit(300);
+
         $audio->update([
             'estado' => 'procesando',
             'error_mensaje' => null,

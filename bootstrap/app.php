@@ -16,6 +16,15 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'apuntes/*/audios/*/transcribir',
+            'apuntes/*/audios/*/aplicar-cornell',
+        ]);
+
+        $middleware->encryptCookies(except: [
+            'cronos_session_token',
+        ]);
+
         $middleware->alias([
             'auth.custom' => \App\Http\Middleware\CheckCustomSession::class,
         ]);

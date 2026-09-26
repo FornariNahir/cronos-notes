@@ -12,10 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ApunteAudio', function (Blueprint $table) {
-            $table->longText('transcripcion')->nullable()->after('rutaAudio');
-            $table->json('resumen_ia')->nullable()->after('transcripcion');
-            $table->string('estado', 30)->default('pendiente')->after('resumen_ia');
-            $table->text('error_mensaje')->nullable()->after('estado');
+            if (!Schema::hasColumn('ApunteAudio', 'transcripcion')) {
+                $table->longText('transcripcion')->nullable()->after('rutaAudio');
+            }
+            if (!Schema::hasColumn('ApunteAudio', 'resumen_ia')) {
+                $table->json('resumen_ia')->nullable();
+            }
+            if (!Schema::hasColumn('ApunteAudio', 'estado')) {
+                $table->string('estado', 30)->default('pendiente');
+            }
+            if (!Schema::hasColumn('ApunteAudio', 'error_mensaje')) {
+                $table->text('error_mensaje')->nullable();
+            }
         });
     }
 
@@ -25,12 +33,13 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('ApunteAudio', function (Blueprint $table) {
-            $table->dropColumn([
-                'transcripcion',
-                'resumen_ia',
-                'estado',
-                'error_mensaje'
-            ]);
+            $cols = array_filter(
+                ['transcripcion', 'resumen_ia', 'estado', 'error_mensaje'],
+                fn($c) => Schema::hasColumn('ApunteAudio', $c)
+            );
+            if (!empty($cols)) {
+                $table->dropColumn($cols);
+            }
         });
     }
 };

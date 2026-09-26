@@ -29,6 +29,7 @@ class AudioTranscriptionService
         $endpoint = "{$whisperUrl}{$separator}task=transcribe&language=es&output=json";
 
         $response = Http::timeout(180)
+            ->withOptions($this->getHttpOptions())
             ->attach('audio_file', $fileContents, basename($relativeAudioPath))
             ->post($endpoint);
 
@@ -83,13 +84,14 @@ class AudioTranscriptionService
             . "Incluí puntuación adecuada y separación lógica de oraciones. "
             . "Devolvé únicamente el texto transcripto crudo, sin introducciones ni comentarios adicionales.";
 
-        $modelos = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
+        $modelos = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
         $response = null;
         $ultimoError = '';
 
         foreach ($modelos as $modelo) {
             try {
-                $response = Http::retry(2, 500)
+                $response = Http::timeout(60)
+                    ->retry(2, 500)
                     ->withOptions($this->getHttpOptions())
                     ->withHeaders([
                         'Content-Type' => 'application/json',
@@ -156,7 +158,7 @@ class AudioTranscriptionService
             ];
         }
 
-        // Driver predeterminado: whisper_local con fallback automático
+        // Intento primario con Whisper Local
         try {
             $text = $this->transcribeWithWhisper($relativeAudioPath);
             return [
@@ -165,7 +167,7 @@ class AudioTranscriptionService
             ];
         } catch (\Throwable $whisperException) {
             Log::warning(
-                "Whisper Local no disponible: {$whisperException->getMessage()}." .
+                "Whisper Local falló: {$whisperException->getMessage()}." .
                 ($fallbackEnabled ? " Iniciando conmutación por fallback a Gemini Multimodal." : "")
             );
 
@@ -212,7 +214,7 @@ class AudioTranscriptionService
             throw new RuntimeException("La API Key de Google Gemini no está configurada en el servidor.");
         }
 
-        $modelos = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
+        $modelos = ['gemini-2.5-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
         $response = null;
         $ultimoError = '';
 
@@ -220,7 +222,7 @@ class AudioTranscriptionService
             . "Estructura requerida:\n"
             . "1. titulo_sugerido: Un título académico, claro y representativo del contenido.\n"
             . "2. ideas_clave: Lista ordenada con las preguntas de repaso fundamentales, términos conceptuales y definiciones clave asociadas al tema.\n"
-            . "3. notas: Desarrollo completo y ordenado de los temas explicados, redactado en formato Markdown (empleando títulos secundarios, viñetas, negritas para conceptos relevantes y ejemplos).\n"
+            . "3. notas: Desarrollo completo y ordenado de los temas explicados respetando este estándar de formato: NO uses almohadillas (#) para títulos. Todos los títulos de sección deben ir destacados en negrita (ejemplo: **Título de la Sección**). Los términos clave o destacados van en **Negrita**. Los ítems, ejemplos o puntos secundarios deben redactarse con viñetas '• ' y texto explicativo en cursiva (ejemplo: • *Explicación del punto en cursiva*). Mantén los párrafos y secciones separados por doble salto de línea.\n"
             . "4. resumen: Síntesis conceptual integradora de cierre redactada en un párrafo conciso de entre 3 a 5 oraciones.\n\n"
             . "Transcripción:\n" . $cleanText;
 
@@ -238,7 +240,7 @@ class AudioTranscriptionService
                 ],
                 'notas' => [
                     'type' => 'STRING',
-                    'description' => 'Desarrollo detallado de los temas en formato Markdown.'
+                    'description' => 'Desarrollo detallado con títulos en **Negrita**, términos en **Negrita** y viñetas con texto en *Cursiva*.'
                 ],
                 'resumen' => [
                     'type' => 'STRING',
@@ -250,7 +252,8 @@ class AudioTranscriptionService
 
         foreach ($modelos as $modelo) {
             try {
-                $response = Http::retry(2, 500)
+                $response = Http::timeout(60)
+                    ->retry(2, 500)
                     ->withOptions($this->getHttpOptions())
                     ->withHeaders([
                         'Content-Type' => 'application/json',

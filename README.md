@@ -176,6 +176,94 @@ Para ver el sitio web en funcionamiento, debes mantener corriendo dos procesos e
 
 ---
 
+## Configuración del Módulo de Transcripción y Resumen IA (Método Cornell)
+
+El módulo de apuntes de **Cronos Notes** integra procesamiento de lenguaje natural y visión auditiva multimodal mediante un esquema híbrido y resiliente:
+
+1. **Transcripción de Voz a Texto (Speech-to-Text / STT):**
+   - **Motor Primario (Local / Privado):** Microservicio contenedorizado con **OpenAI Whisper ASR** ejecutándose localmente en Docker. Garantiza privacidad total y costo cero de API.
+   - **Motor Secundario (Fallback Resiliente / Nube):** **Google Gemini Multimodal Audio** (`gemini-2.5-flash`). Si Whisper no está activo, el sistema conmuta automáticamente hacia la nube sin interrumpir al usuario.
+2. **Síntesis Pedagógica Cornell (IA Generativa):**
+   - **Google Gemini Flash:** Estructura la transcripción en un esquema pedagógico estricto:
+     - **Título sugerido:** Identifica el tema principal de la sesión.
+     - **Preguntas / Palabras clave:** Preguntas de repaso y conceptos fundamentales para la columna izquierda Cornell.
+     - **Notas:** Desarrollo detallado siguiendo el estándar del editor (**Títulos en Negrita**, **Conceptos clave en Negrita**, **Ítems y puntos secundarios con viñetas en Cursiva**).
+     - **Resumen:** Síntesis integradora de cierre de 3 a 5 oraciones.
+
+---
+
+### Paso 1: Levantar el Servidor Local de Whisper con Docker
+
+Para habilitar la transcripción local sin consumir cuota de APIs externas, utiliza el contenedor oficial de Whisper ASR:
+
+1. Asegúrate de tener **Docker Desktop** instalado y en ejecución en tu equipo.
+2. Abre tu terminal y ejecuta el siguiente comando para descargar e iniciar el contenedor:
+   ```bash
+   docker run -d --name cronos-whisper -p 9000:9000 -e ASR_MODEL=base -e ASR_ENGINE=openai_whisper onerahmet/openai-whisper-asr-webservice:latest
+   ```
+   > **Nota sobre modelos (`ASR_MODEL`):**
+   > - `base` (recomendado para desarrollo): Rápido, ligero (~140 MB de RAM) y con excelente precisión en español.
+   > - `small` (opcional si requieres mayor fidelidad técnica): ~460 MB de RAM.
+
+3. Para verificar que el servicio esté respondiendo, abre en tu navegador:
+   👉 [http://localhost:9000/docs](http://localhost:9000/docs) (deberás visualizar la documentación interactiva Swagger del microservicio).
+
+---
+
+### Paso 2: Solicitar y Configurar la API Key de Google Gemini
+
+Tanto para la síntesis estructurada del Método Cornell como para el respaldo de transcripción multimodal en la nube, se requiere una clave de API de Google Gemini:
+
+1. Ingresa a la consola oficial de [Google AI Studio](https://aistudio.google.com/).
+2. Inicia sesión con tu cuenta de Google.
+3. En el menú de navegación lateral o en la esquina superior izquierda, haz clic en **"Get API key"** (Obtener clave de API).
+4. Haz clic en el botón azul **"Create API key"** (Crear clave de API):
+   - Puedes seleccionar un proyecto existente de Google Cloud o elegir **"Create API key in new project"** (Crear clave en un proyecto nuevo).
+5. Copia la clave generada (Google AI Studio genera claves seguras que comienzan con `AIzaSy...` o `AQ...`).
+6. Abre tu archivo `.env` en la raíz del proyecto y asigna tu clave en la variable correspondiente:
+   ```env
+   GEMINI_API_KEY=tu_clave_de_gemini_aqui
+   ```
+
+---
+
+### Paso 3: Configuración del Archivo `.env` para Audio e IA
+
+Asegúrate de que las siguientes variables estén presentes en tu archivo `.env`:
+
+```env
+# Google Gemini API
+GEMINI_API_KEY=tu_clave_de_gemini_aqui
+
+# Microservicio Whisper Local & Driver de Transcripción
+TRANSCRIPTION_DRIVER=whisper_local
+WHISPER_LOCAL_URL=http://localhost:9000/asr
+WHISPER_FALLBACK_TO_GEMINI=true
+```
+
+> **Comportamiento del Driver:**
+> - Si `TRANSCRIPTION_DRIVER=whisper_local` y el contenedor Docker está corriendo, se usará Whisper localmente.
+> - Si el contenedor Docker está apagado o no responde, al estar `WHISPER_FALLBACK_TO_GEMINI=true`, el sistema utilizará automáticamente Gemini Multimodal sin que la petición falle.
+> - Si prefieres usar exclusivamente Gemini para la transcripción en la nube, puedes configurar `TRANSCRIPTION_DRIVER=gemini`.
+
+---
+
+### Paso 4: Cómo Probar la Transcripción y el Método Cornell en la Aplicación
+
+1. En el navegador, ingresa a la sección **"Mis Apuntes"** y abre un apunte existente o crea uno nuevo guardándolo por primera vez.
+2. En el panel lateral derecho (**Panel de Audio**):
+   - Puedes **examinar carpetas** y subir un archivo de audio local (`.mp3`, `.wav`, `.m4a`, `.webm`, etc., hasta 10 MB).
+   - O seleccionar tu micrófono en el desplegable y presionar el botón circular central para **grabar tu voz en vivo**.
+3. Una vez guardado el audio en la lista *"Tus audios"*, haz clic en el botón **"Transcribir"**.
+4. Al completarse el procesamiento por IA, se abrirá el modal interactivo con dos pestañas:
+   - **Método Cornell (IA):** Muestra el título sugerido, las preguntas y palabras clave, las notas desarrolladas (con el estándar de títulos en negrita y viñetas en cursiva) y el resumen integrador.
+   - **Transcripción completa:** Muestra el texto textual completo desgrabado.
+5. Haz clic en:
+   - **"Aplicar en columnas Cornell"**: Convierte el apunte al modo Cornell de 3 columnas y reparte la información automáticamente en *Palabras clave*, *Notas* y *Resumen*.
+   - **"Insertar en el apunte"**: Inserta el contenido estructurado en la nota manteniendo el formato actual.
+
+---
+
 ## Guía de Pruebas de Flujos de Autenticación
 
 Para verificar el correcto funcionamiento de la recuperación de contraseñas y la autenticación con Google, sigue los pasos detallados a continuación:

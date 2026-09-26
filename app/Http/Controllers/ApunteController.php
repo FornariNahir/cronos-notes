@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ApunteController extends Controller
@@ -223,14 +225,166 @@ class ApunteController extends Controller
             'audio.max' => 'El archivo de audio no debe superar los 25 MB.'
         ]);
 
-        $path = $request->file('audio')->store('apuntes_audios', 'public');
+        $file = $request->file('audio');
+        $originalName = $file->getClientOriginalName();
+        $path = $file->store('apuntes_audios', 'public');
 
-        $apunte->audios()->create([
+        $audio = $apunte->audios()->create([
             'rutaAudio' => $path,
+            'nombreOriginal' => $originalName,
             'fechaCreacion' => now()
         ]);
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'audio' => $audio,
+                'message' => 'Grabación guardada correctamente'
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Grabación guardada correctamente');
+    }
+
+    /**
+     * Transcribe un archivo de audio del apunte usando IA / procesamiento inteligente y genera síntesis Cornell.
+     */
+    public function transcribeAudio(Request $request, $audioId)
+    {
+        $audio = \App\Models\ApunteAudio::findOrFail($audioId);
+        $apunte = Apunte::findOrFail($audio->idApunte);
+        $this->verificarAccesoPerfil('modificar');
+
+        // Si ya fue transcrito previamente y tiene resumen Cornell, retornar la transcripción existente
+        if (!empty($audio->transcripcion) && !empty($audio->resumen_ia) && !$request->boolean('force')) {
+            return response()->json([
+                'success' => true,
+                'transcripcion' => $audio->transcripcion,
+                'resumen_cornell' => $audio->resumen_ia,
+                'alreadyTranscribed' => true
+            ]);
+        }
+
+        $filePath = Storage::disk('public')->path($audio->rutaAudio);
+        if (!file_exists($filePath)) {
+            return response()->json(['error' => 'El archivo de audio no se encuentra en el servidor.'], 404);
+        }
+
+        $transcriptionService = app(\App\Services\AudioTranscriptionService::class);
+
+        try {
+            $result = $transcriptionService->processAudio($audio);
+
+            return response()->json([
+                'success' => true,
+                'transcripcion' => $result['transcripcion'],
+                'resumen_cornell' => $result['resumen_cornell'],
+                'motor_stt' => $result['motor_stt'] ?? 'gemini_multimodal',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Error al procesar transcripción de audio ID {$audioId}: " . $e->getMessage());
+
+            return response()->json([
+                'error' => 'No se pudo realizar la transcripción del audio.',
+                'detalle' => $e->getMessage(),
+            ], 503);
+        }
+    }
+
+    /**
+     * Aplica el resumen Cornell generado a las columnas del apunte (reemplazar o anexar).
+     */
+    public function aplicarCornell(Request $request, $id, $audioId)
+    {
+        $request->validate([
+            'modo' => 'required|in:reemplazar,anexar',
+            'formato' => 'nullable|in:normal,cornell',
+        ]);
+
+        $apunte = Apunte::findOrFail($id);
+        $this->verificarAccesoPerfil('modificar');
+
+        $audio = \App\Models\ApunteAudio::where('idApunteAudio', $audioId)
+            ->where('idApunte', $apunte->idApunte)
+            ->firstOrFail();
+
+        $resumen = $audio->resumen_ia;
+        if (empty($resumen) || !is_array($resumen)) {
+            return response()->json([
+                'error' => 'El audio seleccionado aún no cuenta con un resumen Cornell procesado.',
+            ], 422);
+        }
+
+        $modo = $request->input('modo', 'anexar');
+        $formato = $request->input('formato', $apunte->tipoApunte ?? 'normal');
+
+        // Formatear ideas_clave
+        $nuevasIdeas = '';
+        if (isset($resumen['ideas_clave'])) {
+            if (is_array($resumen['ideas_clave'])) {
+                $nuevasIdeas = implode("\n", array_map(fn($item) => "- " . ltrim($item, "- *"), $resumen['ideas_clave']));
+            } else {
+                $nuevasIdeas = (string) $resumen['ideas_clave'];
+            }
+        }
+
+        $nuevasNotas = (string) ($resumen['notas'] ?? '');
+        $nuevoResumen = (string) ($resumen['resumen'] ?? '');
+
+        // Formato para Modo Normal
+        $contenidoNormal = "### 💡 Preguntas Clave\n" . trim($nuevasIdeas) . "\n\n"
+            . "---\n\n"
+            . "### 📝 Notas\n" . trim($nuevasNotas) . "\n\n"
+            . "---\n\n"
+            . "### 📌 Resumen\n" . trim($nuevoResumen);
+
+        if ($modo === 'reemplazar') {
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = $contenidoNormal;
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->contenidoApunte = $nuevasNotas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'cornell';
+            }
+
+            if (!empty($resumen['titulo_sugerido']) && (empty($apunte->tituloApunte) || in_array($apunte->tituloApunte, ['Sin título', 'Nuevo Apunte']))) {
+                $apunte->tituloApunte = mb_substr($resumen['titulo_sugerido'], 0, 100);
+            }
+        } else { // anexar
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . $contenidoNormal
+                    : $contenidoNormal;
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
+
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . trim($nuevasNotas)
+                    : trim($nuevasNotas);
+
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'cornell';
+            }
+        }
+
+        $apunte->save();
+
+        return response()->json($apunte->fresh(), 200);
     }
 
     /**
@@ -252,5 +406,34 @@ class ApunteController extends Controller
         $audio->delete();
 
         return redirect()->back()->with('success', 'Audio eliminado correctamente');
+    }
+
+    /**
+     * Actualiza el nombre de un archivo de audio.
+     */
+    public function updateAudioName(Request $request, $audioId)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:100'
+        ]);
+
+        $audio = \App\Models\ApunteAudio::findOrFail($audioId);
+        $apunte = Apunte::findOrFail($audio->idApunte);
+        $perfil = Perfil::findOrFail($apunte->idPerfil);
+        $this->authorize('modificar', $perfil);
+
+        $audio->update([
+            'nombreOriginal' => $request->nombre
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'audio' => $audio,
+                'message' => 'Nombre del audio actualizado correctamente.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Nombre del audio actualizado correctamente');
     }
 }

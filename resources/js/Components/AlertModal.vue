@@ -119,6 +119,7 @@ const maxWidthClass = computed(() => {
 .sm\:max-w-2xl { max-width: 42rem; }
 
 .alert-card {
+  font-family: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: #ffffff;
   border-radius: 16px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -135,7 +136,7 @@ const maxWidthClass = computed(() => {
 
 .alert-icon {
   font-size: 24px;
-  color: #7b413f;
+  color: #612c2d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,7 +166,7 @@ const maxWidthClass = computed(() => {
 }
 
 .btn-primary {
-  background-color: #7b413f;
+  background-color: #612c2d;
   color: #ffffff;
   border: none;
   padding: 10px 20px;
@@ -177,7 +178,7 @@ const maxWidthClass = computed(() => {
 }
 
 .btn-primary:hover {
-  background-color: #612c2d;
+  background-color: #4e2324;
 }
 
 .btn-primary:active {

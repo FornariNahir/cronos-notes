@@ -241,7 +241,7 @@ class ApunteController extends Controller
     }
 
     /**
-     * Transcribe un archivo de audio del apunte usando IA / procesamiento inteligente.
+     * Transcribe un archivo de audio del apunte usando IA / procesamiento inteligente y genera síntesis Cornell.
      */
     public function transcribeAudio(Request $request, $audioId)
     {
@@ -249,11 +249,12 @@ class ApunteController extends Controller
         $apunte = Apunte::findOrFail($audio->idApunte);
         $this->verificarAccesoPerfil('modificar');
 
-        // Si ya fue transcrito previamente, retornar la transcripción existente
-        if (!empty($audio->transcripcion)) {
+        // Si ya fue transcrito previamente y tiene resumen Cornell, retornar la transcripción existente
+        if (!empty($audio->transcripcion) && !empty($audio->resumen_ia) && !$request->boolean('force')) {
             return response()->json([
                 'success' => true,
                 'transcripcion' => $audio->transcripcion,
+                'resumen_cornell' => $audio->resumen_ia,
                 'alreadyTranscribed' => true
             ]);
         }
@@ -263,58 +264,121 @@ class ApunteController extends Controller
             return response()->json(['error' => 'El archivo de audio no se encuentra en el servidor.'], 404);
         }
 
-        $transcripcion = null;
-        $apiKey = config('services.gemini.key') ?? env('GEMINI_API_KEY');
+        $transcriptionService = app(\App\Services\AudioTranscriptionService::class);
 
-        // Intentar transcripción con Gemini si hay API key configurada
-        if (!empty($apiKey) && !str_starts_with($apiKey, 'AQ.')) {
-            try {
-                $mimeType = mime_content_type($filePath) ?: 'audio/webm';
-                $audioData = base64_encode(file_get_contents($filePath));
-                
-                $response = Http::timeout(45)->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={$apiKey}", [
-                    'contents' => [
-                        [
-                            'parts' => [
-                                [
-                                    'inlineData' => [
-                                        'mimeType' => $mimeType,
-                                        'data' => $audioData
-                                    ]
-                                ],
-                                [
-                                    'text' => 'Transcribe de forma fiel y completa este audio en español. Agrega signos de puntuación y estructura párrafos claros. Devolvé únicamente el texto transcrito sin introducciones.'
-                                ]
-                            ]
-                        ]
-                    ]
-                ]);
+        try {
+            $result = $transcriptionService->processAudio($audio);
 
-                if ($response->successful()) {
-                    $json = $response->json();
-                    $transcripcion = $json['candidates'][0]['content']['parts'][0]['text'] ?? null;
-                }
-            } catch (\Exception $e) {
-                Log::warning("Error en transcripción Gemini: " . $e->getMessage());
+            return response()->json([
+                'success' => true,
+                'transcripcion' => $result['transcripcion'],
+                'resumen_cornell' => $result['resumen_cornell'],
+                'motor_stt' => $result['motor_stt'] ?? 'gemini_multimodal',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Error al procesar transcripción de audio ID {$audioId}: " . $e->getMessage());
+
+            return response()->json([
+                'error' => 'No se pudo realizar la transcripción del audio.',
+                'detalle' => $e->getMessage(),
+            ], 503);
+        }
+    }
+
+    /**
+     * Aplica el resumen Cornell generado a las columnas del apunte (reemplazar o anexar).
+     */
+    public function aplicarCornell(Request $request, $id, $audioId)
+    {
+        $request->validate([
+            'modo' => 'required|in:reemplazar,anexar',
+            'formato' => 'nullable|in:normal,cornell',
+        ]);
+
+        $apunte = Apunte::findOrFail($id);
+        $this->verificarAccesoPerfil('modificar');
+
+        $audio = \App\Models\ApunteAudio::where('idApunteAudio', $audioId)
+            ->where('idApunte', $apunte->idApunte)
+            ->firstOrFail();
+
+        $resumen = $audio->resumen_ia;
+        if (empty($resumen) || !is_array($resumen)) {
+            return response()->json([
+                'error' => 'El audio seleccionado aún no cuenta con un resumen Cornell procesado.',
+            ], 422);
+        }
+
+        $modo = $request->input('modo', 'anexar');
+        $formato = $request->input('formato', $apunte->tipoApunte ?? 'normal');
+
+        // Formatear ideas_clave
+        $nuevasIdeas = '';
+        if (isset($resumen['ideas_clave'])) {
+            if (is_array($resumen['ideas_clave'])) {
+                $nuevasIdeas = implode("\n", array_map(fn($item) => "- " . ltrim($item, "- *"), $resumen['ideas_clave']));
+            } else {
+                $nuevasIdeas = (string) $resumen['ideas_clave'];
             }
         }
 
-        // Si no se pudo transcribir con API externa, generar síntesis de clase basada en el título y contexto
-        if (empty($transcripcion)) {
-            $nombre = $audio->nombreOriginal ?: 'Grabación de voz';
-            $fecha = $audio->fechaCreacion ? $audio->fechaCreacion->format('d/m/Y H:i') : now()->format('d/m/Y H:i');
-            $titulo = $apunte->tituloApunte ?: 'Apunte de estudio';
-            $transcripcion = "Transcripción de {$nombre} ({$fecha}):\n\nConceptos centrales abordados sobre \"{$titulo}\". Durante la exposición se destacaron los fundamentos teóricos principales, la correlación de ideas clave y los ejemplos prácticos correspondientes.";
+        $nuevasNotas = (string) ($resumen['notas'] ?? '');
+        $nuevoResumen = (string) ($resumen['resumen'] ?? '');
+
+        // Formato para Modo Normal
+        $contenidoNormal = "### 💡 Preguntas Clave\n" . trim($nuevasIdeas) . "\n\n"
+            . "---\n\n"
+            . "### 📝 Notas\n" . trim($nuevasNotas) . "\n\n"
+            . "---\n\n"
+            . "### 📌 Resumen\n" . trim($nuevoResumen);
+
+        if ($modo === 'reemplazar') {
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = $contenidoNormal;
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = $nuevasIdeas;
+                $apunte->contenidoApunte = $nuevasNotas;
+                $apunte->resumenApunte = $nuevoResumen;
+                $apunte->tipoApunte = 'cornell';
+            }
+
+            if (!empty($resumen['titulo_sugerido']) && (empty($apunte->tituloApunte) || in_array($apunte->tituloApunte, ['Sin título', 'Nuevo Apunte']))) {
+                $apunte->tituloApunte = mb_substr($resumen['titulo_sugerido'], 0, 100);
+            }
+        } else { // anexar
+            if ($formato === 'normal') {
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . $contenidoNormal
+                    : $contenidoNormal;
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'normal';
+            } else {
+                $apunte->ideasApunte = !empty(trim($apunte->ideasApunte ?? ''))
+                    ? trim($apunte->ideasApunte) . "\n\n" . trim($nuevasIdeas)
+                    : trim($nuevasIdeas);
+
+                $apunte->contenidoApunte = !empty(trim($apunte->contenidoApunte ?? ''))
+                    ? trim($apunte->contenidoApunte) . "\n\n---\n\n" . trim($nuevasNotas)
+                    : trim($nuevasNotas);
+
+                $apunte->resumenApunte = !empty(trim($apunte->resumenApunte ?? ''))
+                    ? trim($apunte->resumenApunte) . "\n\n" . trim($nuevoResumen)
+                    : trim($nuevoResumen);
+                $apunte->tipoApunte = 'cornell';
+            }
         }
 
-        $audio->update([
-            'transcripcion' => $transcripcion
-        ]);
+        $apunte->save();
 
-        return response()->json([
-            'success' => true,
-            'transcripcion' => $transcripcion
-        ]);
+        return response()->json($apunte->fresh(), 200);
     }
 
     /**

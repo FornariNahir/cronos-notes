@@ -15,11 +15,15 @@ class ApunteAudio extends Model
         'rutaAudio',
         'nombreOriginal',
         'transcripcion',
+        'resumen_ia',
+        'estado',
+        'error_mensaje',
         'fechaCreacion'
     ];
 
     protected $casts = [
-        'fechaCreacion' => 'datetime'
+        'fechaCreacion' => 'datetime',
+        'resumen_ia' => 'array',
     ];
 
     public function apunte()

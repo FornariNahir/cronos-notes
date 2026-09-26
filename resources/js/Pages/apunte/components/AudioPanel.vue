@@ -538,6 +538,7 @@ const getAudioTitle = (audio) => {
 // --- Transcripción de Audio ---
 const transcribingId = ref(null)
 const localTranscriptions = ref({})
+const localResumenes = ref({})
 
 const hasTranscription = (audio) => {
   return !!(audio.transcripcion || localTranscriptions.value[audio.idApunteAudio])
@@ -547,12 +548,17 @@ const getTranscriptionText = (audio) => {
   return audio.transcripcion || localTranscriptions.value[audio.idApunteAudio] || ''
 }
 
+const getCornellSummary = (audio) => {
+  return audio.resumen_ia || localResumenes.value[audio.idApunteAudio] || null
+}
+
 const handleTranscribeClick = async (audio) => {
   // Si ya está transcrito, abrimos el modal o emitimos para ver/insertar
   if (hasTranscription(audio)) {
     emit('show-transcription', {
       audio,
-      text: getTranscriptionText(audio)
+      text: getTranscriptionText(audio),
+      resumen_cornell: getCornellSummary(audio)
     })
     return
   }
@@ -565,20 +571,24 @@ const handleTranscribeClick = async (audio) => {
     const response = await axios.post(route('apuntes.audio.transcribe', audio.idApunteAudio))
     if (response.data && response.data.transcripcion) {
       localTranscriptions.value[audio.idApunteAudio] = response.data.transcripcion
+      localResumenes.value[audio.idApunteAudio] = response.data.resumen_cornell || null
+      audio.transcripcion = response.data.transcripcion
+      audio.resumen_ia = response.data.resumen_cornell || null
+
       emit('transcribed', {
         audio,
-        text: response.data.transcripcion
+        text: response.data.transcripcion,
+        resumen_cornell: response.data.resumen_cornell
       })
+    } else {
+      emit('error', 'La transcripción no devolvió contenido de texto.')
     }
   } catch (err) {
     console.error('Error al transcribir:', err)
-    // Fallback con simulación si hay fallo de red para garantizar la interacción del mockup
-    const fallbackText = `Transcripción de ${getAudioTitle(audio)}:\nRegistro de audio transcrito y procesado para estudio.`
-    localTranscriptions.value[audio.idApunteAudio] = fallbackText
-    emit('transcribed', {
-      audio,
-      text: fallbackText
-    })
+    const errorMsg = err.response?.data?.detalle 
+      || err.response?.data?.error 
+      || 'No se pudo realizar la transcripción del audio. Por favor verificá tu conexión o configuración de IA.'
+    emit('error', errorMsg)
   } finally {
     transcribingId.value = null
   }

@@ -143,20 +143,95 @@
       </div>
     </Teleport>
 
-    <!-- Modal de Transcripción de Audio -->
+    <!-- Modal de Transcripción de Audio y Resumen Cornell -->
     <Teleport to="body">
       <div v-if="showTranscriptionModal" class="zen-custom-modal-overlay" @click.self="showTranscriptionModal = false">
-        <div class="zen-custom-modal" style="max-width: 540px; width: 92%;">
-          <div class="zen-modal-icon" style="background: rgba(97, 44, 45, 0.1); color: #612c2d;">
-            <i class="ti ti-file-text" style="font-size: 26px;"></i>
+        <div class="zen-custom-modal" style="max-width: 620px; width: 94%; max-height: 90vh; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div class="zen-modal-icon" style="background: rgba(97, 44, 45, 0.1); color: #612c2d; margin-bottom: 0;">
+                <i class="ti ti-sparkles" style="font-size: 24px;" v-if="activeCornellSummary"></i>
+                <i class="ti ti-file-text" style="font-size: 24px;" v-else></i>
+              </div>
+              <div style="text-align: left;">
+                <h3 class="zen-modal-title" style="margin: 0; font-size: 1.15rem; color: #612c2d;">
+                  {{ activeCornellSummary ? 'Resumen Inteligente Cornell' : 'Transcripción de Audio' }}
+                </h3>
+                <span style="font-size: 12px; color: #8c4e50; font-weight: 600;">
+                  {{ activeTranscriptionAudio?.nombreOriginal || ('AUD_' + activeTranscriptionAudio?.idApunteAudio) }}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              @click="showTranscriptionModal = false"
+              style="background: transparent; border: none; font-size: 18px; cursor: pointer; color: #8c4e50;"
+            >
+              <i class="ti ti-x"></i>
+            </button>
           </div>
-          <h3 class="zen-modal-title" style="color: #612c2d;">Transcripción de Audio</h3>
-          <p class="zen-modal-text" style="font-size: 13px; color: #612c2d; margin-bottom: 12px; font-weight: 600;">
-            {{ activeTranscriptionAudio?.nombreOriginal || ('AUD_' + activeTranscriptionAudio?.idApunteAudio) }}
-          </p>
-          <div style="background: #FAF8F7; border: 1px solid rgba(97, 44, 45, 0.2); border-radius: 8px; padding: 14px; max-height: 220px; overflow-y: auto; text-align: left; font-size: 13px; color: #333; line-height: 1.6; white-space: pre-wrap; font-family: Figtree, sans-serif;">
+
+          <!-- Pestañas si hay Resumen Cornell disponible -->
+          <div v-if="activeCornellSummary" style="display: flex; gap: 8px; border-bottom: 1px solid rgba(97, 44, 45, 0.15); margin-bottom: 12px; padding-bottom: 6px;">
+            <button
+              type="button"
+              @click="activeModalTab = 'cornell'"
+              :style="[
+                'border: none; background: transparent; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.15s;',
+                activeModalTab === 'cornell' ? 'background: #612c2d; color: #ffffff;' : 'color: #612c2d; background: rgba(97,44,45,0.06);'
+              ]"
+            >
+              <i class="ti ti-layout-columns" style="margin-right: 4px;"></i>
+              Método Cornell (IA)
+            </button>
+            <button
+              type="button"
+              @click="activeModalTab = 'transcripcion'"
+              :style="[
+                'border: none; background: transparent; padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; transition: all 0.15s;',
+                activeModalTab === 'transcripcion' ? 'background: #612c2d; color: #ffffff;' : 'color: #612c2d; background: rgba(97,44,45,0.06);'
+              ]"
+            >
+              <i class="ti ti-file-text" style="margin-right: 4px;"></i>
+              Transcripción completa
+            </button>
+          </div>
+
+          <!-- Contenido: Tab Resumen Cornell -->
+          <div v-if="activeCornellSummary && activeModalTab === 'cornell'" style="overflow-y: auto; text-align: left; max-height: 48vh; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
+            <div v-if="activeCornellSummary.titulo_sugerido" style="background: #F7EDE9; border: 1px solid rgba(97, 44, 45, 0.2); border-radius: 8px; padding: 10px 14px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #612c2d; display: block; margin-bottom: 2px;">Título Sugerido</span>
+              <span style="font-size: 14px; font-weight: 600; color: #2d1314;">{{ activeCornellSummary.titulo_sugerido }}</span>
+            </div>
+
+            <!-- Palabras Clave / Preguntas -->
+            <div style="background: #FAF8F7; border: 1px solid rgba(97, 44, 45, 0.15); border-radius: 8px; padding: 12px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #612c2d; display: block; margin-bottom: 6px;">💡 Palabras Clave y Preguntas</span>
+              <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #444; line-height: 1.5;">
+                <li v-for="(idea, idx) in (Array.isArray(activeCornellSummary.ideas_clave) ? activeCornellSummary.ideas_clave : [activeCornellSummary.ideas_clave])" :key="idx" v-html="formatToEditorHtml(idea)">
+                </li>
+              </ul>
+            </div>
+
+            <!-- Notas Principales -->
+            <div style="background: #FAF8F7; border: 1px solid rgba(97, 44, 45, 0.15); border-radius: 8px; padding: 12px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #612c2d; display: block; margin-bottom: 6px;">📝 Notas de Clase</span>
+              <div style="font-size: 13px; color: #333; line-height: 1.6;" v-html="formatToEditorHtml(activeCornellSummary.notas)"></div>
+            </div>
+
+            <!-- Resumen -->
+            <div style="background: #FAF8F7; border: 1px solid rgba(97, 44, 45, 0.15); border-radius: 8px; padding: 12px;">
+              <span style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #612c2d; display: block; margin-bottom: 4px;">📌 Resumen Integrador</span>
+              <div style="font-size: 13px; color: #444; line-height: 1.5;" v-html="formatToEditorHtml(activeCornellSummary.resumen)"></div>
+            </div>
+          </div>
+
+          <!-- Contenido: Tab Transcripción Completa -->
+          <div v-else style="background: #FAF8F7; border: 1px solid rgba(97, 44, 45, 0.2); border-radius: 8px; padding: 14px; max-height: 48vh; overflow-y: auto; text-align: left; font-size: 13px; color: #333; line-height: 1.6; white-space: pre-wrap; font-family: Figtree, sans-serif;">
             {{ activeTranscriptionText }}
           </div>
+
+          <!-- Acciones del Modal -->
           <div class="zen-modal-actions" style="margin-top: 18px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;">
             <button
               type="button"
@@ -167,16 +242,32 @@
               <i class="ti ti-copy" style="font-size: 16px;"></i>
               {{ copiedTranscription ? '¡Copiado!' : 'Copiar texto' }}
             </button>
+
+            <!-- Si no está en Modo Cornell, botón para activarlo y poblar las 3 columnas -->
+            <button
+              v-if="perfilActivo?.permisoCompartido !== 'Lector' && activeCornellSummary && !cornellMode"
+              type="button"
+              class="zen-btn-primary"
+              @click="insertCornellIntoNote(true)"
+              style="display: flex; align-items: center; gap: 6px; background-color: #3B6D11 !important;"
+              title="Convierte la nota a Método Cornell y completa las 3 columnas automáticamente"
+            >
+              <i class="ti ti-layout-columns" style="font-size: 16px;"></i>
+              Aplicar en columnas Cornell
+            </button>
+
+            <!-- Insertar en el apunte actual -->
             <button
               v-if="perfilActivo?.permisoCompartido !== 'Lector'"
               type="button"
               class="zen-btn-primary"
-              @click="insertTranscriptionIntoNote"
+              @click="insertCornellIntoNote(false)"
               style="display: flex; align-items: center; gap: 6px;"
             >
               <i class="ti ti-file-plus" style="font-size: 16px;"></i>
-              Insertar en el apunte
+              {{ cornellMode ? 'Insertar en columnas Cornell' : 'Insertar en el apunte' }}
             </button>
+
             <button
               type="button"
               class="zen-btn-secondary"
@@ -332,28 +423,38 @@ const onUploadFile = (file) => {
   })
 }
 
-// Estado y funciones del Modal de Transcripción
+// Estado y funciones del Modal de Transcripción y Resumen Cornell
 const showTranscriptionModal = ref(false)
 const activeTranscriptionAudio = ref(null)
 const activeTranscriptionText = ref('')
+const activeCornellSummary = ref(null)
+const activeModalTab = ref('cornell')
 const copiedTranscription = ref(false)
 
-const onAudioTranscribed = ({ audio, text }) => {
+const onAudioTranscribed = ({ audio, text, resumen_cornell }) => {
   activeTranscriptionAudio.value = audio
   activeTranscriptionText.value = text
+  activeCornellSummary.value = resumen_cornell || audio.resumen_ia || null
+  activeModalTab.value = activeCornellSummary.value ? 'cornell' : 'transcripcion'
   showTranscriptionModal.value = true
 }
 
-const onShowTranscription = ({ audio, text }) => {
+const onShowTranscription = ({ audio, text, resumen_cornell }) => {
   activeTranscriptionAudio.value = audio
   activeTranscriptionText.value = text
+  activeCornellSummary.value = resumen_cornell || audio.resumen_ia || null
+  activeModalTab.value = activeCornellSummary.value ? 'cornell' : 'transcripcion'
   showTranscriptionModal.value = true
 }
 
 const copyTranscriptionToClipboard = async () => {
-  if (!activeTranscriptionText.value) return
+  const textToCopy = activeModalTab.value === 'cornell' && activeCornellSummary.value
+    ? `Título: ${activeCornellSummary.value.titulo_sugerido || ''}\n\nIdeas Clave:\n${Array.isArray(activeCornellSummary.value.ideas_clave) ? activeCornellSummary.value.ideas_clave.map(i => '- ' + i).join('\n') : activeCornellSummary.value.ideas_clave}\n\nNotas:\n${activeCornellSummary.value.notas || ''}\n\nResumen:\n${activeCornellSummary.value.resumen || ''}`
+    : activeTranscriptionText.value
+
+  if (!textToCopy) return
   try {
-    await navigator.clipboard.writeText(activeTranscriptionText.value)
+    await navigator.clipboard.writeText(textToCopy)
     copiedTranscription.value = true
     setTimeout(() => {
       copiedTranscription.value = false
@@ -363,7 +464,100 @@ const copyTranscriptionToClipboard = async () => {
   }
 }
 
-const insertTranscriptionIntoNote = () => {
+// Formateador estándar: Títulos en Negrita, Ítems con viñetas en Cursiva y párrafos limpios
+const formatToEditorHtml = (rawText) => {
+  if (!rawText) return ''
+
+  let text = String(rawText)
+
+  // 1. Convertir encabezados Markdown (# Titulo, ## Titulo, ### Titulo) a Títulos en Negrita
+  text = text.replace(/^###+\s*(.*?)$/gim, '<p><strong>$1</strong></p>')
+  text = text.replace(/^##\s*(.*?)$/gim, '<p><strong style="font-size: 1.1em;">$1</strong></p>')
+  text = text.replace(/^#\s*(.*?)$/gim, '<p><strong style="font-size: 1.2em;">$1</strong></p>')
+
+  // 2. Negrita (**texto** o __texto__)
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  text = text.replace(/__(.*?)__/g, '<strong>$1</strong>')
+
+  // 3. Viñetas Markdown (* o - o •) con texto en cursiva según el estándar solicitado
+  text = text.replace(/^\s*[-*•]\s+(.*?)$/gim, (match, itemContent) => {
+    const trimmed = itemContent.trim()
+    if (trimmed.startsWith('<em>') || trimmed.startsWith('*') || trimmed.startsWith('_')) {
+      return `<p style="margin-left: 16px; margin-bottom: 4px;">• ${trimmed}</p>`
+    }
+    // Si contiene dos puntos (ej: "Propósito principal: Simular..."), poner la etiqueta en negrita y la explicación en cursiva
+    if (trimmed.includes(':')) {
+      const colonIdx = trimmed.indexOf(':')
+      const label = trimmed.slice(0, colonIdx).replace(/<[^>]+>/g, '').trim()
+      const rest = trimmed.slice(colonIdx + 1).trim()
+      return `<p style="margin-left: 16px; margin-bottom: 4px;">• <strong>${label}</strong>: <em>${rest}</em></p>`
+    }
+    return `<p style="margin-left: 16px; margin-bottom: 4px;">• <em>${trimmed}</em></p>`
+  })
+
+  // 4. Cursiva restante (*texto* o _texto_)
+  text = text.replace(/(?<!\*)\*([^\*\n]+)\*(?!\*)/g, '<em>$1</em>')
+  text = text.replace(/(?<!_)_([^_\n]+)_(?!_)/g, '<em>$1</em>')
+
+  // 5. Saltos de línea para párrafos limpios
+  text = text.replace(/\n\n+/g, '<br><br>')
+  text = text.replace(/\n/g, '<br>')
+
+  return text
+}
+
+const insertCornellIntoNote = (switchToCornell = false) => {
+  const summary = activeCornellSummary.value
+
+  // Si no hay resumen estructurado de Cornell, insertamos la transcripción pura
+  if (!summary) {
+    insertRawTranscriptionIntoNote()
+    return
+  }
+
+  if (switchToCornell) {
+    cornellMode.value = true
+  }
+
+  // Si el título es genérico o está vacío, asignar el sugerido por IA
+  if (summary.titulo_sugerido && (!form.tituloApunte || form.tituloApunte === 'Sin título' || form.tituloApunte === 'Nuevo Apunte')) {
+    form.tituloApunte = summary.titulo_sugerido
+  }
+
+  // Ideas / Palabras clave con viñeta y negrita destacada
+  const ideasList = Array.isArray(summary.ideas_clave)
+    ? summary.ideas_clave.map(i => `<p style="margin-left: 14px; margin-bottom: 6px;">• <strong>${String(i).replace(/^[•*-]\s*/, '').trim()}</strong></p>`).join('')
+    : `<p style="margin-left: 14px; margin-bottom: 6px;">• ${formatToEditorHtml(summary.ideas_clave)}</p>`
+
+  const notasFormatted = formatToEditorHtml(summary.notas)
+  const resumenFormatted = formatToEditorHtml(summary.resumen)
+
+  if (cornellMode.value || switchToCornell) {
+    // Distribuir en las tres columnas del Método Cornell
+    form.ideasApunte = (form.ideasApunte ? form.ideasApunte + '<br><br>' : '') + ideasList
+    form.contenidoApunte = (form.contenidoApunte ? form.contenidoApunte + '<br><br>' : '') + notasFormatted
+    form.resumenApunte = (form.resumenApunte ? form.resumenApunte + '<br><br>' : '') + resumenFormatted
+    showCustomAlert('Éxito', 'Estructura Cornell insertada con éxito en Palabras clave, Notas y Resumen.')
+  } else {
+    // Modo Normal: insertar bloques secuenciales organizados
+    const block = `
+      <p><strong style="font-size: 1.15em; color: #612c2d;">💡 Preguntas y Conceptos Clave</strong></p>
+      ${ideasList}
+      <hr style="border: 0; border-top: 1px solid rgba(97,44,45,0.2); margin: 16px 0;">
+      <p><strong style="font-size: 1.15em; color: #612c2d;">📝 Notas</strong></p>
+      ${notasFormatted}
+      <hr style="border: 0; border-top: 1px solid rgba(97,44,45,0.2); margin: 16px 0;">
+      <p><strong style="font-size: 1.15em; color: #612c2d;">📌 Resumen</strong></p>
+      ${resumenFormatted}
+    `
+    form.contenidoApunte = (form.contenidoApunte ? form.contenidoApunte + '<br><br>' : '') + block
+    showCustomAlert('Éxito', 'Resumen estructurado insertado en el apunte.')
+  }
+
+  showTranscriptionModal.value = false
+}
+
+const insertRawTranscriptionIntoNote = () => {
   if (!activeTranscriptionText.value) return
   const formatted = activeTranscriptionText.value.replace(/\n/g, '<br>')
   const block = `<p><strong>[Transcripción]:</strong> ${formatted}</p>`

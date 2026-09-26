@@ -147,6 +147,7 @@ Route::middleware('auth.custom')->group(function () {
     Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
     Route::post('/apuntes/{id}/audio', [ApunteController::class, 'uploadAudio'])->name('apuntes.audio.upload');
     Route::post('/apuntes/audio/{audioId}/transcribir', [ApunteController::class, 'transcribeAudio'])->name('apuntes.audio.transcribe');
+    Route::post('/apuntes/{id}/audio/{audioId}/aplicar-cornell', [ApunteController::class, 'aplicarCornell'])->name('apuntes.audio.aplicar-cornell');
     Route::put('/apuntes/audio/{audioId}/renombrar', [ApunteController::class, 'updateAudioName'])->name('apuntes.audio.rename');
     Route::delete('/apuntes/audio/{audioId}', [ApunteController::class, 'destroyAudio'])->name('apuntes.audio.destroy');
 

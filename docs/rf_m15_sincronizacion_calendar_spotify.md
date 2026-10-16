@@ -1,79 +1,186 @@
 # [RF-M15] Sincronización Completa con Google Calendar y Spotify
 
 ## 1. Descripción y Objetivo
-Este requerimiento profundiza y completa las capacidades de integración externa iniciadas en versiones previas, permitiendo una experiencia de productividad unificada dentro de Cronos Notes:
-- **Sincronización Bidireccional con Google Calendar**: Permite exportar automáticamente las sesiones Pomodoro planificadas y tareas con fecha límite hacia el calendario de Google del usuario, así como importar eventos de estudio existentes para visualizarlos en el calendario de Cronos Notes y prevenir superposiciones horarias.
-- **Reproductor Integrado de Spotify (Web Playback SDK & Web API)**: Permite a los usuarios con cuenta de Spotify conectar su biblioteca musical, explorar listas de reproducción sugeridas para estudio y concentración (Lofi Beats, Chillhop, Deep Focus, Ruido Marrón) y controlar la reproducción (Play, Pausa, Siguiente, Anterior, Volumen) directamente desde el widget multimedia del Modo Zen sin abandonar la aplicación.
-- **Objetivo**: Evitar el cambio constante de pestañas o aplicaciones entre el temporizador, el calendario personal y el reproductor musical, centralizando todo el entorno de trabajo en una sola plataforma.
+
+Este requerimiento consolida la interoperabilidad del ecosistema Cronos Notes con plataformas líderes de productividad y multimedia (Google Calendar y Spotify), eliminando la fricción y el constante cambio de contexto (*context switching*) que experimentan los estudiantes entre su temporizador Pomodoro, su agenda personal y la reproducción de música ambiental.
+
+El requerimiento comprende dos ejes principales de integración:
+
+### 1.1. Sincronización con Google Calendar
+- **Exportación de Compromisos (Cronos ➔ Google Calendar):** Permite exportar automáticamente aquellas tareas que dispongan de fecha y hora límite (`fechaLimite`), así como bloques de sesiones de estudio Pomodoro programadas, insertándolas como eventos en el calendario principal de Google del usuario bajo el tag identificatorio `[Cronos]`.
+- **Proyección de Disponibilidad y Recordatorios (Google Calendar ➔ Cronos):** Recupera los eventos programados en Google Calendar y los despliega en la cuadrícula mensual de [`Calendario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/Calendario.vue) bajo la categoría de **Recordatorios / Eventos de Agenda**.
+- **Delimitación de Dominio:** Los eventos importados desde Google Calendar **no se convierten en tareas nativas de Cronos Notes**. Esto previene la alteración inadvertida de métricas de rendimiento, porcentajes de completitud de perfiles y el sistema de rachas diarias. El usuario visualiza sus compromisos para prevenir solapamientos y cuenta con la opción manual de *"Convertir en Tarea de Cronos"* si decide dedicar un bloque Pomodoro específico a dicho evento.
+
+### 1.2. Integración Multimedia con Spotify (Web API & Web Playback SDK)
+- **Reproductor Embebido en Modo Zen:** Permite a los usuarios con cuenta de Spotify conectar su biblioteca musical y acceder de forma inmediata a listas de reproducción sugeridas y optimizadas para concentración y estudio profundo (*Lofi Focus Beats, Chillhop, Deep Focus, Ruido Blanco / Ruido Marrón*).
+- **Control de Reproducción Nativo en [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue):** Control total de streaming (Play, Pausa, Siguiente pista, Pista anterior y Control de volumen) y visualización en tiempo real de carátula de álbum, título de la canción y artista, sin abandonar la pantalla de estudio ni requerir la aplicación de escritorio de Spotify abierta en paralelo.
+
+### 1.3. Objetivo General
+Centralizar en un entorno unificado de alta concentración la planificación temporal y el ambiente sonoro del estudiante, mitigando la sobrecarga cognitiva y la dispersión provocada por la alternancia frecuente de ventanas y aplicaciones externas.
 
 ---
 
-## 2. Tecnologías, Herramientas y Librerías
+## 2. Modelo de Dominio: Tareas vs. Recordatorios de Calendario
 
-- **Laravel Socialite & Google API Client**: Flujo OAuth 2.0 con alcance `https://www.googleapis.com/auth/calendar.events` para creación, edición y consulta de eventos.
-- **Spotify Web API & Spotify Web Playback SDK**: Protocolo OAuth 2.0 (`user-read-playback-state`, `user-modify-playback-state`, `streaming`) y librería JavaScript SDK para reproducción de audio directa en el navegador.
-- **Inertia.js & Vue 3**: Componentes de reproducción musical en Sesión Zen y sincronización rápida en Calendario.
-- **Tabla `IntegracionExterna`**: Almacenamiento seguro y refresco automático de `access_token` y `refresh_token` para Google y Spotify.
+Para mantener la integridad relacional de la base de datos y la validez pedagógica de las estadísticas, se establece una clara distinción entre las entidades del sistema:
+
+| Criterio | Tarea Nativa (Cronos Notes) | Recordatorio / Evento de Google Calendar |
+| :--- | :--- | :--- |
+| **Entidad / Persistencia** | Modelo `Tarea` en tabla `tarea` (MySQL) | Consumo dinámico / caché vía Google Calendar API |
+| **Vinculación a Perfil** | Obligatoria (`idPerfil`) | Ninguna (agenda personal global del usuario) |
+| **Métricas de Rendimiento** | Computa para tareas pendientes, completadas y rachas | **No computa** en estadísticas ni rachas |
+| **Representación Visual** | Tarjeta con color de prioridad (Alta: Rojo, Media: Amarillo, Baja: Azul) | Tarjeta con isotipo de Google Calendar, borde diferenciado y horario (`14:00 - 15:30`) |
+| **Interacción / Modal** | Permite marcar como completada, editar detalles o iniciar Pomodoro | Permite ver detalles del evento, link a Google Calendar y botón *"Convertir en Tarea de Cronos"* |
 
 ---
 
-## 3. Archivos Involucrados en el Requerimiento
+## 3. Tecnologías, Herramientas y Librerías
+
+- **Laravel Socialite & Google API Client:** Implementación de flujo OAuth 2.0 con alcance incremental (`https://www.googleapis.com/auth/calendar.events` y `calendar.events.readonly`) para lectura y escritura de eventos.
+- **Spotify Web API & Spotify Web Playback SDK:** Protocolo OAuth 2.0 (`streaming`, `user-read-playback-state`, `user-modify-playback-state`, `playlist-read-private`) junto al SDK cliente en JavaScript (`https://sdk.scdn.co/spotify-player.js`) para streaming de audio WebSockets en el navegador.
+- **Tabla `IntegracionExterna` (Eloquent ORM):** Almacenamiento seguro, encriptado y persistente de tokens (`tokenAcceso`, `refreshToken`, `tokenExpiracion`) para Google y Spotify asociados al `idUsuario`.
+- **Inertia.js & Vue 3:** Componentes reactivos en el frontend para el reproductor multimedia y la renderización híbrida de la cuadrícula mensual en el calendario.
+
+---
+
+## 4. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [SpotifyPlayer.vue](/resources/js/Pages/pomodoro/components/SpotifyPlayer.vue) - Componente del reproductor embebido de Spotify con carátula de álbum, barra de reproducción y controles interactivos.
-- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Integra el reproductor de Spotify junto al mezclador de sonidos ambientales.
-- [Calendario.vue](/resources/js/Pages/Calendario.vue) - Vista del calendario con botón "Sincronizar con Google Calendar" e indicadores de eventos externos.
-- [PerfilUsuario.vue](/resources/js/Pages/PerfilUsuario.vue) - Panel de configuración de cuentas vinculadas (Google y Spotify).
+- [`Calendario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/Calendario.vue) - Cuadrícula del calendario mensual que renderiza reactivamente las tareas de Cronos y los eventos externos como recordatorios.
+- [`SpotifyPlayer.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/components/SpotifyPlayer.vue) - Widget de control musical interactivo con carátula, timeline, selector de playlists y volumen.
+- [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue) - Integra el widget de Spotify en el entorno inmersivo de estudio.
+- [`PerfilUsuario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/PerfilUsuario.vue) - Panel de gestión de cuentas vinculadas (conectar / desconectar Google Calendar y Spotify).
 
 ### Backend & Controladores (Laravel)
-- [GoogleCalendarController.php](/app/Http/Controllers/GoogleCalendarController.php) - Controlador para sincronizar tareas y eventos con Google Calendar.
-- [SpotifyController.php](/app/Http/Controllers/SpotifyController.php) - Controlador para gestionar autenticación OAuth de Spotify, refresco de tokens y peticiones a la API de Spotify.
-- [GoogleCalendarService.php](/app/Services/GoogleCalendarService.php) - Servicio para crear y listar eventos de Google Calendar.
-- [SpotifyService.php](/app/Services/SpotifyService.php) - Servicio para interactuar con la Web API de Spotify (playlists recomendadas, estado de reproducción).
+- `GoogleCalendarController.php` (`/app/Http/Controllers/`) - Endpoints para sincronización manual, lectura de eventos del mes y creación de eventos desde tareas.
+- `SpotifyController.php` (`/app/Http/Controllers/`) - Endpoints para gestionar autenticación OAuth con Spotify, refresco de tokens y obtención de playlists recomendadas de estudio.
+- `GoogleCalendarService.php` (`/app/Services/`) - Lógica de conexión con Google API (manejo de credenciales, peticiones REST, mapeo de eventos).
+- `SpotifyService.php` (`/app/Services/`) - Lógica de comunicación con Spotify Web API y comandos de reproducción.
 
-### Modelos y Datos (Eloquent ORM)
-- [IntegracionExterna.php](/app/Models/IntegracionExterna.php) - Persistencia de credenciales, tokens y expiraciones de cada servicio conectado.
-- [Tarea.php](/app/Models/Tarea.php) - Atributo `google_event_id` para vincular tareas con eventos del calendario.
+### Modelos y Migraciones (Eloquent ORM)
+- [`IntegracionExterna.php`](file:///C:/Users/della/cronos-notes/app/Models/IntegracionExterna.php) - Almacena las credenciales externas por usuario y plataforma (`GoogleCalendar`, `Spotify`).
+- [`Tarea.php`](file:///C:/Users/della/cronos-notes/app/Models/Tarea.php) - Incorpora el campo `google_event_id` para trazabilidad de eventos sincronizados.
 
 ---
 
-## 4. Flujo de Datos y Control
+## 5. Flujo de Datos y Control
 
-### Diagrama de Flujo del Requerimiento
+### 5.1. Diagrama de Secuencia del Requerimiento
+
 ```mermaid
-graph TD
-    A[Usuario: Conecta Spotify / Google Calendar] --> B[Backend: Autorización OAuth 2.0 y guardado de Refresh Token]
-    B --> C{Acción del Usuario}
-    C -->|Reproducir Música| D[Frontend: Spotify Web Playback SDK inicializa sesión de streaming]
-    D --> E[Frontend: Carga playlists de concentración y envía comandos Play/Pause]
-    C -->|Sincronizar Tarea/Sesión| F[Backend: GoogleCalendarService envía evento a Google Calendar API]
-    F --> G[Google Calendar: Registra bloque de estudio con recordatorio]
-    G --> H[Frontend: Muestra confirmación y sincroniza vista de Calendario]
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant V as Frontend (Vue 3 / Inertia)
+    participant C as Laravel Controllers
+    participant S as External Services (Google / Spotify)
+    participant DB as Base de Datos (MySQL)
+    participant API as APIs Externas (Google / Spotify)
+
+    %% Autenticación / Vinculación OAuth
+    rect rgb(240, 248, 255)
+    note right of U: 1. Handshake OAuth 2.0 y Persistencia
+    U->>V: Clic en "Vincular Google Calendar" o "Vincular Spotify"
+    V->>C: Redirección a /auth/{provider}/redirect
+    C->>API: Solicitud de autorización con scopes requeridos
+    API-->>U: Pantalla de consentimiento del proveedor
+    U->>API: Otorga permisos
+    API-->>C: Callback con authorization code (/auth/{provider}/callback)
+    C->>API: Intercambio de code por access_token y refresh_token
+    C->>DB: updateOrCreate en 'IntegracionExterna' (tokens encriptados)
+    C-->>V: Redirección con estado de vinculación exitoso
+    end
+
+    %% Google Calendar Sync (Pull)
+    rect rgb(255, 250, 240)
+    note right of U: 2. Sincronización y Visualización de Calendario (Pull)
+    U->>V: Ingresa a la sección "Calendario"
+    V->>C: GET /calendario (rango del mes visualizado)
+    C->>DB: Consulta Tareas de Cronos del perfil activo
+    C->>S: GoogleCalendarService::obtenerEventosMes(user, fechaInicio, fechaFin)
+    S->>API: GET /calendars/primary/events (Bearer Token)
+    API-->>S: Lista de eventos de Google Calendar
+    S-->>C: Colección normalizada de Recordatorios
+    C-->>V: Inertia props: { tareasCargadas, eventosGoogle }
+    V->>V: Renderiza grilla combinando Tareas y Recordatorios externos
+    end
+
+    %% Exportación de Tarea (Push)
+    rect rgb(255, 245, 238)
+    note right of U: 3. Exportación de Tarea a Google Calendar (Push)
+    U->>V: Crea tarea con fechaLimite y marca "Sincronizar con Google Calendar"
+    V->>C: POST /tareas
+    C->>DB: Guarda registro en tabla 'tarea'
+    C->>S: GoogleCalendarService::crearEvento(tarea)
+    S->>API: POST /calendars/primary/events
+    API-->>S: Retorna google_event_id
+    S->>DB: Actualiza tarea con google_event_id
+    C-->>V: Respuesta satisfactoria y reflejo inmediato en interfaz
+    end
+
+    %% Spotify Streaming
+    rect rgb(245, 255, 245)
+    note right of U: 4. Streaming y Control de Spotify en Modo Zen
+    U->>V: Ingresa a Sesión Zen y abre widget Spotify
+    V->>S: Inicializa Spotify Web Playback SDK con access_token
+    S->>API: Conexión WebSocket de streaming (Player Virtual Cronos)
+    API-->>V: Evento 'ready' con device_id registrado
+    U->>V: Selecciona playlist recomendada y presiona "Play"
+    V->>C: PUT /api/spotify/play { context_uri, device_id }
+    C->>API: Spotify Web API (/v1/me/player/play)
+    API-->>V: Audio stream activo + actualización reactiva de portada y título
+    end
 ```
 
-### Detalle del Flujo de Control (Pasos)
-1. **Vinculación de Cuentas:** El usuario ingresa a Ajustes de Perfil o presiona el botón "Conectar Spotify" / "Sincronizar Google Calendar". Se ejecuta el handshake OAuth 2.0 y se persisten los tokens en `IntegracionExterna`.
-2. **Uso de Spotify:**
-   - En el Modo Zen, el componente `SpotifyPlayer.vue` consulta playlists predeterminadas de concentración a través de `SpotifyController@getPlaylists`.
-   - Al seleccionar una pista, se envía la instrucción de reproducción al SDK del navegador o a través de endpoints REST (`/v1/me/player/play`).
-   - El estado de la pista actual (título, artista, progreso, carátula) se sincroniza reactivamente en Vue.
-3. **Uso de Google Calendar:**
-   - Al crear una tarea con fecha y hora límite o al programar una sesión de estudio, se ofrece la opción *"Añadir a Google Calendar"*.
-   - El backend invoca a `GoogleCalendarService@crearEvento`, enviando título, descripción y tiempo estimado en bloques Pomodoro.
-   - El ID del evento retornado se almacena en la tarea para permitir futuras actualizaciones o eliminaciones sincronizadas.
+### 5.2. Detalle del Flujo de Control Paso a Paso
+
+1. **Gestión de Autorizaciones y Credenciales (OAuth 2.0):**
+   - El usuario inicia la vinculación desde [`PerfilUsuario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/PerfilUsuario.vue).
+   - Laravel Socialite o el cliente HTTP redirigen a los proveedores externos con los scopes requeridos:
+     - **Google:** `https://www.googleapis.com/auth/calendar.events.readonly` y `calendar.events`.
+     - **Spotify:** `streaming`, `user-read-playback-state`, `user-modify-playback-state`, `playlist-read-private`.
+   - Tras el consentimiento, el callback intercambia el código de autorización por `access_token` y `refresh_token`, almacenándolos de manera segura en la tabla `IntegracionExterna` vinculados al usuario autenticado.
+
+2. **Flujo de Lectura y Proyección de Calendario (Pull):**
+   - Al navegar a `/calendario`, el backend recupera las tareas locales filtradas por el perfil activo y los eventos de Google Calendar para el mes en curso.
+   - En [`Calendario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/Calendario.vue), la lógica reactiva clasifica los elementos recibidos:
+     - **Tareas locales:** Renderizadas con color de prioridad y acciones de edición/completitud.
+     - **Recordatorios externos:** Renderizados con badge de Google Calendar e indicador de horario, sin incidir en el contador de tareas pendientes ni estadísticas.
+   - Al interactuar con un recordatorio externo, el modal despliega los datos del evento y permite accionar *"Convertir en Tarea de Cronos"*, abriendo el formulario de tarea precompletado con título y fecha.
+
+3. **Flujo de Exportación de Tareas hacia Google Calendar (Push):**
+   - Al crear o editar una tarea con fecha límite y tildar *"Sincronizar con Google Calendar"*, `TareaController` delega a `GoogleCalendarService` la creación del evento en Google.
+   - El ID asignado por Google se guarda en `tarea.google_event_id`, garantizando que posteriores cambios de fecha o eliminación de la tarea se sincronicen automáticamente en el calendario externo.
+
+4. **Flujo de Reproducción Multimedia con Spotify:**
+   - En [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue), se instancia el Web Playback SDK mediante el script oficial de Spotify, registrando un dispositivo de reproducción virtual.
+   - El usuario visualiza una galería de listas de reproducción curadas para concentración (*Lofi, Instrumental, Ruido Marrón*).
+   - Al accionar controles de reproducción, el frontend realiza peticiones autorizadas a los endpoints de la Web API de Spotify (`/v1/me/player/play`, `/pause`, `/next`, `/volume`), escuchando los eventos de cambio de estado para actualizar reactivamente la carátula, título y barra de progreso.
 
 ---
 
-## 5. Pruebas y Validación (QA)
+## 6. Pruebas y Validación (QA)
 
-### Caso de Prueba 1: Reproducción con Spotify
-1. **Precondición:** Iniciar sesión y tener una cuenta activa de Spotify vinculada.
-2. **Paso 1:** Entrar a la Sesión Zen (`/pomodoro`) y abrir el panel de Spotify.
-3. **Paso 2:** Seleccionar la playlist recomendada *"Lofi Focus Beats"* y presionar "Play".
-4. **Resultado Esperado:** La pista comienza a sonar, se actualiza el nombre de la canción, artista y portada en el reproductor. Los controles de volumen y pausa responden de inmediato.
+### Caso de Prueba 1: Vinculación OAuth de Google y Spotify
+1. **Precondición:** Usuario autenticado en Cronos Notes.
+2. **Paso 1:** Navegar a `/perfil-usuario` y hacer clic en *"Vincular Google Calendar"*.
+3. **Paso 2:** Aprobar los permisos solicitados en la pantalla de consentimiento de Google.
+4. **Resultado Esperado:** Redirección exitosa al perfil mostrando la insignia verde *"Google Calendar Conectado"* y registro correspondiente creado en la tabla `IntegracionExterna`.
 
-### Caso de Prueba 2: Sincronización con Google Calendar
-1. **Precondición:** Tener vinculada la cuenta de Google Calendar.
-2. **Paso 1:** Ir a "Mis Tareas", crear una nueva tarea titulada *"Estudio de Redes"* con fecha límite mañana a las 18:00 y marcar la casilla *"Sincronizar con Google Calendar"*.
+### Caso de Prueba 2: Proyección de Eventos Externos como Recordatorios
+1. **Precondición:** Cuenta de Google Calendar vinculada con un evento registrado para el día 15 del mes actual (ej. *"Examen Final de Redes"* de 09:00 a 11:00).
+2. **Paso 1:** Ingresar a la sección *"Calendario"* en Cronos Notes.
+3. **Paso 2:** Observar la casilla del día 15.
+4. **Resultado Esperado:** Se visualiza una tarjeta de tipo **Recordatorio** con el icono de Google Calendar y el horario *"09:00 - 11:00"*. Las estadísticas de tareas del perfil no se modifican. Al hacer clic se despliega el modal de detalle del evento externo con la opción *"Convertir en Tarea"*.
+
+### Caso de Prueba 3: Exportación de Tarea hacia Google Calendar
+1. **Precondición:** Google Calendar vinculado.
+2. **Paso 1:** Crear una nueva tarea *"Entrega de Trabajo Práctico"* con fecha límite mañana a las 18:00 y marcar el checkbox *"Añadir a Google Calendar"*.
 3. **Paso 2:** Guardar la tarea.
-4. **Resultado Esperado:** La tarea se crea en Cronos Notes con la insignia de Google Calendar. Al abrir Google Calendar en el navegador, el evento *"Estudio de Redes"* aparece agendado con la duración estimada en Pomodoros y descripción correspondiente.
+4. **Resultado Esperado:** La tarea se persiste en la base de datos local con su respectivo `google_event_id`. Al revisar Google Calendar en una pestaña externa, el evento aparece agendado con el prefijo `[Cronos]`.
+
+### Caso de Prueba 4: Streaming y Control con Spotify en Sesión Zen
+1. **Precondición:** Cuenta de Spotify vinculada (usuario con plan compatible).
+2. **Paso 1:** Iniciar una Sesión Pomodoro en Modo Zen y abrir el panel de Spotify.
+3. **Paso 2:** Seleccionar la lista *"Lofi Focus Beats"* y presionar "Play".
+4. **Resultado Esperado:** El streaming comienza a sonar en el navegador. Se visualiza la portada del álbum, título del tema y controles reactivos (Pausa, Salto de pista y Volumen).

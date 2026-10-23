@@ -13,6 +13,8 @@ class ApunteAudio extends Model
     protected $fillable = [
         'idApunte',
         'rutaAudio',
+        'nombreOriginal',
+        'transcripcion',
         'fechaCreacion'
     ];
 

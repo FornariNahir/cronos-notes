@@ -146,6 +146,8 @@ Route::middleware('auth.custom')->group(function () {
     Route::put('/apuntes/{id}', [ApunteController::class, 'update'])->name('apuntes.update');
     Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
     Route::post('/apuntes/{id}/audio', [ApunteController::class, 'uploadAudio'])->name('apuntes.audio.upload');
+    Route::post('/apuntes/audio/{audioId}/transcribir', [ApunteController::class, 'transcribeAudio'])->name('apuntes.audio.transcribe');
+    Route::put('/apuntes/audio/{audioId}/renombrar', [ApunteController::class, 'updateAudioName'])->name('apuntes.audio.rename');
     Route::delete('/apuntes/audio/{audioId}', [ApunteController::class, 'destroyAudio'])->name('apuntes.audio.destroy');
 
     // PERFIL COMPARTIDO — Gestión del propietario

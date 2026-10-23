@@ -12,7 +12,11 @@ El requerimiento comprende dos ejes principales de integración:
 - **Delimitación de Dominio:** Los eventos importados desde Google Calendar **no se convierten en tareas nativas de Cronos Notes**. Esto previene la alteración inadvertida de métricas de rendimiento, porcentajes de completitud de perfiles y el sistema de rachas diarias. El usuario visualiza sus compromisos para prevenir solapamientos y cuenta con la opción manual de *"Convertir en Tarea de Cronos"* si decide dedicar un bloque Pomodoro específico a dicho evento.
 
 ### 1.2. Integración Multimedia con Spotify (Web API & Web Playback SDK)
-- **Reproductor Embebido en Modo Zen:** Permite a los usuarios con cuenta de Spotify conectar su biblioteca musical y acceder de forma inmediata a listas de reproducción sugeridas y optimizadas para concentración y estudio profundo (*Lofi Focus Beats, Chillhop, Deep Focus, Ruido Blanco / Ruido Marrón*).
+- **Reproductor Embebido en Modo Zen:** Permite a los usuarios con cuenta de Spotify conectar su biblioteca musical y acceder de forma inmediata a tres estilos musicales curados, instrumentales y libres de distracciones vocales para concentración y estudio:
+  1. 🎧 **Lofi & Chill Beats:** Ritmos suaves y relajantes (Lofi Hip Hop, Chillhop) ideales para lectura, toma de apuntes y tareas rutinarias.
+  2. ☕ **Café & Jazz:** Texturas cálidas de smooth jazz y acústico que recrean la atmósfera distendida y estimulante de una cafetería.
+  3. 🎹 **Piano & Clásica Instrumental:** Melodías de piano y composiciones contemporáneas para sesiones de alta carga cognitiva, resolución lógica y matemáticas.
+- **Sinergia con el Mezclador de Sonidos Nativo (RF-M06):** Dado que Cronos Notes ya dispone de un mezclador propio de ruidos ambientales (ruido blanco, ruido marrón, lluvia, café, fogata), Spotify no compite ni duplica estos sonidos fónicos, sino que actúa como la capa musical melódica. Esto posibilita una experiencia inmersiva combinada (ej. reproducir una playlist de *Café & Jazz* de Spotify con el sonido nativo de lluvia de fondo de Cronos).
 - **Control de Reproducción Nativo en [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue):** Control total de streaming (Play, Pausa, Siguiente pista, Pista anterior y Control de volumen) y visualización en tiempo real de carátula de álbum, título de la canción y artista, sin abandonar la pantalla de estudio ni requerir la aplicación de escritorio de Spotify abierta en paralelo.
 
 ### 1.3. Objetivo General
@@ -154,7 +158,7 @@ sequenceDiagram
 
 4. **Flujo de Reproducción Multimedia con Spotify:**
    - En [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue), se instancia el Web Playback SDK mediante el script oficial de Spotify, registrando un dispositivo de reproducción virtual.
-   - El usuario visualiza una galería de listas de reproducción curadas para concentración (*Lofi, Instrumental, Ruido Marrón*).
+   - El usuario visualiza una galería rápida con los tres estilos musicales curados para concentración (*Lofi & Chill Beats*, *Café & Jazz* y *Piano & Clásica Instrumental*), además del acceso a sus propias listas de Spotify.
    - Al accionar controles de reproducción, el frontend realiza peticiones autorizadas a los endpoints de la Web API de Spotify (`/v1/me/player/play`, `/pause`, `/next`, `/volume`), escuchando los eventos de cambio de estado para actualizar reactivamente la carátula, título y barra de progreso.
 
 ---

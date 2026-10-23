@@ -82,7 +82,10 @@ const probarGoogleCalendar = async () => {
         const data = await res.json();
         if (res.ok && data.status === 'success') {
             const count = data.total_eventos_obtenidos || 0;
-            showCustomAlert('Conexión Google Calendar Exitosa', `La API de Google Calendar respondió correctamente. Próximos eventos encontrados: ${count}.`);
+            const cals = data.calendarios_consultados && data.calendarios_consultados.length > 0
+                ? `\n\nCalendarios analizados:\n• ${data.calendarios_consultados.join('\n• ')}`
+                : '';
+            showCustomAlert('Conexión Google Calendar Exitosa', `La API de Google Calendar respondió correctamente. Próximos eventos encontrados: ${count}.${cals}`);
         } else {
             showCustomAlert('Error en Google Calendar', data.message || 'No se pudo consultar el calendario.');
         }

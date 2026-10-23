@@ -94,4 +94,55 @@ class IntegracionExternaTest extends TestCase
             'plataforma' => 'GoogleCalendar',
         ]);
     }
+
+    public function test_calendario_carga_prop_eventos_google(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('calendario'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => 
+            $page->component('Calendario')
+                ->has('tareasCargadas')
+                ->has('perfilesDisponibles')
+                ->has('eventosGoogle')
+        );
+    }
+
+    public function test_smoke_test_google_calendar_multicalendario_exitoso(): void
+    {
+        IntegracionExterna::create([
+            'idUsuario' => $this->user->idUsuario,
+            'plataforma' => 'GoogleCalendar',
+            'tokenAcceso' => 'fake-token',
+        ]);
+
+        $mockService = $this->mock(\App\Services\GoogleCalendarService::class);
+        $mockService->shouldReceive('getCalendariosDisponibles')
+            ->once()
+            ->andReturn([
+                ['id' => 'primary', 'summary' => 'Principal'],
+                ['id' => 'sec@group.calendar.google.com', 'summary' => 'Lic. en Sistemas de Información']
+            ]);
+
+        $mockService->shouldReceive('getEventosRango')
+            ->once()
+            ->andReturn([
+                [
+                    'id' => 'ev1',
+                    'titulo' => 'AE3 - PPS',
+                    'calendario_nombre' => 'Lic. en Sistemas de Información',
+                    'fecha' => '2026-10-21',
+                    'hora_inicio' => '15:30',
+                ]
+            ]);
+
+        $response = $this->actingAs($this->user)->get(route('api.test.google-calendar'));
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+            'total_eventos_obtenidos' => 1,
+            'calendarios_consultados' => ['Principal', 'Lic. en Sistemas de Información'],
+        ]);
+    }
 }

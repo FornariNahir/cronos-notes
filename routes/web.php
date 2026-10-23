@@ -86,7 +86,7 @@ Route::middleware('auth.custom')->group(function () {
     // ESTADISTICAS (Global)
     Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
 
-    Route::get('/calendario', function () {
+    Route::get('/calendario', function (\App\Services\GoogleCalendarService $calendarService) {
         $userId = Auth::user()->idUsuario;
 
         $tareas = \App\Models\Tarea::whereHas('perfil', function ($query) use ($userId) {
@@ -111,11 +111,26 @@ Route::middleware('auth.custom')->group(function () {
 
         $perfiles = \App\Models\Perfil::where('idUsuario', $userId)->get();
 
+        // Cargar eventos de Google Calendar (RF-M15)
+        // Rango de visualización ampliado: desde el mes anterior hasta los próximos 3 meses
+        $inicioIso = now()->subMonth()->startOfMonth()->toRfc3339String();
+        $finIso = now()->addMonths(3)->endOfMonth()->toRfc3339String();
+        $eventosGoogle = $calendarService->getEventosRango($userId, $inicioIso, $finIso);
+
         return Inertia::render('Calendario', [
             'tareasCargadas' => $tareas,
-            'perfilesDisponibles' => $perfiles
+            'perfilesDisponibles' => $perfiles,
+            'eventosGoogle' => $eventosGoogle,
         ]);
     })->name('calendario');
+
+    // Endpoint JSON para consultar eventos en un rango específico de fechas
+    Route::get('/api/google-calendar/eventos', function (\Illuminate\Http\Request $request, \App\Services\GoogleCalendarService $calendarService) {
+        $userId = Auth::user()->idUsuario;
+        $inicio = $request->query('inicio');
+        $fin = $request->query('fin');
+        return response()->json($calendarService->getEventosRango($userId, $inicio, $fin));
+    })->name('api.google-calendar.eventos');
 
     Route::get('/perfil-usuario', function () {
         $userId = Auth::user()->idUsuario;

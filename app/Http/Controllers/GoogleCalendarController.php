@@ -38,15 +38,24 @@ class GoogleCalendarController extends Controller
      */
     public function redirect(): RedirectResponse
     {
+        $user = Auth::user();
+        $params = [
+            'access_type' => 'offline', // Crucial para obtener el Refresh Token duradero
+            'prompt' => 'consent',       // Garantiza que Google devuelva siempre el tokenNuevo
+        ];
+
+        // Si el usuario ya está autenticado, enviamos login_hint para omitir la selección de cuenta
+        if ($user && !empty($user->email)) {
+            $params['login_hint'] = $user->email;
+        }
+
         return $this->getGoogleCalendarProvider()
             ->scopes([
+                'https://www.googleapis.com/auth/calendar',
                 'https://www.googleapis.com/auth/calendar.events',
-                'https://www.googleapis.com/auth/calendar.events.readonly',
+                'https://www.googleapis.com/auth/calendar.readonly',
             ])
-            ->with([
-                'access_type' => 'offline', // Crucial para obtener el Refresh Token duradero
-                'prompt' => 'consent',       // Garantiza que Google devuelva siempre el tokenNuevo
-            ])
+            ->with($params)
             ->redirect();
     }
 
@@ -101,9 +110,9 @@ class GoogleCalendarController extends Controller
     }
 
     /**
-     * Endpoint de diagnóstico (Smoke Test): comprueba la conexión leyendo los próximos eventos.
+     * Endpoint de diagnóstico (Smoke Test): comprueba la conexión leyendo los calendarios y eventos del usuario (RF-M15).
      */
-    public function smokeTest(): JsonResponse
+    public function smokeTest(\App\Services\GoogleCalendarService $calendarService): JsonResponse
     {
         $userId = Auth::id();
         $token = $this->tokenService->getValidToken($userId, 'GoogleCalendar');
@@ -115,50 +124,35 @@ class GoogleCalendarController extends Controller
             ], 404);
         }
 
-        // Llamada a la API de Google Calendar
-        $response = Http::withToken($token)
-            ->get('https://www.googleapis.com/calendar/v3/calendars/primary/events', [
-                'maxResults' => 5,
-                'timeMin' => now()->toRfc3339String(),
-                'singleEvents' => 'true',
-                'orderBy' => 'startTime',
-            ]);
+        try {
+            $calendarios = $calendarService->getCalendariosDisponibles($userId);
+            $eventos = $calendarService->getEventosRango($userId);
 
-        // Si expiró (401), intentamos refrescar una vez
-        if ($response->status() === 401) {
-            $nuevoToken = $this->tokenService->refreshToken($userId, 'GoogleCalendar');
-            if ($nuevoToken) {
-                $response = Http::withToken($nuevoToken)
-                    ->get('https://www.googleapis.com/calendar/v3/calendars/primary/events', [
-                        'maxResults' => 5,
-                        'timeMin' => now()->toRfc3339String(),
-                        'singleEvents' => 'true',
-                        'orderBy' => 'startTime',
-                    ]);
-            }
-        }
+            $nombresCalendarios = array_map(function ($c) {
+                return $c['summary'] ?? 'Calendario';
+            }, $calendarios);
 
-        if ($response->successful()) {
-            $eventos = $response->json()['items'] ?? [];
             return response()->json([
                 'status' => 'success',
                 'message' => 'Conexión con Google Calendar API exitosa.',
                 'total_eventos_obtenidos' => count($eventos),
-                'eventos_muestra' => array_map(function ($ev) {
+                'calendarios_consultados' => $nombresCalendarios,
+                'eventos_muestra' => array_slice(array_map(function ($ev) {
                     return [
                         'id' => $ev['id'] ?? null,
-                        'resumen' => $ev['summary'] ?? '(Sin título)',
-                        'inicio' => $ev['start']['dateTime'] ?? $ev['start']['date'] ?? null,
-                        'fin' => $ev['end']['dateTime'] ?? $ev['end']['date'] ?? null,
+                        'resumen' => $ev['titulo'] ?? '(Sin título)',
+                        'calendario' => $ev['calendario_nombre'] ?? 'Principal',
+                        'fecha' => $ev['fecha'] ?? null,
+                        'hora' => $ev['hora_inicio'] ?? 'Todo el día',
                     ];
-                }, $eventos),
+                }, $eventos), 0, 5),
             ]);
+        } catch (\Exception $e) {
+            Log::error("[GoogleCalendarController] Error en smokeTest: " . $e->getMessage());
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error al consultar Google Calendar API: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error al consultar Google Calendar API.',
-            'error_details' => $response->json(),
-        ], $response->status());
     }
 }

@@ -22,13 +22,23 @@ class GoogleCalendarController extends Controller
     }
 
     /**
+     * Obtener el proveedor de Socialite configurado específicamente con las credenciales de Google Calendar.
+     */
+    protected function getGoogleCalendarProvider()
+    {
+        $config = config('services.google_calendar');
+        return Socialite::buildProvider(
+            \Laravel\Socialite\Two\GoogleProvider::class,
+            $config
+        );
+    }
+
+    /**
      * Redirigir al usuario al flujo de autorización de Google Calendar con permisos incrementales.
      */
     public function redirect(): RedirectResponse
     {
-        $callbackUrl = config('services.google_calendar.redirect', route('auth.google-calendar.callback'));
-
-        return Socialite::driver('google')
+        return $this->getGoogleCalendarProvider()
             ->scopes([
                 'https://www.googleapis.com/auth/calendar.events',
                 'https://www.googleapis.com/auth/calendar.events.readonly',
@@ -37,7 +47,6 @@ class GoogleCalendarController extends Controller
                 'access_type' => 'offline', // Crucial para obtener el Refresh Token duradero
                 'prompt' => 'consent',       // Garantiza que Google devuelva siempre el tokenNuevo
             ])
-            ->redirectUrl($callbackUrl)
             ->redirect();
     }
 
@@ -47,11 +56,7 @@ class GoogleCalendarController extends Controller
     public function callback(): RedirectResponse
     {
         try {
-            $callbackUrl = config('services.google_calendar.redirect', route('auth.google-calendar.callback'));
-
-            $googleUser = Socialite::driver('google')
-                ->redirectUrl($callbackUrl)
-                ->user();
+            $googleUser = $this->getGoogleCalendarProvider()->user();
 
             $user = Auth::user();
 

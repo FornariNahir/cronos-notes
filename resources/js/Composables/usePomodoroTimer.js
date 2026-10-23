@@ -1,10 +1,96 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { useZenMixer } from './useZenMixer';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 
-const soundWorkComplete = new Howl({ src: ['/audios/tibetan-meditation.mp3'], volume: 0.8 });
-const soundBreakComplete = new Howl({ src: ['/audios/meditative-tiger.mp3'], volume: 0.8 });
+export const ALERT_SOUNDS_CATALOG = [
+  { id: 'zen-bell', nombre: 'Campana Zen Cálida', emoji: '🔔', src: '/audios/alertas/zen-bell.wav' },
+  { id: 'marimba-chime', nombre: 'Acorde de Marimba', emoji: '🎶', src: '/audios/alertas/marimba-chime.wav' },
+  { id: 'harp-break', nombre: 'Arpa de Descanso', emoji: '🪕', src: '/audios/alertas/harp-break.wav' },
+  { id: 'focus-double-tone', nombre: 'Doble Toque Enfoque', emoji: '✨', src: '/audios/alertas/focus-double-tone.wav' }
+];
+
+// Precargar todas las instancias de audio en memoria desde el inicio para latencia 0ms
+const howlInstances = {};
+if (typeof window !== 'undefined') {
+  for (const item of ALERT_SOUNDS_CATALOG) {
+    howlInstances[item.id] = new Howl({
+      src: [item.src],
+      preload: true,
+      html5: false // Web Audio API buffer en memoria para disparo instantáneo sin delay
+    });
+  }
+}
+
+const getHowlForAlert = (soundId) => {
+  const item = ALERT_SOUNDS_CATALOG.find(s => s.id === soundId) || ALERT_SOUNDS_CATALOG[0];
+  if (!howlInstances[item.id]) {
+    howlInstances[item.id] = new Howl({
+      src: [item.src],
+      preload: true,
+      html5: false
+    });
+  }
+  return howlInstances[item.id];
+};
+
+// Estado global reactivo de Modo Oscuro / Claro compartido entre AppLayout, SesionZen y MiniTimerFlotante
+const isGlobalDarkMode = ref(typeof window !== 'undefined' ? localStorage.getItem('cn-theme') === 'dark' : false);
+
+export const setGlobalDarkMode = (dark) => {
+  isGlobalDarkMode.value = !!dark;
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('cn-theme', isGlobalDarkMode.value ? 'dark' : 'light');
+    if (isGlobalDarkMode.value) {
+      document.body.classList.remove('cn-body-light');
+      document.body.classList.add('cn-body-dark');
+    } else {
+      document.body.classList.remove('cn-body-dark');
+      document.body.classList.add('cn-body-light');
+    }
+  }
+};
+
+export const syncGlobalDarkModeFromStorage = () => {
+  if (typeof window !== 'undefined') {
+    const dark = localStorage.getItem('cn-theme') === 'dark';
+    setGlobalDarkMode(dark);
+  }
+};
+
+// Preferencias reactivas de alertas sonoras (persistidas en localStorage)
+const alertEnabled = ref(typeof window !== 'undefined' ? localStorage.getItem('cronos_alert_enabled') !== 'false' : true);
+const alertVolume = ref(typeof window !== 'undefined' ? parseFloat(localStorage.getItem('cronos_alert_volume') ?? '0.85') : 0.85);
+const alertSoundWork = ref((typeof window !== 'undefined' && localStorage.getItem('cronos_alert_work')) || 'zen-bell');
+const alertSoundBreak = ref((typeof window !== 'undefined' && localStorage.getItem('cronos_alert_break')) || 'focus-double-tone');
+
+watch(alertEnabled, (val) => localStorage.setItem('cronos_alert_enabled', String(val)));
+watch(alertVolume, (val) => localStorage.setItem('cronos_alert_volume', String(val)));
+watch(alertSoundWork, (val) => localStorage.setItem('cronos_alert_work', val));
+watch(alertSoundBreak, (val) => localStorage.setItem('cronos_alert_break', val));
+
+const unlockAudioContext = () => {
+  try {
+    if (Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume();
+    }
+  } catch (e) {
+    // ignore
+  }
+};
+
+const playAlertSound = (soundId, forcePlay = false) => {
+  if (!alertEnabled.value && !forcePlay) return;
+  try {
+    unlockAudioContext();
+    const howl = getHowlForAlert(soundId);
+    howl.stop();
+    howl.volume(Math.max(0, Math.min(1, alertVolume.value)));
+    howl.play();
+  } catch (e) {
+    console.error('Error reproduciendo sonido de alerta:', e);
+  }
+};
 
 // Module-level shared states (persistent across page navigations in SPA)
 const isRunning = ref(false);
@@ -16,6 +102,8 @@ const quickStartTaskId = ref('');
 const selectedConfigId = ref('');
 const minutesRegisteredInCurrentPhase = ref(0);
 const localSesionActiva = ref(null);
+const isPipActive = ref(false);
+const pipRequestCounter = ref(0);
 
 const tickCallback = ref(null);
 const phaseCompleteCallback = ref(null);
@@ -77,6 +165,7 @@ export function usePomodoroTimer(props) {
   };
 
   const iniciarInicioRapido = () => {
+    unlockAudioContext();
     if (props?.isGuest) {
       localSesionActiva.value = {
         idSesion: 'guest',
@@ -96,6 +185,7 @@ export function usePomodoroTimer(props) {
   };
 
   const iniciarSesion = () => {
+    unlockAudioContext();
     if (props?.isGuest) {
       localSesionActiva.value = {
         idSesion: 'guest_custom',
@@ -164,6 +254,9 @@ export function usePomodoroTimer(props) {
         currentPhase.value = 'work';
         isRunning.value = false;
         minutesRegisteredInCurrentPhase.value = 0;
+      } else if (isRunning.value) {
+        isRunning.value = false;
+        startTimer(null, null, true);
       }
     } else {
       timeLeft.value = 25 * 60;
@@ -175,6 +268,7 @@ export function usePomodoroTimer(props) {
   };
 
   const startTimer = (onTick, onPhaseComplete, isRestored = false) => {
+    unlockAudioContext();
     if (onTick) tickCallback.value = onTick;
     if (onPhaseComplete) phaseCompleteCallback.value = onPhaseComplete;
     
@@ -194,7 +288,7 @@ export function usePomodoroTimer(props) {
 
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
-      if (timeLeft.value > 0) {
+      if (timeLeft.value > 1) {
         timeLeft.value--;
         saveStateToStorage();
         updateDocumentTitle();
@@ -213,6 +307,8 @@ export function usePomodoroTimer(props) {
 
         if (tickCallback.value) tickCallback.value(timeLeft.value);
       } else {
+        // Llegó exactamente a 00:00 -> disparar sonido y cambio de fase al instante sin 1 seg extra de espera
+        timeLeft.value = 0;
         stopTimer();
         completePhase();
         if (phaseCompleteCallback.value) phaseCompleteCallback.value();
@@ -249,16 +345,22 @@ export function usePomodoroTimer(props) {
 
   const showNotification = (title, body) => {
     if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, { body, icon: '/imagenes/logo-cronos.png' });
+      new Notification(title, { body, icon: '/imagenes/logo-cronos.png' });
     }
   };
 
   const completePhase = () => {
+    // Reproducir sonido en el primer milisegundo antes de cualquier llamada de red
+    if (currentPhase.value === 'work') {
+      playAlertSound(alertSoundWork.value);
+    } else {
+      playAlertSound(alertSoundBreak.value);
+    }
+
     stopTimer();
     let currentMinutos = Math.floor((totalSeconds.value - timeLeft.value) / 60);
     
     if (currentPhase.value === 'work') {
-      soundWorkComplete.play();
       showNotification("Pomodoro Completado", "Gran trabajo. Tómate un respiro.");
       
       if (localSesionActiva.value && !props?.isGuest) {
@@ -279,7 +381,6 @@ export function usePomodoroTimer(props) {
         }
       }
     } else if (currentPhase.value === 'shortBreak' || currentPhase.value === 'longBreak') {
-      soundBreakComplete.play();
       showNotification("Descanso Terminado", "Es hora de volver a enfocarse.");
       
       if (currentPhase.value === 'longBreak') {
@@ -337,6 +438,10 @@ export function usePomodoroTimer(props) {
     });
   };
 
+  const requestPipWindow = () => {
+    pipRequestCounter.value++;
+  };
+
   onUnmounted(() => {
     tickCallback.value = null;
     phaseCompleteCallback.value = null;
@@ -354,13 +459,27 @@ export function usePomodoroTimer(props) {
     iniciarSesion,
     initTimer,
     startTimer,
+    stopTimer,
     stopTimerLogic: stopTimer,
+    resetTimer,
     resetTimerLogic: resetTimer,
     completePhase,
     endSession,
     saveStateToStorage,
     totalSeconds,
     localSesionActiva,
-    registerCallbacks
+    registerCallbacks,
+    isPipActive,
+    pipRequestCounter,
+    requestPipWindow,
+    alertEnabled,
+    alertVolume,
+    alertSoundWork,
+    alertSoundBreak,
+    playAlertSound,
+    alertSoundsCatalog: ALERT_SOUNDS_CATALOG,
+    isGlobalDarkMode,
+    setGlobalDarkMode,
+    syncGlobalDarkModeFromStorage
   };
 }

@@ -102,6 +102,17 @@
             Mis apuntes
           </Link>
         </li>
+        <li>
+          <Link :href="route('salas.index')" class="nav-item" :class="{ active: route().current('salas.index') || route().current('salas.show') || $page.url.startsWith('/salas-estudio') }" @click="closeSidebarOnMobile">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Salas de Estudio
+          </Link>
+        </li>
 
       </ul>
     </aside>
@@ -157,12 +168,13 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import MiniTimerFlotante from '@/Components/Pomodoro/MiniTimerFlotante.vue';
+import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 
 const isSidebarClosed = ref(window.innerWidth <= 768);
 const isZenMode = ref(false);
 const isSettingsDropdownOpen = ref(false);
 const dropdownRef = ref(null);
-const isDarkMode = ref(false);
+const { isGlobalDarkMode: isDarkMode, setGlobalDarkMode, syncGlobalDarkModeFromStorage } = usePomodoroTimer();
 
 const toggleDropdown = () => {
   isSettingsDropdownOpen.value = !isSettingsDropdownOpen.value;
@@ -181,14 +193,7 @@ const handleClickOutside = (event) => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   
-  isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
-  if (isDarkMode.value) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-  }
+  syncGlobalDarkModeFromStorage();
 });
 
 onUnmounted(() => {
@@ -206,16 +211,7 @@ const closeSidebarOnMobile = () => {
 };
 
 const toggleMode = () => {
-  isDarkMode.value = !isDarkMode.value;
-  if (isDarkMode.value) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-    localStorage.setItem('cn-theme', 'dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-    localStorage.setItem('cn-theme', 'light');
-  }
+  setGlobalDarkMode(!isDarkMode.value);
 };
 </script>
 

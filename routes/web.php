@@ -12,6 +12,7 @@ use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
 
 use App\Http\Controllers\PerfilCompartidoController;
+use App\Http\Controllers\SalaEstudioController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -147,6 +148,16 @@ Route::middleware('auth.custom')->group(function () {
     Route::delete('/apuntes/{id}', [ApunteController::class, 'destroy'])->name('apuntes.destroy');
     Route::post('/apuntes/{id}/audio', [ApunteController::class, 'uploadAudio'])->name('apuntes.audio.upload');
     Route::delete('/apuntes/audio/{audioId}', [ApunteController::class, 'destroyAudio'])->name('apuntes.audio.destroy');
+
+    // SALAS DE ESTUDIO VIRTUALES (RF-M17)
+    Route::get('/salas-estudio', [SalaEstudioController::class, 'index'])->name('salas.index');
+    Route::post('/salas-estudio', [SalaEstudioController::class, 'store'])->name('salas.store');
+    Route::get('/salas-estudio/{id}', [SalaEstudioController::class, 'show'])->name('salas.show');
+    Route::post('/salas-estudio/{id}/estado', [SalaEstudioController::class, 'estado'])->name('salas.estado');
+    Route::post('/salas-estudio/{id}/pomodoro', [SalaEstudioController::class, 'pomodoro'])->name('salas.pomodoro');
+    Route::patch('/salas-estudio/{id}/meet', [SalaEstudioController::class, 'actualizarMeet'])->name('salas.actualizar-meet');
+    Route::post('/salas-estudio/{id}/salir', [SalaEstudioController::class, 'salir'])->name('salas.salir');
+    Route::post('/salas-estudio/{id}/finalizar', [SalaEstudioController::class, 'finalizar'])->name('salas.finalizar');
 
     // PERFIL COMPARTIDO — Gestión del propietario
     Route::get('/perfiles/{idPerfil}/compartido', [PerfilCompartidoController::class, 'index'])->name('perfil-compartido.index');

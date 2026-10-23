@@ -134,7 +134,7 @@ class PerfilCompartidoController extends Controller
             'tokenUtilizado' => false,
         ]);
 
-        Notification::route('mail', $request->email)->notify(new InvitacionPerfilNotification($invitacion));
+        try { Notification::route('mail', $request->email)->notify(new InvitacionPerfilNotification($invitacion)); } catch (\Throwable $e) { \Illuminate\Support\Facades\Log::warning('SMTP falló al enviar invitación: ' . $e->getMessage()); return redirect()->back()->with('success', 'Invitación creada. El correo SMTP falló, pero podés copiar el link de invitación directo desde la ventana de Compartir.'); }
 
         return redirect()->back()->with('success', 'Invitación enviada correctamente.');
     }

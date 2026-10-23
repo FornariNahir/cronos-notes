@@ -23,7 +23,7 @@ class PerfilController extends Controller
                 'invitaciones' => function ($query) {
                     $query->where('estado', 'Pendiente')
                           ->where('tokenUtilizado', false)
-                          ->select('idInvitacion', 'idPerfil', 'emailInvitado', 'permisoOfrecido', 'fechaEnvio');
+                          ->select('idInvitacion', 'idPerfil', 'emailInvitado', 'permisoOfrecido', 'fechaEnvio', 'token');
                 }
             ])
             ->withCount('usuariosCompartidos')

@@ -42,7 +42,6 @@ class GoogleAuthController extends Controller
 
         if (!$user) {
             // Si el usuario no existe, lo registramos.
-            // Extraer nombre y apellido de los datos crudos de Google o procesar el nombre completo.
             $rawUser = $googleUser->getRaw();
             $nombre = $rawUser['given_name'] ?? '';
             $apellido = $rawUser['family_name'] ?? '';
@@ -62,6 +61,10 @@ class GoogleAuthController extends Controller
             ]);
         }
 
+        $integracionExistente = IntegracionExterna::where('idUsuario', $user->idUsuario)
+            ->where('plataforma', 'GoogleAuth')
+            ->first();
+
         // Crear o actualizar la integración de GoogleAuth en IntegracionExterna
         IntegracionExterna::updateOrCreate(
             [
@@ -71,7 +74,7 @@ class GoogleAuthController extends Controller
             [
                 'identificadorExterno' => $googleUser->getId(),
                 'tokenAcceso' => $googleUser->token,
-                'tokenNuevo' => $googleUser->refreshToken,
+                'tokenNuevo' => $googleUser->refreshToken ?? $integracionExistente?->tokenNuevo,
             ]
         );
 

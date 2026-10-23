@@ -73,7 +73,6 @@ const proceedEndSession = (marcarTareaCompletada) => {
 const page = usePage();
 
 // State variables
-const isDarkMode = ref(false);
 const selectedSound = ref('Ninguno');
 const timeLeft = ref(25 * 60);
 const selectedLandscape = ref('paisaje1');
@@ -242,7 +241,18 @@ const {
   saveStateToStorage,
   totalSeconds,
   localSesionActiva,
-  registerCallbacks
+  registerCallbacks,
+  isPipActive,
+  requestPipWindow,
+  alertEnabled,
+  alertVolume,
+  alertSoundWork,
+  alertSoundBreak,
+  playAlertSound,
+  alertSoundsCatalog,
+  isGlobalDarkMode: isDarkMode,
+  setGlobalDarkMode,
+  syncGlobalDarkModeFromStorage
 } = usePomodoroTimer(props);
 
 watch(() => localSesionActiva.value, () => {
@@ -299,14 +309,7 @@ const closeOnOutsideClick = (e) => {
 };
 
 onMounted(() => {
-  isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
-  if (isDarkMode.value) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-  }
+  syncGlobalDarkModeFromStorage();
 
   // Registrar los callbacks del temporizador al montar el componente
   registerCallbacks(null, () => {
@@ -389,15 +392,7 @@ const phaseText = computed(() => {
 });
 
 const aplicarCambioModo = (oscuro) => {
-  isDarkMode.value = oscuro;
-  localStorage.setItem('cn-theme', oscuro ? 'dark' : 'light');
-  if (oscuro) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-  }
+  setGlobalDarkMode(oscuro);
 };
 
 // Removed legacy toggleSound logic
@@ -426,6 +421,7 @@ const cerrarModalAvanzado = () => {
 
 // --- WIDGET DE GIF LOGIC ---
 
+const showGifWidget = ref(false);
 const activeGiphyKey = computed(() => props.giphyApiKey || props.tenorApiKey || localStorage.getItem('cn_giphy_key') || localStorage.getItem('cn_tenor_key') || '');
 
 
@@ -731,12 +727,13 @@ watch(cornellTab, async () => {
               <i class="bi" :class="showNotesWidget ? 'bi-journal-richtext' : 'bi-journal'"></i>
             </button>
             <button 
-              @click="toggleGifWidget" 
+              v-if="localSesionActiva"
+              @click="requestPipWindow" 
               class="floating-btn" 
-              :class="{ 'gif-active-btn': showGifWidget }"
-              :title="showGifWidget ? 'Ocultar Compañero GIF' : 'Mostrar Compañero GIF'"
+              :class="{ 'notes-active-btn': isPipActive }"
+              :title="isPipActive ? 'Cerrar Mini-Timer Flotante' : 'Abrir Mini-Timer Flotante (PiP)'"
             >
-              <i class="bi" :class="showGifWidget ? 'bi-image-fill' : 'bi-image'"></i>
+              <i class="bi bi-pip"></i>
             </button>
             <Link 
               href="/dashboard" 
@@ -841,7 +838,11 @@ watch(cornellTab, async () => {
             </div>
             <div id="timer-display" class="timer-display">{{ displayTime }}</div>
             
-            <div class="d-flex gap-2 mt-3 w-100 justify-content-center align-items-center">
+            <div class="d-flex flex-wrap gap-2 mt-3 w-100 justify-content-center align-items-center">
+              <button @click="requestPipWindow" class="btn-zen-mode-toggle" :title="isPipActive ? 'Cerrar Mini-Timer Flotante' : 'Desacoplar Mini-Timer en ventana flotante Always-on-Top'">
+                <i class="bi bi-pip"></i>
+                {{ isPipActive ? 'Cerrar PiP' : 'Mini-Timer' }}
+              </button>
               <button @click="toggleDistractionFree" class="btn-zen-mode-toggle">
                 <i class="bi" :class="isDistractionFree ? 'bi-eye-fill' : 'bi-eye-slash-fill'"></i>
                 {{ isDistractionFree ? 'Salir Modo Zen' : 'Modo Zen' }}
@@ -927,6 +928,49 @@ watch(cornellTab, async () => {
         <div class="settings-panel" :class="{ open: settingsPanelOpen }">
           <div class="settings-content">
             
+            <div class="sound-header mt-1 d-flex justify-content-between align-items-center">
+              <span>ALERTAS DE FIN DE CICLO</span>
+              <input type="checkbox" v-model="alertEnabled" title="Activar/Desactivar alarma sonora" style="cursor: pointer; accent-color: #7b413f;" />
+            </div>
+            <div class="mb-3 p-2 rounded" style="background: rgba(123, 65, 63, 0.08); border: 1px solid rgba(123, 65, 63, 0.18);">
+              <div class="mb-2">
+                <label class="d-block mb-1" style="font-size: 11px; font-weight: 600;">Al terminar Pomodoro (Trabajo)</label>
+                <div class="d-flex gap-1 align-items-center">
+                  <select v-model="alertSoundWork" :disabled="!alertEnabled" class="form-select-zen" style="font-size: 12px; padding: 4px 8px; flex: 1;">
+                    <option v-for="s in alertSoundsCatalog" :key="s.id" :value="s.id">{{ s.emoji }} {{ s.nombre }}</option>
+                  </select>
+                  <button type="button" @click="playAlertSound(alertSoundWork, true)" class="btn-zen-mode-toggle" style="padding: 4px 8px; font-size: 12px;" title="Escuchar sonido">
+                    ▶
+                  </button>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="d-block mb-1" style="font-size: 11px; font-weight: 600;">Al terminar Descanso</label>
+                <div class="d-flex gap-1 align-items-center">
+                  <select v-model="alertSoundBreak" :disabled="!alertEnabled" class="form-select-zen" style="font-size: 12px; padding: 4px 8px; flex: 1;">
+                    <option v-for="s in alertSoundsCatalog" :key="s.id" :value="s.id">{{ s.emoji }} {{ s.nombre }}</option>
+                  </select>
+                  <button type="button" @click="playAlertSound(alertSoundBreak, true)" class="btn-zen-mode-toggle" style="padding: 4px 8px; font-size: 12px;" title="Escuchar sonido">
+                    ▶
+                  </button>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span style="font-size: 11px; font-weight: 600;">Volumen Alerta:</span>
+                <input
+                  type="range"
+                  class="mixer-slider"
+                  style="flex: 1;"
+                  v-model.number="alertVolume"
+                  min="0.05"
+                  max="1"
+                  step="0.05"
+                  :disabled="!alertEnabled"
+                />
+                <span style="font-size: 11px; min-width: 32px; text-align: right;">{{ Math.round(alertVolume * 100) }}%</span>
+              </div>
+            </div>
+
             <div class="sound-header mt-2">MEZCLADOR DE SONIDOS</div>
             <div class="sound-options mixer-options">
               <div 

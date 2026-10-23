@@ -12,6 +12,23 @@ class PresenciaSalaEstudio extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'idPerfil', 'idUsuario', 'estadoUsuario', 'ultimoPing'
+        'idPerfil',
+        'idUsuario',
+        'estadoUsuario',
+        'ultimoPing'
     ];
+
+    protected $casts = [
+        'ultimoPing' => 'datetime',
+    ];
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'idUsuario', 'idUsuario');
+    }
+
+    public function perfil()
+    {
+        return $this->belongsTo(Perfil::class, 'idPerfil', 'idPerfil');
+    }
 }

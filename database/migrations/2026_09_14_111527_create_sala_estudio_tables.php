@@ -8,10 +8,13 @@ return new class extends Migration
 {
     public function up()
     {
+        Schema::dropIfExists('PresenciaSalaEstudio');
+        Schema::dropIfExists('SalaEstudio');
+
         Schema::create('SalaEstudio', function (Blueprint $table) {
             $table->id('idSalaEstudio');
-            $table->integer('idPerfil');
-            $table->integer('idUsuarioCreador');
+            $table->unsignedBigInteger('idPerfil');
+            $table->unsignedBigInteger('idUsuarioCreador');
             $table->string('googleMeetUrl', 500);
             $table->string('googleMeetId', 100)->nullable();
             $table->string('tituloEvento', 150)->default('Sesión de Estudio Grupal');
@@ -24,8 +27,8 @@ return new class extends Migration
         });
 
         Schema::create('PresenciaSalaEstudio', function (Blueprint $table) {
-            $table->integer('idPerfil');
-            $table->integer('idUsuario');
+            $table->unsignedBigInteger('idPerfil');
+            $table->unsignedBigInteger('idUsuario');
             $table->enum('estadoUsuario', ['EnLinea', 'EnPomodoro', 'EnMeet', 'Desconectado'])->default('EnLinea');
             $table->timestamp('ultimoPing')->useCurrent()->useCurrentOnUpdate();
 

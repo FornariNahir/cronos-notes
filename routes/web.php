@@ -12,6 +12,8 @@ use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
 
 use App\Http\Controllers\PerfilCompartidoController;
+use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\SpotifyController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -133,8 +135,14 @@ Route::middleware('auth.custom')->group(function () {
             ];
         }
 
+        $integraciones = [
+            'google_calendar' => \App\Models\IntegracionExterna::where('idUsuario', $userId)->where('plataforma', 'GoogleCalendar')->whereNotNull('tokenAcceso')->exists(),
+            'spotify' => \App\Models\IntegracionExterna::where('idUsuario', $userId)->where('plataforma', 'Spotify')->whereNotNull('tokenAcceso')->exists(),
+        ];
+
         return Inertia::render('PerfilUsuario', [
-            'estadisticas' => $estadisticas
+            'estadisticas' => $estadisticas,
+            'integraciones' => $integraciones,
         ]);
     })->name('perfil-usuario');
 
@@ -161,6 +169,20 @@ Route::middleware('auth.custom')->group(function () {
     })->name('invitacion.entrar');
     Route::post('/invitacion/{token}/aceptar', [PerfilCompartidoController::class, 'aceptarInvitacion'])->name('invitacion.aceptar');
     Route::post('/invitacion/{token}/rechazar', [PerfilCompartidoController::class, 'rechazarInvitacion'])->name('invitacion.rechazar');
+
+    // INTEGRACIONES EXTERNAS (RF-M15)
+    // Google Calendar
+    Route::get('/auth/google-calendar/redirect', [GoogleCalendarController::class, 'redirect'])->name('auth.google-calendar.redirect');
+    Route::get('/auth/google-calendar/callback', [GoogleCalendarController::class, 'callback'])->name('auth.google-calendar.callback');
+    Route::delete('/auth/google-calendar/disconnect', [GoogleCalendarController::class, 'disconnect'])->name('auth.google-calendar.disconnect');
+    Route::get('/api/test/google-calendar', [GoogleCalendarController::class, 'smokeTest'])->name('api.test.google-calendar');
+
+    // Spotify
+    Route::get('/auth/spotify/redirect', [SpotifyController::class, 'redirect'])->name('auth.spotify.redirect');
+    Route::get('/auth/spotify/callback', [SpotifyController::class, 'callback'])->name('auth.spotify.callback');
+    Route::delete('/auth/spotify/disconnect', [SpotifyController::class, 'disconnect'])->name('auth.spotify.disconnect');
+    Route::get('/api/spotify/playlists-curadas', [SpotifyController::class, 'getCuratedPlaylists'])->name('api.spotify.playlists-curadas');
+    Route::get('/api/test/spotify', [SpotifyController::class, 'smokeTest'])->name('api.test.spotify');
 });
 
 // Invitación pública — ver invitación sin auth (para que el link del email funcione)

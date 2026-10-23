@@ -18,6 +18,9 @@ El requerimiento comprende dos ejes principales de integración:
   3. 🎹 **Piano & Clásica Instrumental:** Melodías de piano y composiciones contemporáneas para sesiones de alta carga cognitiva, resolución lógica y matemáticas.
 - **Sinergia con el Mezclador de Sonidos Nativo (RF-M06):** Dado que Cronos Notes ya dispone de un mezclador propio de ruidos ambientales (ruido blanco, ruido marrón, lluvia, café, fogata), Spotify no compite ni duplica estos sonidos fónicos, sino que actúa como la capa musical melódica. Esto posibilita una experiencia inmersiva combinada (ej. reproducir una playlist de *Café & Jazz* de Spotify con el sonido nativo de lluvia de fondo de Cronos).
 - **Control de Reproducción Nativo en [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue):** Control total de streaming (Play, Pausa, Siguiente pista, Pista anterior y Control de volumen) y visualización en tiempo real de carátula de álbum, título de la canción y artista, sin abandonar la pantalla de estudio ni requerir la aplicación de escritorio de Spotify abierta en paralelo.
+- **Degradación Elegante según Tipo de Cuenta (Premium vs. Free — Opción A: Deeplink):**
+  - **Usuarios Spotify Premium:** Disfrutan de la experiencia de streaming nativo in-app completa gobernada por el Web Playback SDK.
+  - **Usuarios Spotify Free:** La política estricta de Spotify no autoriza la reproducción web directa a cuentas gratuitas. Para no frustrar la experiencia de usuario ni generar fallos (`ACCOUNT_ERROR`), el sistema detecta el atributo `product: 'free'` devuelto por la API y conmuta automáticamente a una interfaz alternativa: despliega un mensaje explicativo cordial y un botón destacado de **Deeplink directo** (*"Abrir lista en la App de Spotify"* vía `spotify:playlist:...` / URL web). De este modo, el estudiante puede reproducir la selección de estudio en segundo plano desde su cliente de Spotify mientras conserva en primer plano el cronómetro Pomodoro y el mezclador de sonidos ambientales nativo de Cronos Notes.
 
 ### 1.3. Objetivo General
 Centralizar en un entorno unificado de alta concentración la planificación temporal y el ambiente sonoro del estudiante, mitigando la sobrecarga cognitiva y la dispersión provocada por la alternancia frecuente de ventanas y aplicaciones externas.
@@ -126,13 +129,20 @@ sequenceDiagram
     rect rgb(245, 255, 245)
     note right of U: 4. Streaming y Control de Spotify en Modo Zen
     U->>V: Ingresa a Sesión Zen y abre widget Spotify
-    V->>S: Inicializa Spotify Web Playback SDK con access_token
-    S->>API: Conexión WebSocket de streaming (Player Virtual Cronos)
-    API-->>V: Evento 'ready' con device_id registrado
-    U->>V: Selecciona playlist recomendada y presiona "Play"
-    V->>C: PUT /api/spotify/play { context_uri, device_id }
-    C->>API: Spotify Web API (/v1/me/player/play)
-    API-->>V: Audio stream activo + actualización reactiva de portada y título
+    V->>API: GET /v1/me (Verifica 'product')
+    alt Usuario con Spotify Premium
+        V->>S: Inicializa Spotify Web Playback SDK con access_token
+        S->>API: Conexión WebSocket de streaming (Player Virtual Cronos)
+        API-->>V: Evento 'ready' con device_id registrado
+        U->>V: Selecciona playlist recomendada y presiona "Play"
+        V->>C: PUT /api/spotify/play { context_uri, device_id }
+        C->>API: Spotify Web API (/v1/me/player/play)
+        API-->>V: Audio stream activo + actualización reactiva de portada y título
+    else Usuario con Spotify Free (Opción A: Deeplink)
+        V-->>U: Despliega aviso explicativo de cuenta Free
+        U->>V: Selecciona playlist y presiona "Abrir en App de Spotify"
+        V->>U: Dispara Deeplink (spotify:playlist:... / web) en segundo plano
+    end
     end
 ```
 
@@ -157,9 +167,10 @@ sequenceDiagram
    - El ID asignado por Google se guarda en `tarea.google_event_id`, garantizando que posteriores cambios de fecha o eliminación de la tarea se sincronicen automáticamente en el calendario externo.
 
 4. **Flujo de Reproducción Multimedia con Spotify:**
-   - En [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue), se instancia el Web Playback SDK mediante el script oficial de Spotify, registrando un dispositivo de reproducción virtual.
-   - El usuario visualiza una galería rápida con los tres estilos musicales curados para concentración (*Lofi & Chill Beats*, *Café & Jazz* y *Piano & Clásica Instrumental*), además del acceso a sus propias listas de Spotify.
-   - Al accionar controles de reproducción, el frontend realiza peticiones autorizadas a los endpoints de la Web API de Spotify (`/v1/me/player/play`, `/pause`, `/next`, `/volume`), escuchando los eventos de cambio de estado para actualizar reactivamente la carátula, título y barra de progreso.
+   - En [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue), al interactuar con el widget de Spotify, el frontend evalúa el tipo de suscripción del usuario (`product` en el perfil obtenido vía `/v1/me`).
+   - El usuario visualiza la galería con los tres estilos musicales curados para concentración (*Lofi & Chill Beats*, *Café & Jazz* y *Piano & Clásica Instrumental*), además del selector de sus propias listas.
+   - **Flujo para Usuario Premium:** Se instancia el Web Playback SDK mediante el script oficial de Spotify, registrando a Cronos Notes como reproductor activo (`device_id`). Al accionar controles de reproducción, se comanda la Web API (`/v1/me/player/play`, `/pause`, etc.) y el audio suena de forma nativa en el navegador, sincronizando carátula y progreso.
+   - **Flujo para Usuario Free (Opción A - Deeplink):** La interfaz notifica la restricción de streaming web impuesta por Spotify y habilita en cada tarjeta musical el botón *"Abrir en App de Spotify"*. Al presionarlo, el sistema lanza la aplicación de escritorio o web de Spotify mediante URI protocol (`spotify:playlist:...`) o URL directa, permitiendo que la música reproduzca de fondo sin alterar el temporizador Pomodoro ni bloquear los sonidos ambientales locales.
 
 ---
 
@@ -183,8 +194,15 @@ sequenceDiagram
 3. **Paso 2:** Guardar la tarea.
 4. **Resultado Esperado:** La tarea se persiste en la base de datos local con su respectivo `google_event_id`. Al revisar Google Calendar en una pestaña externa, el evento aparece agendado con el prefijo `[Cronos]`.
 
-### Caso de Prueba 4: Streaming y Control con Spotify en Sesión Zen
-1. **Precondición:** Cuenta de Spotify vinculada (usuario con plan compatible).
+### Caso de Prueba 4: Streaming y Control con Spotify Premium en Sesión Zen
+1. **Precondición:** Cuenta de Spotify vinculada con suscripción Premium activa (`product: 'premium'`).
 2. **Paso 1:** Iniciar una Sesión Pomodoro en Modo Zen y abrir el panel de Spotify.
 3. **Paso 2:** Seleccionar la lista *"Lofi Focus Beats"* y presionar "Play".
-4. **Resultado Esperado:** El streaming comienza a sonar en el navegador. Se visualiza la portada del álbum, título del tema y controles reactivos (Pausa, Salto de pista y Volumen).
+4. **Resultado Esperado:** El streaming comienza a sonar directamente en el navegador. Se visualiza la portada del álbum, título del tema y controles reactivos (Pausa, Salto de pista y Volumen).
+
+### Caso de Prueba 5: Degradación Elegante y Acceso por Deeplink con Spotify Free
+1. **Precondición:** Cuenta de Spotify vinculada con plan gratuito (`product: 'free'`).
+2. **Paso 1:** Iniciar una Sesión Pomodoro en Modo Zen y abrir el panel de Spotify.
+3. **Resultado Esperado:** La interfaz despliega un banner informativo amigable aclarando que el streaming web directo requiere Premium, y muestra en las tarjetas de playlists el botón *"Abrir en App de Spotify"*.
+4. **Paso 2:** Presionar *"Abrir en App de Spotify"* sobre la playlist *"Café & Jazz"*.
+5. **Resultado Esperado:** Se invoca el deeplink abriendo la aplicación externa de Spotify en la lista indicada, mientras la sesión Pomodoro en Cronos Notes continúa sin interrupciones.

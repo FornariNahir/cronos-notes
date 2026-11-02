@@ -162,12 +162,12 @@ class SpotifyController extends Controller
                     'color_tag' => '#ff9800',
                 ],
                 [
-                    'id' => 'piano',
-                    'titulo' => 'Piano & Clásica Minimalista',
-                    'descripcion' => 'Melodías de piano acústico instrumental contemporáneo para máxima concentración y código.',
+                    'id' => 'relax',
+                    'titulo' => 'Relax - Piano Minimalista',
+                    'descripcion' => 'Melodías de piano acústico instrumental contemporáneo para máxima concentración y calma.',
                     'uri' => 'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO',
                     'url_web' => 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO',
-                    'icono' => 'bi-music-note-beamed',
+                    'icono' => 'bi-cup-hot',
                     'color_tag' => '#2196f3',
                 ],
             ]

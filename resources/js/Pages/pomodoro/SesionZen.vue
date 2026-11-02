@@ -155,7 +155,7 @@ const toggleMixerSound = (soundKey) => {
 const spotifyStyles = [
   {
     id: 'lofi',
-    name: 'Sleepy',
+    name: 'Lo-Fi',
     fullName: 'Lofi Girl - beats to relax/study',
     desc: 'Lo-Fi Hip Hop instrumental',
     iconType: 'moon',
@@ -164,8 +164,8 @@ const spotifyStyles = [
     url: 'https://open.spotify.com/playlist/0vvXsWCC9xrXsKd4FyS8kM'
   },
   {
-    id: 'jazzy',
-    name: 'Jazzy',
+    id: 'jazz',
+    name: 'Jazz',
     fullName: 'Coffee Table Jazz (Instrumental)',
     desc: 'Jazz acústico suave de cafetería sin voces',
     iconType: 'sax',
@@ -174,8 +174,8 @@ const spotifyStyles = [
     url: 'https://open.spotify.com/playlist/37i9dQZF1DX8Ig2zLEAhzO'
   },
   {
-    id: 'chill',
-    name: 'Chill',
+    id: 'relax',
+    name: 'Relax',
     fullName: 'Peaceful Piano (Solo Piano)',
     desc: 'Piano instrumental minimalista contemporáneo',
     iconType: 'coffee',
@@ -1083,29 +1083,51 @@ watch(cornellTab, async () => {
                 </div>
               </div>
 
-              <!-- Collapsible Spotify Embed Player & Deeplink -->
-              <div v-if="activeSpotifyStyle && showSpotifyEmbed" class="zen-spotify-embed-box">
-                <iframe 
-                  style="border-radius:10px; width:100%; border:0;" 
-                  :src="`https://open.spotify.com/embed/playlist/${activeSpotifyStyle.spotifyId}?utm_source=generator&theme=0`" 
-                  height="80" 
-                  frameBorder="0" 
-                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                  loading="lazy"
-                ></iframe>
-                <div class="zen-spotify-actions">
-                  <span class="zen-spotify-playlist-title text-truncate" :title="activeSpotifyStyle.fullName">
+              <!-- Track Info & Action Bar (Clean & Symmetrical) -->
+              <div v-if="activeSpotifyStyle" class="zen-player-bar">
+                <div class="zen-player-meta">
+                  <span class="zen-player-style-badge">{{ activeSpotifyStyle.name }}</span>
+                  <span class="zen-player-track-name text-truncate" :title="activeSpotifyStyle.fullName">
                     {{ activeSpotifyStyle.fullName }}
                   </span>
+                </div>
+
+                <div class="zen-player-btn-group">
                   <a 
                     :href="activeSpotifyStyle.url" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    class="zen-spotify-open-btn"
+                    class="zen-player-deeplink-btn"
+                    title="Escuchar en la App de Spotify"
                   >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#1DB954" class="me-1">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.306c-.218.358-.684.473-1.042.255-2.858-1.746-6.455-2.141-10.693-1.173-.41.094-.823-.162-.917-.572-.094-.41.162-.823.572-.917 4.636-1.06 8.608-.607 11.825 1.365.358.218.473.684.255 1.042zm1.467-3.262c-.275.448-.86.591-1.308.316-3.271-2.011-8.258-2.593-12.128-1.417-.506.154-1.041-.133-1.195-.639-.154-.506.133-1.041.639-1.195 4.417-1.341 9.914-.688 13.676 1.627.448.275.591.86.316 1.308zm.126-3.41c-3.923-2.33-10.389-2.545-14.137-1.407-.601.182-1.242-.162-1.424-.763-.182-.601.162-1.242.763-1.424 4.305-1.307 11.439-1.054 15.952 1.624.542.321.721 1.025.4 1.567-.321.542-1.025.721-1.554.403z"/>
+                    </svg>
                     Abrir App ↗
                   </a>
+
+                  <button 
+                    type="button" 
+                    class="zen-player-toggle-embed-btn"
+                    @click="showSpotifyEmbed = !showSpotifyEmbed"
+                    :title="showSpotifyEmbed ? 'Ocultar mini reproductor' : 'Mostrar mini reproductor'"
+                  >
+                    <i class="bi" :class="showSpotifyEmbed ? 'bi-chevron-up' : 'bi-music-player'"></i>
+                    <span>{{ showSpotifyEmbed ? 'Cerrar' : 'Widget' }}</span>
+                  </button>
                 </div>
+              </div>
+
+              <!-- Collapsible Spotify Embed Player con altura estandar de 152px (bien proporcionado) -->
+              <div v-if="activeSpotifyStyle && showSpotifyEmbed" class="zen-spotify-embed-box mt-2">
+                <iframe 
+                  style="border-radius:12px; width:100%; border:0;" 
+                  :src="`https://open.spotify.com/embed/playlist/${activeSpotifyStyle.spotifyId}?utm_source=generator&theme=0`" 
+                  height="152" 
+                  frameBorder="0" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"
+                ></iframe>
               </div>
             </div>
 
@@ -2042,11 +2064,97 @@ watch(cornellTab, async () => {
   background: #e28a52;
 }
 
-.zen-spotify-embed-box {
-  margin-bottom: 10px;
-  background: rgba(0, 0, 0, 0.03);
+.zen-player-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(107, 76, 63, 0.06);
+  padding: 8px 10px;
   border-radius: 12px;
-  padding: 6px;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.zen-player-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.zen-player-style-badge {
+  background: #d97706;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.zen-player-track-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(107, 76, 63, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zen-player-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.zen-player-deeplink-btn {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #1db954;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(29, 185, 84, 0.12);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.zen-player-deeplink-btn:hover {
+  background: rgba(29, 185, 84, 0.22);
+  color: #1ed760;
+}
+
+.zen-player-toggle-embed-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(107, 76, 63, 0.75);
+  background: transparent;
+  border: 1px solid rgba(107, 76, 63, 0.18);
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.zen-player-toggle-embed-btn:hover {
+  background: rgba(107, 76, 63, 0.08);
+  color: rgba(107, 76, 63, 0.95);
+}
+
+.zen-spotify-embed-box {
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 14px;
+  padding: 4px;
+  overflow: hidden;
 }
 
 .zen-spotify-actions {
@@ -2153,6 +2261,29 @@ watch(cornellTab, async () => {
 
 .pomodoro-zen-container.dark-mode .zen-spotify-embed-box {
   background: rgba(0, 0, 0, 0.2);
+}
+
+.pomodoro-zen-container.dark-mode .zen-player-bar {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pomodoro-zen-container.dark-mode .zen-player-style-badge {
+  background: #e28a52;
+  color: #1a1e29;
+}
+
+.pomodoro-zen-container.dark-mode .zen-player-track-name {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pomodoro-zen-container.dark-mode .zen-player-toggle-embed-btn {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.pomodoro-zen-container.dark-mode .zen-player-toggle-embed-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .pomodoro-zen-container.dark-mode .zen-spotify-playlist-title {

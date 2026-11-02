@@ -33,6 +33,10 @@ const props = defineProps({
   giphyApiKey: {
     type: String,
     default: ''
+  },
+  spotifyConectado: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -144,6 +148,54 @@ const toggleMixerSound = (soundKey) => {
   if (result === 'locked') {
     mensajeRegistro.value = 'Este sonido es exclusivo para usuarios registrados. ¿Deseas crear una cuenta gratis para desbloquearlo?';
     modalRegistroOpen.value = true;
+  }
+};
+
+// --- SPOTIFY INTEGRATION (RF-M15) ---
+const spotifyStyles = [
+  {
+    id: 'lofi',
+    name: 'Sleepy',
+    fullName: 'Lofi Girl - beats to relax/study',
+    desc: 'Lo-Fi Hip Hop instrumental',
+    iconType: 'moon',
+    spotifyId: '0vvXsWCC9xrXsKd4FyS8kM',
+    uri: 'spotify:playlist:0vvXsWCC9xrXsKd4FyS8kM',
+    url: 'https://open.spotify.com/playlist/0vvXsWCC9xrXsKd4FyS8kM'
+  },
+  {
+    id: 'jazzy',
+    name: 'Jazzy',
+    fullName: 'Coffee Table Jazz (Instrumental)',
+    desc: 'Jazz acústico suave de cafetería sin voces',
+    iconType: 'sax',
+    spotifyId: '37i9dQZF1DX8Ig2zLEAhzO',
+    uri: 'spotify:playlist:37i9dQZF1DX8Ig2zLEAhzO',
+    url: 'https://open.spotify.com/playlist/37i9dQZF1DX8Ig2zLEAhzO'
+  },
+  {
+    id: 'chill',
+    name: 'Chill',
+    fullName: 'Peaceful Piano (Solo Piano)',
+    desc: 'Piano instrumental minimalista contemporáneo',
+    iconType: 'coffee',
+    spotifyId: '37i9dQZF1DX4sWSpwq3LiO',
+    uri: 'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO',
+    url: 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO'
+  }
+];
+
+const activeSpotifyStyle = ref(null);
+const musicVolume = ref(70);
+const showSpotifyEmbed = ref(false);
+
+const toggleSpotifyStyle = (style) => {
+  if (activeSpotifyStyle.value?.id === style.id) {
+    activeSpotifyStyle.value = null;
+    showSpotifyEmbed.value = false;
+  } else {
+    activeSpotifyStyle.value = style;
+    showSpotifyEmbed.value = true;
   }
 };
 
@@ -957,7 +1009,109 @@ watch(cornellTab, async () => {
         <div class="settings-panel" :class="{ open: settingsPanelOpen }">
           <div class="settings-content">
             
-            <div class="sound-header mt-2">MEZCLADOR DE SONIDOS</div>
+            <!-- SECCIÓN SPOTIFY MUSIC (RF-M15) -->
+            <div class="zen-spotify-section">
+              <!-- Top Row: Mood circular buttons + Spotify Logo Badge -->
+              <div class="zen-spotify-top-row">
+                <div class="zen-mood-buttons">
+                  <div 
+                    v-for="st in spotifyStyles" 
+                    :key="st.id" 
+                    class="zen-mood-item"
+                    @click="toggleSpotifyStyle(st)"
+                  >
+                    <div 
+                      class="zen-mood-circle" 
+                      :class="{ 'active': activeSpotifyStyle?.id === st.id }"
+                      :title="st.fullName"
+                    >
+                      <!-- Icon according to type -->
+                      <svg v-if="st.iconType === 'moon'" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                      </svg>
+                      <svg v-else-if="st.iconType === 'sax'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 3v9a6 6 0 0 0 6 6h2a4 4 0 0 0 4-4v-1a2 2 0 0 0-2-2h-3"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                      </svg>
+                      <svg v-else-if="st.iconType === 'coffee'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+                        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+                        <line x1="6" y1="1" x2="6" y2="4"></line>
+                        <line x1="10" y1="1" x2="10" y2="4"></line>
+                        <line x1="14" y1="1" x2="14" y2="4"></line>
+                      </svg>
+                    </div>
+                    <span class="zen-mood-label" :class="{ 'active': activeSpotifyStyle?.id === st.id }">{{ st.name }}</span>
+                  </div>
+                </div>
+
+                <div 
+                  class="zen-spotify-badge-btn" 
+                  :class="{ 'connected': props.spotifyConectado, 'has-active': !!activeSpotifyStyle }"
+                  @click="activeSpotifyStyle ? (showSpotifyEmbed = !showSpotifyEmbed) : toggleSpotifyStyle(spotifyStyles[0])"
+                  :title="props.spotifyConectado ? 'Spotify Conectado' : 'Reproductor Spotify'"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1DB954">
+                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.306c-.218.358-.684.473-1.042.255-2.858-1.746-6.455-2.141-10.693-1.173-.41.094-.823-.162-.917-.572-.094-.41.162-.823.572-.917 4.636-1.06 8.608-.607 11.825 1.365.358.218.473.684.255 1.042zm1.467-3.262c-.275.448-.86.591-1.308.316-3.271-2.011-8.258-2.593-12.128-1.417-.506.154-1.041-.133-1.195-.639-.154-.506.133-1.041.639-1.195 4.417-1.341 9.914-.688 13.676 1.627.448.275.591.86.316 1.308zm.126-3.41c-3.923-2.33-10.389-2.545-14.137-1.407-.601.182-1.242-.162-1.424-.763-.182-.601.162-1.242.763-1.424 4.305-1.307 11.439-1.054 15.952 1.624.542.321.721 1.025.4 1.567-.321.542-1.025.721-1.554.403z"/>
+                  </svg>
+                  <span class="zen-spotify-badge-text">Spotify</span>
+                </div>
+              </div>
+
+              <!-- Dedicated Card: MUSIC VOLUME -->
+              <div class="zen-music-card">
+                <div class="zen-music-card-header">
+                  <span class="zen-music-card-title">MUSIC VOLUME</span>
+                  <span v-if="activeSpotifyStyle" class="zen-music-current-name">{{ activeSpotifyStyle.name }}</span>
+                  <span v-else class="zen-music-off-tag">Inactivo</span>
+                </div>
+                <div class="zen-music-slider-row">
+                  <svg class="zen-vol-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  </svg>
+                  <input 
+                    type="range" 
+                    class="zen-music-slider" 
+                    v-model.number="musicVolume" 
+                    min="0" max="100" step="1"
+                    :disabled="!activeSpotifyStyle"
+                  />
+                  <svg class="zen-vol-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Collapsible Spotify Embed Player & Deeplink -->
+              <div v-if="activeSpotifyStyle && showSpotifyEmbed" class="zen-spotify-embed-box">
+                <iframe 
+                  style="border-radius:10px; width:100%; border:0;" 
+                  :src="`https://open.spotify.com/embed/playlist/${activeSpotifyStyle.spotifyId}?utm_source=generator&theme=0`" 
+                  height="80" 
+                  frameBorder="0" 
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                  loading="lazy"
+                ></iframe>
+                <div class="zen-spotify-actions">
+                  <span class="zen-spotify-playlist-title text-truncate" :title="activeSpotifyStyle.fullName">
+                    {{ activeSpotifyStyle.fullName }}
+                  </span>
+                  <a 
+                    :href="activeSpotifyStyle.url" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="zen-spotify-open-btn"
+                  >
+                    Abrir App ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Separator & Ambient Mixer Header -->
+            <div class="zen-mixer-divider"></div>
+            <div class="sound-header">SONIDOS AMBIENTALES DE FONDO</div>
             <div class="sound-options mixer-options">
               <div 
                 v-for="(state, soundKey) in mixerState" 
@@ -1681,7 +1835,7 @@ watch(cornellTab, async () => {
   transform: scale(0.97);
 }
 .settings-panel {
-  display: none; position: absolute; top: 110%; left: 0; min-width: 260px;
+  display: none; position: absolute; top: 110%; left: 0; min-width: 320px; width: 320px;
   background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(16px);
   border-radius: 16px; box-shadow: 0 16px 48px rgba(107, 76, 63, 0.12), 0 4px 16px rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(107, 76, 63, 0.08); overflow: hidden; z-index: 100;
@@ -1712,6 +1866,302 @@ watch(cornellTab, async () => {
   background: rgba(255, 255, 255, 0.25) !important;
 }
 
+
+/* --- SPOTIFY MIXER UI (RF-M15) - Estilo ejemplo integracion spotify.png --- */
+.zen-spotify-section {
+  padding: 4px 2px 2px 2px;
+}
+
+.zen-spotify-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.zen-mood-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zen-mood-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease;
+}
+
+.zen-mood-item:hover {
+  transform: translateY(-1px);
+}
+
+.zen-mood-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(107, 76, 63, 0.08);
+  color: rgba(107, 76, 63, 0.65);
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.zen-mood-circle:hover {
+  background: rgba(107, 76, 63, 0.14);
+  color: rgba(107, 76, 63, 0.9);
+}
+
+.zen-mood-circle.active {
+  background: #e28a52;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(226, 138, 82, 0.45);
+  transform: scale(1.04);
+}
+
+.zen-mood-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(107, 76, 63, 0.7);
+  margin-top: 4px;
+  transition: color 0.2s ease;
+}
+
+.zen-mood-label.active {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.zen-spotify-badge-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: rgba(107, 76, 63, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.zen-spotify-badge-btn:hover {
+  background: rgba(107, 76, 63, 0.14);
+}
+
+.zen-spotify-badge-btn.has-active {
+  background: rgba(29, 185, 84, 0.12);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.zen-spotify-badge-text {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(107, 76, 63, 0.9);
+}
+
+/* Dedicated Card: MUSIC VOLUME */
+.zen-music-card {
+  background: rgba(107, 76, 63, 0.06);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  transition: background-color 0.2s;
+}
+
+.zen-music-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.zen-music-card-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #8a7065;
+}
+
+.zen-music-current-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.zen-music-off-tag {
+  font-size: 10.5px;
+  color: #a8948b;
+}
+
+.zen-music-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zen-vol-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.zen-music-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: rgba(107, 76, 63, 0.18);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.zen-music-slider:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.zen-music-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d97706;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+.zen-music-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  background: #e28a52;
+}
+
+.zen-spotify-embed-box {
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 6px;
+}
+
+.zen-spotify-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 4px;
+}
+
+.zen-spotify-playlist-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(107, 76, 63, 0.85);
+  max-width: 190px;
+}
+
+.zen-spotify-open-btn {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1db954;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(29, 185, 84, 0.12);
+  transition: all 0.2s;
+}
+
+.zen-spotify-open-btn:hover {
+  background: rgba(29, 185, 84, 0.22);
+  color: #1ed760;
+}
+
+.zen-mixer-divider {
+  height: 1px;
+  background: rgba(107, 76, 63, 0.1);
+  margin: 10px 0 6px 0;
+}
+
+/* Dark Mode Overrides for Spotify UI */
+.pomodoro-zen-container.dark-mode .zen-mood-circle {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.pomodoro-zen-container.dark-mode .zen-mood-circle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.pomodoro-zen-container.dark-mode .zen-mood-circle.active {
+  background: #e28a52;
+  color: #1a1e29;
+  box-shadow: 0 4px 14px rgba(226, 138, 82, 0.45);
+}
+
+.pomodoro-zen-container.dark-mode .zen-mood-label {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.pomodoro-zen-container.dark-mode .zen-mood-label.active {
+  color: #e28a52;
+}
+
+.pomodoro-zen-container.dark-mode .zen-spotify-badge-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pomodoro-zen-container.dark-mode .zen-spotify-badge-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.pomodoro-zen-container.dark-mode .zen-spotify-badge-text {
+  color: #ffffff;
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-card {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-card-title {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-current-name {
+  color: #e28a52;
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-off-tag {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.pomodoro-zen-container.dark-mode .zen-vol-icon {
+  color: #e28a52;
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-slider {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pomodoro-zen-container.dark-mode .zen-music-slider::-webkit-slider-thumb {
+  background: #e28a52;
+}
+
+.pomodoro-zen-container.dark-mode .zen-spotify-embed-box {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.pomodoro-zen-container.dark-mode .zen-spotify-playlist-title {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pomodoro-zen-container.dark-mode .zen-mixer-divider {
+  background: rgba(255, 255, 255, 0.1);
+}
 
 /* Mixer CSS */
 .mixer-options { max-height: 280px; overflow-y: auto; padding-right: 8px; margin-right: -4px; }

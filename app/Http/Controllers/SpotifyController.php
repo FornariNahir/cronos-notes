@@ -145,26 +145,26 @@ class SpotifyController extends Controller
             'playlists' => [
                 [
                     'id' => 'lofi',
-                    'titulo' => 'Lofi & Chill Beats',
-                    'descripcion' => 'Ritmos suaves e instrumentales ideales para lectura y toma de apuntes.',
-                    'uri' => 'spotify:playlist:37i9dQZF1DXdLEN7aqioXM',
-                    'url_web' => 'https://open.spotify.com/playlist/37i9dQZF1DXdLEN7aqioXM',
+                    'titulo' => 'Lofi Girl - beats to relax/study',
+                    'descripcion' => 'La emblemática selección instrumental de lofi hip hop y chillhop para estudiar con calma.',
+                    'uri' => 'spotify:playlist:0vvXsWCC9xrXsKd4FyS8kM',
+                    'url_web' => 'https://open.spotify.com/playlist/0vvXsWCC9xrXsKd4FyS8kM',
                     'icono' => 'bi-headphones',
                     'color_tag' => '#9c27b0',
                 ],
                 [
                     'id' => 'jazz',
-                    'titulo' => 'Café & Jazz',
-                    'descripcion' => 'Texturas acústicas y cálidas para recrear el ambiente de una cafetería.',
-                    'uri' => 'spotify:playlist:37i9dQZF1DXbITWG1ZJKYt',
-                    'url_web' => 'https://open.spotify.com/playlist/37i9dQZF1DXbITWG1ZJKYt',
+                    'titulo' => 'Café & Jazz Instrumental',
+                    'descripcion' => 'Jazz acústico suave de cafetería (piano, contrabajo y vientos), 100% libre de voces.',
+                    'uri' => 'spotify:playlist:37i9dQZF1DX8Ig2zLEAhzO',
+                    'url_web' => 'https://open.spotify.com/playlist/37i9dQZF1DX8Ig2zLEAhzO',
                     'icono' => 'bi-cup-hot',
                     'color_tag' => '#ff9800',
                 ],
                 [
                     'id' => 'piano',
-                    'titulo' => 'Piano & Clásica Instrumental',
-                    'descripcion' => 'Melodías de piano para sesiones analíticas y resolución de problemas.',
+                    'titulo' => 'Piano & Clásica Minimalista',
+                    'descripcion' => 'Melodías de piano acústico instrumental contemporáneo para máxima concentración y código.',
                     'uri' => 'spotify:playlist:37i9dQZF1DX4sWSpwq3LiO',
                     'url_web' => 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO',
                     'icono' => 'bi-music-note-beamed',
@@ -212,10 +212,16 @@ class SpotifyController extends Controller
             ]);
         }
 
+        $errorBody = $response->body();
+        $message = 'Error al consultar Spotify Web API.';
+        if (str_contains($errorBody, 'Active premium subscription required for the owner of the app')) {
+            $message = 'La cuenta de Spotify que creó la aplicación en el Spotify Developer Dashboard no posee una suscripción activa a Spotify Premium. Spotify exige obligatoriamente que el propietario de la App en el Dashboard sea Premium para habilitar llamadas a su Web API.';
+        }
+
         return response()->json([
             'status' => 'error',
-            'message' => 'Error al consultar Spotify Web API.',
-            'error_details' => $response->json(),
+            'message' => $message,
+            'error_details' => $response->json() ?? $errorBody,
         ], $response->status());
     }
 }

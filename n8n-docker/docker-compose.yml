@@ -11,6 +11,7 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
     volumes:
       - n8n_data:/home/node/.n8n
 

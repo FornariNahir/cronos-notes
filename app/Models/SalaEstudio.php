@@ -14,15 +14,33 @@ class SalaEstudio extends Model
     public $timestamps = false; 
 
     protected $fillable = [
-        'idPerfil', 'idUsuarioCreador', 'googleMeetUrl', 
-        'googleMeetId', 'tituloEvento', 'estado', 'fechaCreacion', 'fechaFin'
+        'idPerfil',
+        'idUsuarioCreador',
+        'googleMeetUrl',
+        'googleMeetId',
+        'tituloEvento',
+        'estado',
+        'fechaCreacion',
+        'fechaFin'
     ];
 
-    public function perfil() {
+    protected $casts = [
+        'fechaCreacion' => 'datetime',
+        'fechaFin' => 'datetime',
+    ];
+
+    public function perfil()
+    {
         return $this->belongsTo(Perfil::class, 'idPerfil', 'idPerfil');
     }
 
-    public function creador() {
+    public function creador()
+    {
         return $this->belongsTo(User::class, 'idUsuarioCreador', 'idUsuario');
+    }
+
+    public function presencias()
+    {
+        return $this->hasMany(PresenciaSalaEstudio::class, 'idPerfil', 'idPerfil');
     }
 }

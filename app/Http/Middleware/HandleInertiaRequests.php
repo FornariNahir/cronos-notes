@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'openShareModal' => fn () => $request->session()->get('openShareModal'),
             ],
+            'sesionPomodoroActiva' => fn () => $request->session()->get('sesionPomodoroActiva'),
         ];
     }
 }

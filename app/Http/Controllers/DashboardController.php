@@ -7,6 +7,7 @@ use App\Models\Tarea;
 use App\Models\Estadistica;
 use App\Models\PerfilCompartido;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -34,81 +35,70 @@ class DashboardController extends Controller
             ])
             ->get();
 
-        // Perfiles compartidos con este usuario
-        $perfilesCompartidos = Perfil::whereHas('usuariosCompartidos', function ($query) use ($user) {
-                $query->where('PerfilCompartido.idUsuario', $user->idUsuario);
-            })
-            ->with([
-                'usuario:idUsuario,nombre,apellido'
-            ])
-            ->withCount([
-                'tareas',
-                'tareas as tareas_completadas_count' => function ($query) {
-                    $query->where('estadoTarea', 'Completado');
-                },
-                'usuariosCompartidos'
-            ])
-            ->get()
-            ->map(function ($perfil) use ($user) {
-                $perfil->esCompartido = true;
-                $perfil->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
-                    ->where('idPerfil', $perfil->idPerfil)
-                    ->value('permiso');
-                $perfil->propietario = $perfil->usuario ? ($perfil->usuario->nombre . ' ' . $perfil->usuario->apellido) : 'Desconocido';
-                return $perfil;
-            });
+        // Perfiles compartidos con este usuario (sin N+1 sobre PerfilCompartido)
+        $permisosPorPerfil = PerfilCompartido::where('idUsuario', $user->idUsuario)
+            ->pluck('permiso', 'idPerfil');
+
+        $perfilesCompartidos = collect();
+        if ($permisosPorPerfil->isNotEmpty()) {
+            $perfilesCompartidos = Perfil::whereIn('idPerfil', $permisosPorPerfil->keys())
+                ->with(['usuario:idUsuario,nombre,apellido'])
+                ->withCount([
+                    'tareas',
+                    'tareas as tareas_completadas_count' => function ($query) {
+                        $query->where('estadoTarea', 'Completado');
+                    },
+                    'usuariosCompartidos'
+                ])
+                ->get()
+                ->map(function ($perfil) use ($permisosPorPerfil) {
+                    $perfil->esCompartido = true;
+                    $perfil->permisoCompartido = $permisosPorPerfil[$perfil->idPerfil] ?? 'Leer';
+                    $perfil->propietario = $perfil->usuario ? ($perfil->usuario->nombre . ' ' . $perfil->usuario->apellido) : 'Desconocido';
+                    return $perfil;
+                });
+        }
 
         $perfilActivoId = session('perfilActivo');
         $perfilActivo = null;
         $tareas = [];
 
         if ($perfilActivoId) {
-            // Obtenemos los datos del perfil activo (propietario o compartido)
-            $perfilActivo = Perfil::where('idPerfil', $perfilActivoId)
-                                  ->where(function ($query) use ($user) {
-                                      $query->where('idUsuario', $user->idUsuario)
-                                            ->orWhereHas('usuariosCompartidos', function ($q) use ($user) {
-                                                $q->where('PerfilCompartido.idUsuario', $user->idUsuario);
-                                            });
-                                  })
-                                  ->with('usuario:idUsuario,nombre,apellido')
-                                  ->first();
+            // Reutilizar de memoria si ya lo cargamos arriba
+            $perfilActivo = $perfiles->firstWhere('idPerfil', (int) $perfilActivoId)
+                ?? $perfilesCompartidos->firstWhere('idPerfil', (int) $perfilActivoId);
 
             if ($perfilActivo) {
-                // Determinar rol/permiso del usuario actual
                 if ($perfilActivo->idUsuario === $user->idUsuario) {
                     $perfilActivo->esCompartido = false;
                     $perfilActivo->permisoCompartido = 'Administrador';
                     $perfilActivo->propietario = $user->nombre . ' ' . $user->apellido;
-                } else {
-                    $perfilActivo->esCompartido = true;
-                    $perfilActivo->permisoCompartido = PerfilCompartido::where('idUsuario', $user->idUsuario)
-                        ->where('idPerfil', $perfilActivoId)
-                        ->value('permiso');
-                    $perfilActivo->propietario = $perfilActivo->usuario ? ($perfilActivo->usuario->nombre . ' ' . $perfilActivo->usuario->apellido) : 'Desconocido';
                 }
 
                 // Obtenemos solo las tareas pendientes de ese perfil sumando ciclos Pomodoro
                 $tareas = Tarea::where('idPerfil', $perfilActivo->idPerfil)
-                               ->where('estadoTarea', 'Pendiente')
-                               ->withSum(['sesionesPomodoro' => function($query) {
-                                   $query->where('estadoSesion', 'Completada');
-                                }], 'ciclosCompletados')
-                               ->get();
+                    ->where('estadoTarea', 'Pendiente')
+                    ->withSum(['sesionesPomodoro' => function ($query) {
+                        $query->where('estadoSesion', 'Completada');
+                    }], 'ciclosCompletados')
+                    ->get();
             }
         }
 
-        // Obtenemos las estadísticas del usuario o creamos valores por defecto
-        $estadisticas = Estadistica::where('idUsuario', $user->idUsuario)->first();
+        // 1 sola consulta agrupada para los últimos 7 días (incluyendo HOY)
+        $fechaInicioSemana = Carbon::today()->subDays(6)->startOfDay();
+        $minutosPorDia = SesionPomodoro::join('ConfiguracionPomodoro', 'SesionPomodoro.idConfiguracionPomodoro', '=', 'ConfiguracionPomodoro.idConfiguracionPomodoro')
+            ->where('ConfiguracionPomodoro.idUsuario', $user->idUsuario)
+            ->where('SesionPomodoro.fechaCreacionSesion', '>=', $fechaInicioSemana)
+            ->selectRaw('DATE(SesionPomodoro.fechaCreacionSesion) as fecha, SUM(SesionPomodoro.tiempoTrabajoTotalMinutos) as total_minutos')
+            ->groupBy(DB::raw('DATE(SesionPomodoro.fechaCreacionSesion)'))
+            ->pluck('total_minutos', 'fecha');
 
-        // Calcular dinámicamente las horas de concentración diarias para HOY
-        $minutosHoy = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                $q->where('idUsuario', $user->idUsuario);
-            })
-            ->whereDate('fechaCreacionSesion', Carbon::today()->toDateString())
-            ->sum('tiempoTrabajoTotalMinutos');
+        $hoyStr = Carbon::today()->toDateString();
+        $minutosHoy = (int) ($minutosPorDia[$hoyStr] ?? 0);
         $horasConcentracionDiaria = round($minutosHoy / 60, 2);
 
+        $estadisticas = Estadistica::where('idUsuario', $user->idUsuario)->first();
         if (!$estadisticas) {
             $estadisticas = Estadistica::create([
                 'idUsuario' => $user->idUsuario,
@@ -118,40 +108,37 @@ class DashboardController extends Controller
                 'tiempoTotalPomodoro' => 0,
                 'horasConcentracionDiaria' => $horasConcentracionDiaria
             ]);
-        } else {
+        } elseif (abs((float) $estadisticas->horasConcentracionDiaria - $horasConcentracionDiaria) > 0.001) {
             $estadisticas->update([
                 'horasConcentracionDiaria' => $horasConcentracionDiaria
             ]);
         }
 
-        // Datos para el Gráfico de Barras (Semana)
+        // Construir Gráfico de Barras (Semana) en memoria sin hacer 7 queries
         $chartDataSemana = [];
         for ($i = 6; $i >= 0; $i--) {
             $fecha = Carbon::today()->subDays($i);
-            $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                    $q->where('idUsuario', $user->idUsuario);
-                })
-                ->whereDate('fechaCreacionSesion', $fecha->toDateString())
-                ->sum('tiempoTrabajoTotalMinutos');
-                
+            $fechaKey = $fecha->toDateString();
+            $minutos = (int) ($minutosPorDia[$fechaKey] ?? 0);
+
             $chartDataSemana[] = [
                 'fecha' => $fecha->format('d/m'),
                 'horas' => round($minutos / 60, 2)
             ];
         }
 
-        // Datos para el Gráfico de Dona (Perfil)
+        // 1 sola consulta agrupada por Perfil para el Gráfico de Dona
+        $minutosPorPerfil = SesionPomodoro::join('ConfiguracionPomodoro', 'SesionPomodoro.idConfiguracionPomodoro', '=', 'ConfiguracionPomodoro.idConfiguracionPomodoro')
+            ->join('Tarea', 'SesionPomodoro.idTarea', '=', 'Tarea.idTarea')
+            ->where('ConfiguracionPomodoro.idUsuario', $user->idUsuario)
+            ->selectRaw('Tarea.idPerfil as idPerfil, SUM(SesionPomodoro.tiempoTrabajoTotalMinutos) as total_minutos')
+            ->groupBy('Tarea.idPerfil')
+            ->pluck('total_minutos', 'idPerfil');
+
         $chartDataPerfil = [];
         $coloresDisponibles = ['#612c2d', '#c4a5a5', '#e5d5d5', '#8b4c4c', '#531d55'];
         foreach ($perfiles as $index => $p) {
-            $minutos = SesionPomodoro::whereHas('configuracionPomodoro', function($q) use ($user) {
-                    $q->where('idUsuario', $user->idUsuario);
-                })
-                ->whereHas('tarea', function($q) use ($p) {
-                    $q->where('idPerfil', $p->idPerfil);
-                })
-                ->sum('tiempoTrabajoTotalMinutos');
-                
+            $minutos = (int) ($minutosPorPerfil[$p->idPerfil] ?? 0);
             if ($minutos > 0) {
                 $chartDataPerfil[] = [
                     'perfil' => $p->tituloPerfil,
@@ -161,7 +148,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Enviamos los datos a Dashboard.vue
         return Inertia::render('Dashboard', [
             'perfiles' => $perfiles,
             'perfilesCompartidos' => $perfilesCompartidos,

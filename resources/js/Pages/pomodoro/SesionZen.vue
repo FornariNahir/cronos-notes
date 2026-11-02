@@ -169,9 +169,9 @@ const spotifyStyles = [
     fullName: 'Coffee Table Jazz (Instrumental)',
     desc: 'Jazz acústico suave de cafetería sin voces',
     iconType: 'sax',
-    spotifyId: '37i9dQZF1DX8Ig2zLEAhzO',
-    uri: 'spotify:playlist:37i9dQZF1DX8Ig2zLEAhzO',
-    url: 'https://open.spotify.com/playlist/37i9dQZF1DX8Ig2zLEAhzO'
+    spotifyId: '37i9dQZF1DWVqfgj8NZEp1',
+    uri: 'spotify:playlist:37i9dQZF1DWVqfgj8NZEp1',
+    url: 'https://open.spotify.com/playlist/37i9dQZF1DWVqfgj8NZEp1'
   },
   {
     id: 'relax',

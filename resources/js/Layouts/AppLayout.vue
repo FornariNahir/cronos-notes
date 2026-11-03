@@ -3,84 +3,94 @@
     
     <button 
       id="sidebarToggle" 
-      aria-label="Toggle sidebar" 
+      aria-label="Abrir menú lateral" 
       @click="toggleSidebar"
       v-show="isSidebarClosed"
+      title="Abrir menú"
     >
-      &#9776;
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <polyline points="14 9 17 12 14 15" />
+      </svg>
     </button>
 
     <aside class="sidebar" :class="{ 'closed': isSidebarClosed }">
-      <div class="logo-area d-flex align-items-center justify-content-between w-100">
-        <div class="logo-icon">
-          <img src="/imagenes/logo-cronos.png" alt="Logo">
-        </div>
+      <div class="logo-area">
+        <Link :href="route('dashboard')" class="logo-brand-link" title="Ir al Dashboard">
+          <img
+            :src="isDarkMode ? '/imagenes/logo-cronos-trim-dark.png' : '/imagenes/logo-cronos-trim.png'"
+            alt="Cronos Notes"
+            class="sidebar-logo-img"
+          />
+        </Link>
         <button 
           class="btn-collapse-sidebar" 
           @click="toggleSidebar" 
           aria-label="Colapsar menú"
+          title="Ocultar barra lateral"
         >
-          <i class="bi bi-chevron-left"></i>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
       </div>
 
+      <div class="nav-section-title first-section">Principal</div>
       <ul class="nav-menu">
         <li>
           <Link :href="route('dashboard')" class="nav-item" :class="{ active: route().current('dashboard') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Pagina principal
+            <span>Página principal</span>
           </Link>
         </li>
         <li>
           <Link :href="route('gestion-perfil')" class="nav-item" :class="{ active: route().current('gestion-perfil') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="7" height="7"/>
-              <rect x="14" y="3" width="7" height="7"/>
-              <rect x="14" y="14" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="14" y="14" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
             </svg>
-            Mis perfiles
+            <span>Mis perfiles</span>
           </Link>
         </li>
         <li>
           <Link :href="route('gestion-tareas')" class="nav-item" :class="{ active: route().current('gestion-tareas') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
               <line x1="16" y1="17" x2="8" y2="17"/>
               <polyline points="10 9 9 9 8 9"/>
             </svg>
-            Mis tareas
+            <span>Mis tareas</span>
           </Link>
         </li>
         <li>
           <Link href="/estadisticas" class="nav-item" :class="{ active: $page.url.startsWith('/estadisticas') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="20" x2="18" y2="10"/>
               <line x1="12" y1="20" x2="12" y2="4"/>
               <line x1="6" y1="20" x2="6" y2="14"/>
             </svg>
-            Estadisticas
+            <span>Estadísticas</span>
           </Link>
         </li>
         <li>
           <Link :href="route('calendario')" class="nav-item" :class="{ active: route().current('calendario') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
               <line x1="16" y1="2" x2="16" y2="6"/>
               <line x1="8" y1="2" x2="8" y2="6"/>
               <line x1="3" y1="10" x2="21" y2="10"/>
             </svg>
-            Calendario
+            <span>Calendario</span>
           </Link>
         </li>
-
-
-
       </ul>
 
       <div class="nav-section-title">Pomodoro</div>
@@ -91,15 +101,15 @@
               <path d="M12 22c-4-4-8-9-8-14 0-5 6-6 8-6s8 1 8 6c0 5-4 10-8 14z"/>
               <path d="M12 22V12"/>
             </svg>
-            Espacio de Concentración
+            <span>Espacio de Concentración</span>
           </Link>
         </li>
         <li>
           <Link :href="route('apuntes.index')" class="nav-item" :class="{ active: route().current('apuntes.index') || route().current('apuntes.create') || route().current('apuntes.edit') }" @click="closeSidebarOnMobile">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
-            Mis apuntes
+            <span>Mis apuntes</span>
           </Link>
         </li>
         <li>
@@ -110,10 +120,9 @@
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Salas de Estudio
+            <span>Salas de Estudio</span>
           </Link>
         </li>
-
       </ul>
     </aside>
 
@@ -226,40 +235,58 @@ const toggleMode = () => {
 }
 
 .sidebar {
-  width: 220px;
-  background-color: #fff;
-  padding: 12px 16px 24px 16px;
+  width: 248px;
+  background-color: #ffffff;
+  padding: 0 14px 24px 14px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e5e5;
+  border-right: 1px solid #eadcd7;
+  box-shadow: 2px 0 16px rgba(74, 35, 40, 0.03);
   position: fixed;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   left: 0;
   top: 0;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1040;
 }
 
 .logo-area {
   display: flex;
   align-items: center;
-  margin-bottom: -15px;
-  padding: 0 8px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 18px 14px 16px 16px;
+  margin: 0 -14px 14px -14px;
+  border-bottom: 1px solid #f0e5e1;
 }
 
-.logo-icon img {
-  margin-top: -15px;
-  width: 150px;
-  height: auto;
+.logo-brand-link {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  outline: none;
+}
+
+.sidebar-logo-img {
+  height: 44px;
+  width: auto;
+  max-width: 162px;
   object-fit: contain;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.logo-brand-link:hover .sidebar-logo-img {
+  transform: scale(1.02);
 }
 
 .nav-menu {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   padding: 0;
   margin: 0;
 }
@@ -268,14 +295,16 @@ const toggleMode = () => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  color: #666;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #5a4645;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
 }
 
 .nav-btn {
@@ -286,28 +315,41 @@ const toggleMode = () => {
 }
 
 .nav-item:hover {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #f6eeeb;
+  color: #4A2328;
 }
 
 .nav-item.active {
-  background-color: #612c2d;
-  color: #fff;
+  background-color: #4A2328;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(74, 35, 40, 0.16);
 }
 
 .nav-item svg {
-  width: 20px;
-  height: 20px;
+  width: 19px;
+  height: 19px;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.nav-item:hover svg {
+  transform: translateX(1px);
 }
 
 .nav-section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  margin-top: 32px;
-  margin-bottom: 12px;
-  padding: 0 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8c6d6a;
+  margin-top: 24px;
+  margin-bottom: 8px;
+  padding: 0 14px;
+}
+
+.nav-section-title.first-section {
+  margin-top: 2px;
 }
 
 .logout-li {
@@ -321,59 +363,58 @@ const toggleMode = () => {
 
 #sidebarToggle {
   position: fixed;
-  top: 15px;
+  top: 14px;
   left: 15px;
-  background: #612c2d;
-  border: none;
-  border-radius: 6px;
+  background: #4A2328;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
   width: 40px;
   height: 40px;
-  color: white;
-  font-size: 1.5rem;
+  color: #ffffff;
   cursor: pointer;
   z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(74, 35, 40, 0.22);
+  transition: all 0.2s ease;
+}
+
+#sidebarToggle:hover {
+  background: #612c2d;
+  transform: translateY(-1px);
 }
 
 .sidebar.closed {
-  transform: translateX(-220px);
+  transform: translateX(-248px);
 }
 
 .btn-collapse-sidebar {
-  background: transparent;
-  border: none;
-  color: #666;
-  font-size: 1.25rem;
+  width: 32px;
+  height: 32px;
+  background: #fdfaf8;
+  border: 1px solid #eadcd7;
+  color: #612c2d;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 6px;
-  transition: background-color 0.2s, color 0.2s;
-  margin-top: -15px;
+  padding: 0;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .btn-collapse-sidebar:hover {
-  background-color: #f5f5f5;
-  color: #333;
-}
-
-body.cn-body-dark .btn-collapse-sidebar {
-  color: #f4be95;
-}
-
-body.cn-body-dark .btn-collapse-sidebar:hover {
-  background-color: #7b413f;
-  color: #ffffff;
+  background-color: #f5ebe8;
+  border-color: #c9b1aa;
+  color: #4A2328;
 }
 
 #content {
-  margin-left: 220px;
+  margin-left: 248px;
   padding: 20px;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #content.expanded {
@@ -598,10 +639,29 @@ body.cn-body-dark #content {
 body.cn-body-dark .sidebar {
   background-color: #4d2323 !important;
   border-right: 1px solid #7b413f !important;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.25) !important;
 }
 
-body.cn-body-dark .logo-icon img {
-  filter: brightness(0) invert(1) !important;
+body.cn-body-dark .logo-area {
+  border-bottom-color: rgba(244, 190, 149, 0.16) !important;
+}
+
+body.cn-body-dark .btn-collapse-sidebar {
+  background-color: #3b1919 !important;
+  border-color: #7b413f !important;
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .btn-collapse-sidebar:hover {
+  background-color: #612c2d !important;
+  border-color: #f4be95 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark #sidebarToggle {
+  background-color: #f4be95 !important;
+  color: #3b1919 !important;
+  border-color: #f4be95 !important;
 }
 
 body.cn-body-dark .nav-item {
@@ -609,18 +669,19 @@ body.cn-body-dark .nav-item {
 }
 
 body.cn-body-dark .nav-item:hover {
-  background-color: #7b413f !important;
+  background-color: rgba(244, 190, 149, 0.14) !important;
   color: #ffffff !important;
 }
 
 body.cn-body-dark .nav-item.active {
   background-color: #f4be95 !important;
-  color: #4d2323 !important;
-  font-weight: 600 !important;
+  color: #3b1919 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22) !important;
 }
 
 body.cn-body-dark .nav-section-title {
-  color: #fcd5b8 !important;
+  color: #e2b99b !important;
 }
 
 body.cn-body-dark .top-bar {

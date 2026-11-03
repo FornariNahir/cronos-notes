@@ -22,6 +22,7 @@ const {
 
 const page = usePage();
 const pipWindow = ref(null);
+const isMinimized = ref(false);
 
 // Sincronizar la sesión activa compartida por Inertia en cualquier página de la app
 watch(
@@ -30,7 +31,7 @@ watch(
     if (sharedSession && !localSesionActiva.value) {
       localSesionActiva.value = sharedSession;
       initTimer();
-    } else if (!sharedSession && localSesionActiva.value && localSesionActiva.value.idSesion !== 'guest' && localSesionActiva.value.idSesion !== 'guest_custom') {
+    } else if (!sharedSession && localSesionActiva.value && localSesionActiva.value.idSesion !== 'guest' && localSesionActiva.value.idSesion !== 'guest_custom' && !String(localSesionActiva.value.idSesion).startsWith('sala_')) {
       localSesionActiva.value = null;
     }
   },
@@ -48,15 +49,17 @@ const togglePipTheme = () => {
   setGlobalDarkMode(!isGlobalDarkMode.value);
 };
 
-const isOnPomodoroPage = computed(() => {
-  return page.url.startsWith('/pomodoro');
+// Ocultar el widget flotante en página cuando ya estamos viendo el cronómetro principal (Espacio Pomodoro o Sala de Estudio en vivo)
+const isOnMainTimerPage = computed(() => {
+  const url = page.url || '';
+  return url.startsWith('/pomodoro') || /^\/salas-estudio\/\d+/.test(url);
 });
 
-// Visible fuera de /pomodoro cuando existe una sesión activa o el reloj está corriendo/avanzado, y no está en ventana PiP
+// Visible fuera de las pantallas principales de cronómetro cuando existe una sesión activa, y no está desacoplado en ventana PiP
 const isVisible = computed(() => {
   const hasTime = timeLeft.value !== null && timeLeft.value !== undefined;
   const hasStarted = isRunning.value || (totalSeconds.value > 0 && timeLeft.value < totalSeconds.value) || !!localSesionActiva.value;
-  return hasTime && hasStarted && !isOnPomodoroPage.value && !isPipActive.value;
+  return hasTime && hasStarted && !isOnMainTimerPage.value && !isPipActive.value;
 });
 
 const formattedTime = computed(() => {
@@ -67,7 +70,7 @@ const formattedTime = computed(() => {
 });
 
 const phaseLabel = computed(() => {
-  if (currentPhase.value === 'work') return 'TRABAJO';
+  if (currentPhase.value === 'work') return 'ENFOQUE';
   if (currentPhase.value === 'shortBreak') return 'DESCANSO CORTO';
   return 'DESCANSO LARGO';
 });
@@ -87,6 +90,12 @@ const skipPhase = () => {
 const irAPomodoro = () => {
   if (isPipActive.value && pipWindow.value) {
     pipWindow.value.close();
+  }
+  const sesionId = String(localSesionActiva.value?.idSesion || '');
+  if (sesionId.startsWith('sala_')) {
+    const salaId = sesionId.replace('sala_', '');
+    router.visit(route('salas.show', salaId));
+    return;
   }
   router.visit(route('pomodoro.index'));
 };
@@ -152,6 +161,7 @@ const abrirDocumentPIP = async () => {
 
   try {
     let pip = null;
+    isMinimized.value = false;
 
     if ('documentPictureInPicture' in window) {
       pip = await window.documentPictureInPicture.requestWindow({
@@ -176,7 +186,7 @@ const abrirDocumentPIP = async () => {
       * { box-sizing: border-box; }
       body {
         background-color: #fdfaf8;
-        color: #4d2323;
+        color: #4A2328;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -206,11 +216,11 @@ const abrirDocumentPIP = async () => {
         border-bottom-color: #7b413f;
       }
       .pip-title {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         font-weight: 800;
-        color: #7b413f;
+        color: #612c2d;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
+        letter-spacing: 1.4px;
       }
       body.dark-mode .pip-title {
         color: #f4be95;
@@ -223,7 +233,7 @@ const abrirDocumentPIP = async () => {
       .pip-btn {
         background: transparent;
         border: none;
-        color: #7b413f;
+        color: #612c2d;
         cursor: pointer;
         padding: 3px;
         border-radius: 6px;
@@ -244,6 +254,12 @@ const abrirDocumentPIP = async () => {
       .pip-only-hide {
         display: none !important;
       }
+      .pip-body-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
       .pip-task {
         font-size: 0.78rem;
         color: #6b4c4b;
@@ -257,11 +273,11 @@ const abrirDocumentPIP = async () => {
         color: #fcd5b8;
       }
       .pip-time {
-        font-size: 3.2rem;
-        font-family: 'Courier New', Courier, monospace;
+        font-size: 3.1rem;
+        font-variant-numeric: tabular-nums;
         font-weight: 800;
         margin: 6px 0;
-        color: #4d2323;
+        color: #4A2328;
         text-align: center;
         line-height: 1;
       }
@@ -276,18 +292,18 @@ const abrirDocumentPIP = async () => {
         width: 100%;
       }
       .pip-controls button {
-        background: #4d2323;
+        background: #4A2328;
         color: white;
         border: none;
         border-radius: 50%;
-        width: 46px;
-        height: 46px;
+        width: 44px;
+        height: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: 0.2s;
-        box-shadow: 0 4px 10px rgba(77, 35, 35, 0.25);
+        box-shadow: 0 4px 10px rgba(74, 35, 40, 0.25);
       }
       .pip-controls button:hover {
         background: #7b413f;
@@ -327,7 +343,7 @@ const abrirDocumentPIP = async () => {
   }
 };
 
-// Escuchar solicitudes de apertura de PiP disparadas desde SesionZen.vue u otros componentes
+// Escuchar solicitudes de apertura de PiP disparadas desde SesionZen.vue o Detalle.vue
 watch(pipRequestCounter, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     abrirDocumentPIP();
@@ -352,7 +368,10 @@ onUnmounted(() => {
       id="timer-pip-container-content"
       ref="widgetRef"
       class="mini-timer-widget"
-      :class="{ 'dark-mode': isGlobalDarkMode }"
+      :class="{
+        'dark-mode': isGlobalDarkMode,
+        'is-minimized': isMinimized && !isPipActive
+      }"
       :style="position.x !== -1 && !isPipActive ? { left: position.x + 'px', top: position.y + 'px', right: 'auto', bottom: 'auto' } : {}"
     >
       <!-- Header / Drag Handle -->
@@ -361,16 +380,19 @@ onUnmounted(() => {
         @mousedown="!isPipActive && initDrag($event)"
         :style="!isPipActive ? 'cursor: grab' : ''"
       >
-        <span class="pip-title">{{ phaseLabel }}</span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="pip-title">{{ phaseLabel }}</span>
+          <span v-if="isMinimized && !isPipActive" class="pip-time-compact">{{ formattedTime }}</span>
+        </div>
+
         <div class="pip-header-actions">
-          <!-- Botón Modo Claro / Oscuro (visible tanto en el widget como en la ventana PiP) -->
+          <!-- Botón Modo Claro / Oscuro -->
           <button
             @click.stop="togglePipTheme"
             :title="isGlobalDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'"
             class="pip-btn"
           >
-            <!-- Sol (cuando está en modo oscuro) -->
-            <svg v-if="isGlobalDarkMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-if="isGlobalDarkMode" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="5" />
               <line x1="12" y1="1" x2="12" y2="3" />
               <line x1="12" y1="21" x2="12" y2="23" />
@@ -381,77 +403,101 @@ onUnmounted(() => {
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
             </svg>
-            <!-- Luna (cuando está en modo claro) -->
-            <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <svg v-else viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
             </svg>
           </button>
 
-          <button v-if="!isPipActive" @click.stop="irAPomodoro" title="Ir al Espacio de Concentración" class="pip-btn pip-only-hide">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+          <button v-if="!isPipActive" @click.stop="irAPomodoro" title="Ir al Temporizador Principal" class="pip-btn pip-only-hide">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
             </svg>
           </button>
+
           <button v-if="!isPipActive" @click.stop="abrirDocumentPIP" title="Desacoplar en Ventana Flotante (Always-on-Top)" class="pip-btn pip-only-hide">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
               <rect x="12" y="12" width="7" height="6" rx="1" fill="currentColor" />
+            </svg>
+          </button>
+
+          <!-- Minimizar / acoplar widget -->
+          <button
+            v-if="!isPipActive"
+            @click.stop="isMinimized = !isMinimized"
+            :title="isMinimized ? 'Expandir Mini-Timer' : 'Minimizar Mini-Timer'"
+            class="pip-btn pip-only-hide"
+          >
+            <svg v-if="isMinimized" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
         </div>
       </div>
 
-      <!-- Tarea / Ciclo -->
-      <div v-if="localSesionActiva?.tituloTarea" class="pip-task" :title="localSesionActiva.tituloTarea">
-        {{ localSesionActiva.tituloTarea }} (Ciclo {{ currentCycle }}/{{ localSesionActiva.sesionesPrevioDescansoLargo || 4 }})
-      </div>
+      <!-- Cuerpo desplegable -->
+      <div v-show="!isMinimized || isPipActive" class="pip-body-content">
+        <!-- Tarea / Ciclo -->
+        <div v-if="localSesionActiva?.tituloTarea" class="pip-task" :title="localSesionActiva.tituloTarea">
+          {{ localSesionActiva.tituloTarea }} · Ciclo {{ currentCycle }}/{{ localSesionActiva.sesionesPrevioDescansoLargo || 4 }}
+        </div>
 
-      <!-- Contador -->
-      <div class="pip-time">
-        {{ formattedTime }}
-      </div>
+        <!-- Contador -->
+        <div class="pip-time">
+          {{ formattedTime }}
+        </div>
 
-      <!-- Controles -->
-      <div class="pip-controls">
-        <button @click="togglePlay" class="btn-play" :title="isRunning ? 'Pausar' : 'Reanudar'">
-          <svg v-if="isRunning" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="6" y="4" width="4" height="16" />
-            <rect x="14" y="4" width="4" height="16" />
-          </svg>
-          <svg v-else viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 3 19 12 5 21 5 3" />
-          </svg>
-        </button>
-        <button @click="skipPhase" class="btn-skip" title="Saltar Fase">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="5 4 15 12 5 20 5 4" />
-            <line x1="19" y1="5" x2="19" y2="19" />
-          </svg>
-        </button>
+        <!-- Controles -->
+        <div class="pip-controls">
+          <button @click="togglePlay" class="btn-play" :title="isRunning ? 'Pausar' : 'Reanudar'">
+            <svg v-if="isRunning" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="6" y="4" width="4" height="16" />
+              <rect x="14" y="4" width="4" height="16" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          </button>
+          <button @click="skipPhase" class="btn-skip" title="Saltar Fase">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polygon points="5 4 15 12 5 20 5 4" />
+              <line x1="19" y1="5" x2="19" y2="19" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Tema Blanco/Marrón Cronos Notes (Modo Claro y Modo Oscuro) */
+/* Tema Institucional Cronos Notes (Modo Claro y Modo Oscuro) */
 .mini-timer-widget {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 250px;
+  bottom: 24px;
+  right: 24px;
+  width: 248px;
   background-color: #ffffff;
-  border: 2px solid #e5e7eb;
-  color: #4d2323;
+  border: 1.5px solid #e5d5cb;
+  color: #4A2328;
   border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-  z-index: 9999;
+  padding: 12px 15px;
+  box-shadow: 0 10px 28px rgba(74, 35, 40, 0.16);
+  z-index: 1030;
   user-select: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, width 0.2s ease;
+}
+
+.mini-timer-widget.is-minimized {
+  width: auto;
+  min-width: 220px;
+  padding: 8px 14px;
 }
 
 .mini-timer-widget.dark-mode {
@@ -466,9 +512,16 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 8px;
+  border-bottom: 1px solid #eadcd7;
+  padding-bottom: 7px;
   margin-bottom: 6px;
+  gap: 8px;
+}
+
+.mini-timer-widget.is-minimized .timer-header {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .mini-timer-widget.dark-mode .timer-header {
@@ -478,22 +531,40 @@ onUnmounted(() => {
 .pip-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .pip-title {
-  font-weight: 700;
-  font-size: 0.82rem;
+  font-weight: 800;
+  font-size: 0.75rem;
   letter-spacing: 0.8px;
-  color: #7b413f;
+  color: #612c2d;
 }
 
 .mini-timer-widget.dark-mode .pip-title {
   color: #f4be95;
 }
 
+.pip-time-compact {
+  font-weight: 800;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  color: #4A2328;
+}
+
+.mini-timer-widget.dark-mode .pip-time-compact {
+  color: #ffffff;
+}
+
+.pip-body-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .pip-task {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: #6b4c4b;
   max-width: 215px;
   white-space: nowrap;
@@ -509,13 +580,14 @@ onUnmounted(() => {
 .pip-btn {
   background: transparent;
   border: none;
-  color: #7b413f;
+  color: #612c2d;
   cursor: pointer;
-  padding: 2px;
+  padding: 3px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: background-color 0.2s, transform 0.15s;
 }
 
 .mini-timer-widget.dark-mode .pip-btn {
@@ -523,17 +595,22 @@ onUnmounted(() => {
 }
 
 .pip-btn:hover {
-  opacity: 0.75;
-  transform: scale(1.08);
+  background-color: rgba(123, 65, 63, 0.1);
+  transform: scale(1.06);
+}
+
+.mini-timer-widget.dark-mode .pip-btn:hover {
+  background-color: rgba(244, 190, 149, 0.14);
 }
 
 .pip-time {
-  font-size: 2.7rem;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: bold;
+  font-size: 2.55rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
   letter-spacing: 1px;
   margin: 4px 0;
-  color: #4d2323;
+  color: #4A2328;
+  line-height: 1.05;
 }
 
 .mini-timer-widget.dark-mode .pip-time {
@@ -542,22 +619,22 @@ onUnmounted(() => {
 
 .pip-controls {
   display: flex;
-  gap: 15px;
+  gap: 14px;
   margin-top: 6px;
 }
 
 .btn-play, .btn-skip {
-  background: #4d2323;
+  background: #4A2328;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(77, 35, 35, 0.3);
+  box-shadow: 0 4px 10px rgba(74, 35, 40, 0.25);
   transition: transform 0.1s, background 0.2s, color 0.2s;
 }
 

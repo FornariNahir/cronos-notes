@@ -266,9 +266,9 @@ const etiquetaFase = computed(() => {
 });
 
 const badgeEstadoInfo = (estado) => {
-  if (estado === 'EnPomodoro') return { texto: '🍅 En Pomodoro', clase: 'status-pomodoro' };
-  if (estado === 'EnMeet') return { texto: '📹 En Google Meet', clase: 'status-meet' };
-  return { texto: '🟢 En Línea', clase: 'status-online' };
+  if (estado === 'EnPomodoro') return { texto: 'En Pomodoro', clase: 'status-pomodoro', tipo: 'pomodoro' };
+  if (estado === 'EnMeet') return { texto: 'En Google Meet', clase: 'status-meet', tipo: 'meet' };
+  return { texto: 'En Línea', clase: 'status-online', tipo: 'online' };
 };
 
 onMounted(() => {
@@ -292,7 +292,10 @@ onUnmounted(() => {
         <div class="sala-topbar-left">
           <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
             <span class="badge-perfil-top">{{ salaState.perfilTitulo }}</span>
-            <span class="badge-live-room">● SALA EN VIVO</span>
+            <span class="badge-live-room">
+              <span class="live-dot-indicator"></span>
+              SALA EN VIVO
+            </span>
           </div>
           <h1 class="sala-main-title">{{ salaState.tituloEvento }}</h1>
           <span class="sala-host-label">Anfitrión: <strong>{{ salaState.creadorNombre }}</strong></span>
@@ -301,28 +304,38 @@ onUnmounted(() => {
         <div class="sala-topbar-actions">
           <button
             type="button"
-            class="btn-pip-room"
+            class="btn-top-action btn-pip-room"
             @click="requestPipWindow"
             :title="isPipActive ? 'Cerrar Mini-Timer Flotante' : 'Desacoplar reloj en ventana flotante Always-on-Top para ver durante el Meet'"
           >
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
               <rect x="12" y="12" width="7" height="6" rx="1" fill="currentColor" />
             </svg>
-            {{ isPipActive ? 'Cerrar Mini-Timer PiP' : 'Mini-Timer Flotante (PiP)' }}
+            <span>{{ isPipActive ? 'Cerrar Mini-Timer' : 'Mini-Timer (PiP)' }}</span>
           </button>
 
-          <button type="button" class="btn-salir-sala" @click="salirDeSala">
-            Salir de la Sala
+          <button type="button" class="btn-top-action btn-salir-sala" @click="salirDeSala">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Salir</span>
           </button>
 
           <button
             v-if="puedeControlarSala"
             type="button"
-            class="btn-finalizar-sala"
+            class="btn-top-action btn-finalizar-sala"
             @click="finalizarSala"
           >
-            Finalizar Sala
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+            </svg>
+            <span>Finalizar Sala</span>
           </button>
         </div>
       </div>
@@ -331,24 +344,27 @@ onUnmounted(() => {
         <!-- Columna Izquierda: Temporizador Pomodoro Grupal Sincronizado -->
         <div class="pomodoro-grupal-card card">
           <div class="pomodoro-phase-chip" :class="pomodoro.fase">
-            {{ etiquetaFase }}
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="13" r="8" />
+              <path d="M12 9v4l2 2" />
+              <path d="M9 3h6" />
+            </svg>
+            <span>{{ etiquetaFase }}</span>
           </div>
 
-          <!-- Indicador de Ciclos con tomates -->
+          <!-- Indicador de Ciclos con dots estilizados -->
           <div class="cycles-row">
             <span class="cycles-counter">Ciclo {{ pomodoro.cicloActual }} de {{ pomodoro.ciclosObjetivo }}</span>
-            <div class="tomatoes-list">
+            <div class="cycles-dots-list" :title="`Ciclo ${pomodoro.cicloActual} de ${pomodoro.ciclosObjetivo}`">
               <span
                 v-for="idx in pomodoro.ciclosObjetivo"
                 :key="idx"
-                class="tomato-dot"
+                class="cycle-dot"
                 :class="{
                   completed: idx < pomodoro.cicloActual,
                   current: idx === pomodoro.cicloActual
                 }"
-              >
-                🍅
-              </span>
+              ></span>
             </div>
           </div>
 
@@ -375,7 +391,10 @@ onUnmounted(() => {
               class="btn-ctrl-primary"
               @click="ejecutarAccionPomodoro('iniciar')"
             >
-              ▶ Iniciar Pomodoro Grupal
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none">
+                <polygon points="6 4 20 12 6 20 6 4" />
+              </svg>
+              <span>Iniciar Pomodoro Grupal</span>
             </button>
             <button
               v-else
@@ -383,7 +402,11 @@ onUnmounted(() => {
               class="btn-ctrl-pause"
               @click="ejecutarAccionPomodoro('pausar')"
             >
-              ⏸ Pausar Reloj Grupal
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+              <span>Pausar Reloj Grupal</span>
             </button>
 
             <button
@@ -392,7 +415,11 @@ onUnmounted(() => {
               @click="ejecutarAccionPomodoro('saltar')"
               title="Avanzar a la siguiente fase (Descanso / Trabajo)"
             >
-              ⏭ Saltar Fase
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 4 15 12 5 20 5 4" />
+                <line x1="19" y1="5" x2="19" y2="19" />
+              </svg>
+              <span>Saltar Fase</span>
             </button>
 
             <button
@@ -401,48 +428,64 @@ onUnmounted(() => {
               @click="ejecutarAccionPomodoro('reiniciar')"
               title="Reiniciar el tiempo de la fase actual"
             >
-              ↺ Reiniciar
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              <span>Reiniciar</span>
             </button>
 
             <button
               type="button"
               class="btn-ctrl-secondary"
+              :class="{ 'active-toggle': showConfigPomodoro }"
               @click="showConfigPomodoro = !showConfigPomodoro"
               title="Configurar duraciones del Pomodoro grupal"
             >
-              ⚙ Duración
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span>Duración</span>
             </button>
           </div>
 
-          <!-- Configuración inline de tiempos del Pomodoro grupal -->
+          <!-- Configuración inline de tiempos del Pomodoro grupal (Grid de 2 columnas balanceado) -->
           <div v-if="showConfigPomodoro" class="config-inline-box">
+            <div class="config-inline-header">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l2 2" />
+                <path d="M9 3h6" />
+              </svg>
+              <span>Ajustar tiempos del temporizador grupal</span>
+            </div>
             <div class="config-grid">
-              <div>
+              <div class="config-field">
                 <label>Trabajo (min)</label>
                 <input type="number" v-model.number="configForm.duracionTrabajo" min="1" max="120" class="input-sm-custom" />
               </div>
-              <div>
-                <label>Desc. Corto (min)</label>
+              <div class="config-field">
+                <label>Descanso Corto (min)</label>
                 <input type="number" v-model.number="configForm.duracionDescansoCorto" min="1" max="30" class="input-sm-custom" />
               </div>
-              <div>
-                <label>Desc. Largo (min)</label>
+              <div class="config-field">
+                <label>Descanso Largo (min)</label>
                 <input type="number" v-model.number="configForm.duracionDescansoLargo" min="5" max="60" class="input-sm-custom" />
               </div>
-              <div>
+              <div class="config-field">
                 <label>Ciclos</label>
                 <input type="number" v-model.number="configForm.ciclosObjetivo" min="1" max="10" class="input-sm-custom" />
               </div>
             </div>
-            <div class="d-flex justify-content-end gap-2 mt-2">
-              <button type="button" class="btn-ctrl-secondary" @click="showConfigPomodoro = false">Cancelar</button>
+            <div class="d-flex justify-content-end gap-2 mt-3">
+              <button type="button" class="btn-ctrl-secondary btn-sm-cfg" @click="showConfigPomodoro = false">Cancelar</button>
               <button
                 type="button"
-                class="btn-ctrl-primary"
-                style="padding: 6px 14px; font-size: 0.84rem;"
+                class="btn-ctrl-primary btn-sm-cfg"
                 @click="ejecutarAccionPomodoro('configurar', configForm)"
               >
-                Guardar Tiempos Grupales
+                Guardar Tiempos
               </button>
             </div>
           </div>
@@ -452,8 +495,16 @@ onUnmounted(() => {
         <div class="sala-side-column">
           <!-- Tarjeta Google Meet -->
           <div class="meet-card card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h3 class="side-card-title">📹 Videollamada de Equipo (Google Meet)</h3>
+            <div class="side-card-header">
+              <div class="side-card-title-wrap">
+                <span class="side-card-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                </span>
+                <h3 class="side-card-title">Videollamada de Equipo (Google Meet)</h3>
+              </div>
               <button
                 type="button"
                 class="btn-link-edit"
@@ -464,16 +515,25 @@ onUnmounted(() => {
             </div>
 
             <p v-if="salaState.googleMeetUrl === 'https://meet.google.com/new'" class="meet-info-text">
-              Hacé clic en <strong>Abrir Google Meet</strong> para iniciar la videollamada y pegá abajo el código o link de la sala para que tus compañeros entren directo al mismo Meet.
+              Hacé clic en <strong>Crear / Abrir Google Meet</strong> para iniciar la videollamada y pegá abajo el código o link de la sala para que tus compañeros entren directo al mismo Meet.
             </p>
             <p v-else class="meet-info-text">
-              Enlace activo: <code>{{ salaState.googleMeetUrl }}</code>
+              Enlace activo: <code class="meet-code-pill">{{ salaState.googleMeetUrl }}</code>
             </p>
 
-            <div class="d-flex gap-2 flex-wrap mb-2">
+            <div class="d-flex gap-2 flex-wrap mb-1">
               <button type="button" class="btn-join-meet" @click="abrirGoogleMeet">
-                {{ salaState.googleMeetUrl === 'https://meet.google.com/new' ? 'Crear / Abrir Google Meet' : 'Unirse a Google Meet' }}
-                ↗
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
+                <span>
+                  {{ salaState.googleMeetUrl === 'https://meet.google.com/new' ? 'Crear / Abrir Google Meet' : 'Unirse a Google Meet' }}
+                </span>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="7" y1="17" x2="17" y2="7" />
+                  <polyline points="7 7 17 7 17 17" />
+                </svg>
               </button>
 
               <button
@@ -482,7 +542,14 @@ onUnmounted(() => {
                 class="btn-copy-meet"
                 @click="copiarEnlaceMeet"
               >
-                {{ copiadoExito ? '✓ ¡Copiado!' : 'Copiar Link' }}
+                <svg v-if="copiadoExito" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <svg v-else viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span>{{ copiadoExito ? 'Copiado' : 'Copiar Link' }}</span>
               </button>
             </div>
 
@@ -514,15 +581,28 @@ onUnmounted(() => {
 
           <!-- Tarjeta de Presencia en Tiempo Real (Body Doubling) -->
           <div class="presencia-card card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h3 class="side-card-title">
-                👥 Compañeros en la Sala ({{ participantes.length }})
-              </h3>
-              <span class="live-sync-badge">En vivo</span>
+            <div class="side-card-header">
+              <div class="side-card-title-wrap">
+                <span class="side-card-icon">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </span>
+                <h3 class="side-card-title">
+                  Compañeros en la Sala ({{ participantes.length }})
+                </h3>
+              </div>
+              <span class="live-sync-badge">
+                <span class="live-dot-indicator"></span>
+                En vivo
+              </span>
             </div>
 
             <!-- Selector rápido del propio estado -->
-            <div class="mi-estado-selector mb-3">
+            <div class="mi-estado-selector">
               <span class="mi-estado-label">Tu estado actual:</span>
               <div class="estado-pills">
                 <button
@@ -531,7 +611,8 @@ onUnmounted(() => {
                   :class="{ active: miEstado === 'EnLinea' }"
                   @click="sincronizarEstadoConServidor('EnLinea')"
                 >
-                  🟢 En Línea
+                  <span class="pill-dot online"></span>
+                  <span>En Línea</span>
                 </button>
                 <button
                   type="button"
@@ -539,7 +620,12 @@ onUnmounted(() => {
                   :class="{ active: miEstado === 'EnPomodoro' }"
                   @click="sincronizarEstadoConServidor('EnPomodoro')"
                 >
-                  🍅 En Pomodoro
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="13" r="8" />
+                    <path d="M12 9v4l2 2" />
+                    <path d="M9 3h6" />
+                  </svg>
+                  <span>En Pomodoro</span>
                 </button>
                 <button
                   type="button"
@@ -547,7 +633,11 @@ onUnmounted(() => {
                   :class="{ active: miEstado === 'EnMeet' }"
                   @click="sincronizarEstadoConServidor('EnMeet')"
                 >
-                  📹 En Meet
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                  <span>En Meet</span>
                 </button>
               </div>
             </div>
@@ -570,7 +660,37 @@ onUnmounted(() => {
                   <div class="participante-email">{{ p.email }}</div>
                 </div>
                 <span class="participante-status-badge" :class="badgeEstadoInfo(p.estadoUsuario).clase">
-                  {{ badgeEstadoInfo(p.estadoUsuario).texto }}
+                  <svg
+                    v-if="badgeEstadoInfo(p.estadoUsuario).tipo === 'pomodoro'"
+                    viewBox="0 0 24 24"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="13" r="8" />
+                    <path d="M12 9v4l2 2" />
+                    <path d="M9 3h6" />
+                  </svg>
+                  <svg
+                    v-else-if="badgeEstadoInfo(p.estadoUsuario).tipo === 'meet'"
+                    viewBox="0 0 24 24"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polygon points="23 7 16 12 23 17 23 7" />
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                  </svg>
+                  <span v-else class="status-online-dot"></span>
+                  <span>{{ badgeEstadoInfo(p.estadoUsuario).texto }}</span>
                 </span>
               </div>
             </div>
@@ -585,53 +705,71 @@ onUnmounted(() => {
 .sala-detalle-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding-bottom: 40px;
+  padding-bottom: 48px;
 }
 
+/* Barra superior de la Sala */
 .sala-topbar {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 18px 22px;
+  border: 1px solid #eadcd7;
+  border-radius: 16px;
+  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 22px;
+  gap: 18px;
+  margin-bottom: 26px;
+  box-shadow: 0 2px 10px rgba(74, 35, 40, 0.04);
 }
 
 .badge-perfil-top {
-  background: #f3e8e6;
-  color: #612c2d;
+  background: #f5ebe8;
+  color: #4A2328;
   font-weight: 700;
-  font-size: 0.76rem;
-  padding: 3px 10px;
+  font-size: 0.75rem;
+  padding: 4px 11px;
   border-radius: 999px;
+  border: 1px solid #e6d3cd;
 }
 
 .badge-live-room {
-  background: #dcfce7;
-  color: #15803d;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
   font-weight: 800;
   font-size: 0.72rem;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   letter-spacing: 0.5px;
+}
+
+.live-dot-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .sala-main-title {
   font-size: 1.45rem;
   font-weight: 800;
-  color: #4d2323;
-  margin: 2px 0;
+  color: #4A2328;
+  margin: 4px 0 2px 0;
+  letter-spacing: -0.01em;
 }
 
 .sala-host-label {
-  font-size: 0.83rem;
+  font-size: 0.84rem;
   color: #6b7280;
 }
 
+/* Botones superiores discretos y uniformes */
 .sala-topbar-actions {
   display: flex;
   align-items: center;
@@ -639,55 +777,63 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 
-.btn-pip-room {
+.btn-top-action {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  background: #fdfaf8;
-  color: #612c2d;
-  border: 1.5px solid #612c2d;
-  border-radius: 9px;
-  padding: 8px 14px;
-  font-weight: 700;
-  font-size: 0.85rem;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.83rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-pip-room {
+  background: #fdfaf8;
+  color: #4A2328;
+  border: 1px solid #d5beb7;
 }
 
 .btn-pip-room:hover {
-  background: #612c2d;
-  color: #ffffff;
+  background: #f5ebe8;
+  border-color: #4A2328;
 }
 
 .btn-salir-sala {
-  background: #f3f4f6;
-  color: #374151;
+  background: #f9fafb;
+  color: #4b5563;
   border: 1px solid #d1d5db;
-  border-radius: 9px;
-  padding: 8px 14px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
+}
+
+.btn-salir-sala:hover {
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
 .btn-finalizar-sala {
-  background: #fee2e2;
+  background: #fef2f2;
   color: #b91c1c;
-  border: 1px solid #fca5a5;
-  border-radius: 9px;
-  padding: 8px 14px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
+  border: 1px solid #fecaca;
 }
 
+.btn-finalizar-sala:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+/* Grid Principal con espaciado holgado */
 .sala-main-grid {
   display: grid;
   grid-template-columns: 1.25fr 1fr;
-  gap: 22px;
+  gap: 26px;
+  align-items: start;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 992px) {
   .sala-main-grid {
     grid-template-columns: 1fr;
   }
@@ -696,83 +842,106 @@ onUnmounted(() => {
 /* Tarjeta Pomodoro Grupal */
 .pomodoro-grupal-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #eadcd7;
   border-radius: 16px;
-  padding: 30px 24px;
+  padding: 34px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  box-shadow: 0 4px 16px rgba(74, 35, 40, 0.05);
 }
 
 .pomodoro-phase-chip {
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 1.4px;
+  letter-spacing: 1.2px;
   padding: 6px 16px;
   border-radius: 999px;
-  background: #f3e8e6;
-  color: #612c2d;
-  margin-bottom: 14px;
+  background: #f5ebe8;
+  color: #4A2328;
+  border: 1px solid #e6d3cd;
+  margin-bottom: 16px;
 }
 
 .pomodoro-phase-chip.shortBreak,
 .pomodoro-phase-chip.longBreak {
   background: #ecfdf5;
   color: #047857;
+  border-color: #a7f3d0;
 }
 
+/* Indicador de Ciclos con Dots estilizados */
 .cycles-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .cycles-counter {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: #6b7280;
 }
 
-.tomatoes-list {
-  display: flex;
-  gap: 4px;
+.cycles-dots-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.tomato-dot {
-  font-size: 1.1rem;
-  opacity: 0.3;
-  transition: 0.2s;
+.cycle-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid #d1d5db;
+  transition: all 0.25s ease;
 }
 
-.tomato-dot.completed,
-.tomato-dot.current {
-  opacity: 1;
+.cycle-dot.completed {
+  background: #4A2328;
+  border-color: #4A2328;
+}
+
+.cycle-dot.current {
+  width: 24px;
+  border-radius: 999px;
+  background: #612c2d;
+  border-color: #612c2d;
+  box-shadow: 0 0 0 3px rgba(97, 44, 45, 0.16);
 }
 
 .clock-giant {
-  font-size: 5.2rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-size: 5.4rem;
+  font-family: 'Inter', 'Segoe UI', Roboto, monospace;
+  font-variant-numeric: tabular-nums;
   font-weight: 800;
-  color: #4d2323;
+  color: #4A2328;
   line-height: 1.05;
-  margin: 12px 0 16px 0;
+  margin: 14px 0 18px 0;
+  letter-spacing: -0.03em;
 }
 
 .progress-track {
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   height: 8px;
-  background: #f3f4f6;
+  background: #f3ecea;
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: #612c2d;
+  background: linear-gradient(90deg, #4A2328 0%, #7b413f 100%);
   border-radius: 999px;
   transition: width 0.5s ease;
 }
@@ -780,7 +949,7 @@ onUnmounted(() => {
 .sync-caption {
   font-size: 0.8rem;
   color: #6b7280;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .group-controls {
@@ -791,100 +960,177 @@ onUnmounted(() => {
 }
 
 .btn-ctrl-primary {
-  background: #612c2d;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #4A2328;
   color: #ffffff;
-  border: none;
+  border: 1px solid #4A2328;
   border-radius: 10px;
   padding: 11px 22px;
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(74, 35, 40, 0.18);
 }
 
 .btn-ctrl-primary:hover {
-  background: #7b413f;
+  background: #612c2d;
+  border-color: #612c2d;
 }
 
 .btn-ctrl-pause {
-  background: #d97706;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #b45309;
   color: #ffffff;
-  border: none;
+  border: 1px solid #b45309;
   border-radius: 10px;
   padding: 11px 22px;
   font-weight: 700;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ctrl-pause:hover {
+  background: #92400e;
 }
 
 .btn-ctrl-secondary {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdfaf8;
+  color: #4A2328;
+  border: 1px solid #dfd1cc;
   border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-ctrl-secondary:hover {
-  background: #e5e7eb;
+.btn-ctrl-secondary:hover,
+.btn-ctrl-secondary.active-toggle {
+  background: #f5ebe8;
+  border-color: #c5ada5;
 }
 
+.btn-sm-cfg {
+  padding: 7px 14px;
+  font-size: 0.83rem;
+}
+
+/* Configuración inline en Grid de 2 columnas */
 .config-inline-box {
   width: 100%;
   max-width: 460px;
-  margin-top: 18px;
-  padding: 14px;
+  margin-top: 22px;
+  padding: 18px;
   border-radius: 12px;
   background: #fdfaf8;
   border: 1px solid #eadcd7;
   text-align: left;
 }
 
-.config-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+.config-inline-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4A2328;
+  margin-bottom: 12px;
 }
 
-.config-grid label {
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 14px;
+}
+
+@media (max-width: 480px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.config-field label {
   display: block;
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  margin-bottom: 4px;
+  color: #5b3b3a;
+  margin-bottom: 5px;
 }
 
 .input-sm-custom {
   width: 100%;
-  padding: 6px 8px;
-  border-radius: 7px;
-  border: 1px solid #d1d5db;
-  font-size: 0.85rem;
+  padding: 8px 11px;
+  border-radius: 8px;
+  border: 1px solid #d5c5c0;
+  font-size: 0.86rem;
+  font-weight: 600;
   color: #1f2937;
   background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-sm-custom:focus {
+  outline: none;
+  border-color: #612c2d;
+  box-shadow: 0 0 0 3px rgba(97, 44, 45, 0.12);
 }
 
 /* Columna Derecha */
 .sala-side-column {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
 }
 
 .meet-card,
 .presencia-card {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 20px;
+  border: 1px solid #eadcd7;
+  border-radius: 16px;
+  padding: 22px 24px;
+  box-shadow: 0 4px 16px rgba(74, 35, 40, 0.04);
+}
+
+.side-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.side-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.side-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f5ebe8;
+  color: #4A2328;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .side-card-title {
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #4d2323;
+  color: #4A2328;
   margin: 0;
 }
 
@@ -896,82 +1142,121 @@ onUnmounted(() => {
   font-weight: 600;
   text-decoration: underline;
   cursor: pointer;
+  padding: 2px 4px;
+}
+
+.btn-link-edit:hover {
+  color: #4A2328;
 }
 
 .meet-info-text {
-  font-size: 0.83rem;
+  font-size: 0.84rem;
   color: #4b5563;
-  margin-bottom: 12px;
-  word-break: break-all;
+  line-height: 1.45;
+  margin-bottom: 14px;
+  word-break: break-word;
 }
 
+.meet-code-pill {
+  background: #f5ebe8;
+  color: #4A2328;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+/* Botón Google Meet alineado a la paleta institucional Cronos (#4A2328) */
 .btn-join-meet {
   flex: 1;
-  background: #0b57d0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #4A2328;
   color: #ffffff;
-  border: none;
-  border-radius: 9px;
+  border: 1px solid #4A2328;
+  border-radius: 10px;
   padding: 10px 16px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .btn-join-meet:hover {
-  background: #0842a0;
+  background: #612c2d;
+  border-color: #612c2d;
 }
 
 .btn-copy-meet {
-  background: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #d1d5db;
-  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fdfaf8;
+  color: #4A2328;
+  border: 1px solid #d5beb7;
+  border-radius: 10px;
   padding: 10px 14px;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.84rem;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-meet:hover {
+  background: #f5ebe8;
 }
 
 .meet-edit-box {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #e5e7eb;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5d6d1;
 }
 
 .meet-edit-label {
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
+  color: #5b3b3a;
   margin-bottom: 6px;
 }
 
 .btn-save-meet {
-  background: #612c2d;
+  background: #4A2328;
   color: #ffffff;
   border: none;
-  border-radius: 7px;
-  padding: 6px 14px;
+  border-radius: 8px;
+  padding: 8px 15px;
   font-weight: 600;
   font-size: 0.83rem;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-save-meet:hover {
+  background: #612c2d;
 }
 
 /* Presencia / Compañeros */
 .live-sync-badge {
-  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.73rem;
   font-weight: 700;
   color: #047857;
   background: #ecfdf5;
-  padding: 3px 8px;
+  border: 1px solid #a7f3d0;
+  padding: 3px 10px;
   border-radius: 999px;
 }
 
 .mi-estado-selector {
   background: #fdfaf8;
   border: 1px solid #eadcd7;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
 }
 
 .mi-estado-label {
@@ -979,32 +1264,53 @@ onUnmounted(() => {
   font-size: 0.76rem;
   font-weight: 700;
   color: #5b3b3a;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .estado-pills {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .estado-pill-btn {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   background: #ffffff;
   color: #4b5563;
-  border: 1px solid #d1d5db;
+  border: 1px solid #d5c5c0;
   border-radius: 8px;
-  padding: 6px 8px;
-  font-size: 0.76rem;
+  padding: 7px 10px;
+  font-size: 0.77rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.15s;
+  transition: all 0.18s ease;
+}
+
+.estado-pill-btn:hover {
+  border-color: #7b413f;
+  color: #4A2328;
 }
 
 .estado-pill-btn.active {
-  background: #612c2d;
+  background: #4A2328;
   color: #ffffff;
-  border-color: #612c2d;
+  border-color: #4A2328;
+}
+
+.pill-dot.online {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+}
+
+.estado-pill-btn.active .pill-dot.online {
+  background: #6ee7b7;
 }
 
 .participantes-list {
@@ -1016,24 +1322,24 @@ onUnmounted(() => {
 .participante-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #fdfaf8;
+  border: 1px solid #efe4e0;
 }
 
 .participante-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #612c2d;
+  background: #4A2328;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   flex-shrink: 0;
 }
 
@@ -1045,17 +1351,20 @@ onUnmounted(() => {
 .participante-nombre {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #2b1819;
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .host-tag {
   font-size: 0.68rem;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 1px 6px;
+  font-weight: 700;
+  background: #f5ebe8;
+  color: #612c2d;
+  border: 1px solid #e2cdc6;
+  padding: 1px 7px;
   border-radius: 999px;
 }
 
@@ -1068,58 +1377,220 @@ onUnmounted(() => {
 }
 
 .participante-status-badge {
-  font-size: 0.74rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.73rem;
   font-weight: 700;
-  padding: 4px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   white-space: nowrap;
+}
+
+.status-online-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
 }
 
 .status-online {
   background: #ecfdf5;
   color: #047857;
+  border: 1px solid #a7f3d0;
 }
 
 .status-pomodoro {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: #f5ebe8;
+  color: #612c2d;
+  border: 1px solid #e2cdc6;
 }
 
 .status-meet {
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+</style>
+
+<!-- Estilos de Modo Oscuro no-scoped para garantizar especificidad sobre el tema global -->
+<style>
+body.cn-body-dark .sala-topbar,
+body.cn-body-dark .pomodoro-grupal-card,
+body.cn-body-dark .meet-card,
+body.cn-body-dark .presencia-card {
+  background-color: #4d2323 !important;
+  border-color: #7b413f !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
 }
 
-/* Dark Mode Overrides */
-:global(body.cn-body-dark) .clock-giant {
+body.cn-body-dark .sala-main-title,
+body.cn-body-dark .side-card-title,
+body.cn-body-dark .clock-giant {
   color: #ffffff !important;
 }
 
-:global(body.cn-body-dark) .progress-bar-fill {
-  background-color: #f4be95 !important;
+body.cn-body-dark .sala-host-label,
+body.cn-body-dark .cycles-counter,
+body.cn-body-dark .sync-caption,
+body.cn-body-dark .meet-info-text,
+body.cn-body-dark .participante-email {
+  color: #e2b99b !important;
 }
 
-:global(body.cn-body-dark) .progress-track {
+body.cn-body-dark .badge-perfil-top,
+body.cn-body-dark .side-card-icon,
+body.cn-body-dark .meet-code-pill,
+body.cn-body-dark .host-tag {
+  background-color: #3b1919 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .badge-live-room,
+body.cn-body-dark .live-sync-badge,
+body.cn-body-dark .status-online {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+body.cn-body-dark .pomodoro-phase-chip {
+  background-color: #3b1919 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .pomodoro-phase-chip.shortBreak,
+body.cn-body-dark .pomodoro-phase-chip.longBreak {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+body.cn-body-dark .cycle-dot {
+  border-color: #8c5350 !important;
+  background-color: transparent !important;
+}
+
+body.cn-body-dark .cycle-dot.completed {
+  background-color: #f4be95 !important;
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .cycle-dot.current {
+  background-color: #fcd5b8 !important;
+  border-color: #fcd5b8 !important;
+  box-shadow: 0 0 0 3px rgba(244, 190, 149, 0.25) !important;
+}
+
+body.cn-body-dark .progress-track {
   background-color: #3b1919 !important;
 }
 
-:global(body.cn-body-dark) .mi-estado-selector,
-:global(body.cn-body-dark) .config-inline-box,
-:global(body.cn-body-dark) .participante-row {
+body.cn-body-dark .progress-bar-fill {
+  background: linear-gradient(90deg, #f4be95 0%, #fcd5b8 100%) !important;
+}
+
+body.cn-body-dark .btn-ctrl-primary,
+body.cn-body-dark .btn-join-meet,
+body.cn-body-dark .btn-save-meet {
+  background-color: #f4be95 !important;
+  color: #3b1919 !important;
+  border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .btn-ctrl-primary:hover,
+body.cn-body-dark .btn-join-meet:hover,
+body.cn-body-dark .btn-save-meet:hover {
+  background-color: #fcd5b8 !important;
+  border-color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .btn-ctrl-secondary,
+body.cn-body-dark .btn-pip-room,
+body.cn-body-dark .btn-salir-sala,
+body.cn-body-dark .btn-copy-meet {
+  background-color: #3b1919 !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .btn-ctrl-secondary:hover,
+body.cn-body-dark .btn-pip-room:hover,
+body.cn-body-dark .btn-salir-sala:hover,
+body.cn-body-dark .btn-copy-meet:hover {
+  background-color: #612c2d !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-finalizar-sala {
+  background-color: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+body.cn-body-dark .btn-finalizar-sala:hover {
+  background-color: rgba(239, 68, 68, 0.28) !important;
+}
+
+body.cn-body-dark .config-inline-box,
+body.cn-body-dark .mi-estado-selector,
+body.cn-body-dark .participante-row {
   background-color: #3b1919 !important;
   border-color: #7b413f !important;
 }
 
-:global(body.cn-body-dark) .participante-nombre,
-:global(body.cn-body-dark) .mi-estado-label,
-:global(body.cn-body-dark) .meet-info-text {
+body.cn-body-dark .config-inline-header,
+body.cn-body-dark .config-field label,
+body.cn-body-dark .mi-estado-label,
+body.cn-body-dark .meet-edit-label,
+body.cn-body-dark .participante-nombre,
+body.cn-body-dark .btn-link-edit {
   color: #fcd5b8 !important;
 }
 
-:global(body.cn-body-dark) .btn-ctrl-primary,
-:global(body.cn-body-dark) .btn-pip-room {
+body.cn-body-dark .meet-edit-box {
+  border-top-color: #7b413f !important;
+}
+
+body.cn-body-dark .input-sm-custom {
+  background-color: #2f1212 !important;
+  color: #ffffff !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .input-sm-custom::placeholder {
+  color: #b58d7d !important;
+}
+
+body.cn-body-dark .estado-pill-btn {
+  background-color: #2f1212 !important;
+  color: #e2b99b !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .estado-pill-btn.active {
   background-color: #f4be95 !important;
   color: #3b1919 !important;
   border-color: #f4be95 !important;
+}
+
+body.cn-body-dark .participante-avatar {
+  background-color: #f4be95 !important;
+  color: #3b1919 !important;
+}
+
+body.cn-body-dark .status-pomodoro {
+  background-color: rgba(244, 190, 149, 0.16) !important;
+  color: #fcd5b8 !important;
+  border-color: rgba(244, 190, 149, 0.35) !important;
+}
+
+body.cn-body-dark .status-meet {
+  background-color: rgba(251, 191, 36, 0.16) !important;
+  color: #fde68a !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
 }
 </style>

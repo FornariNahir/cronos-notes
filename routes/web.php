@@ -12,6 +12,8 @@ use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\ApunteController;
 
 use App\Http\Controllers\PerfilCompartidoController;
+use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\SpotifyController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -84,7 +86,7 @@ Route::middleware('auth.custom')->group(function () {
     // ESTADISTICAS (Global)
     Route::get('/estadisticas', [EstadisticaController::class, 'index'])->name('estadisticas.index');
 
-    Route::get('/calendario', function () {
+    Route::get('/calendario', function (\App\Services\GoogleCalendarService $calendarService) {
         $userId = Auth::user()->idUsuario;
 
         $tareas = \App\Models\Tarea::whereHas('perfil', function ($query) use ($userId) {
@@ -109,11 +111,26 @@ Route::middleware('auth.custom')->group(function () {
 
         $perfiles = \App\Models\Perfil::where('idUsuario', $userId)->get();
 
+        // Cargar eventos de Google Calendar (RF-M15)
+        // Rango de visualización ampliado: desde el mes anterior hasta los próximos 3 meses
+        $inicioIso = now()->subMonth()->startOfMonth()->toRfc3339String();
+        $finIso = now()->addMonths(3)->endOfMonth()->toRfc3339String();
+        $eventosGoogle = $calendarService->getEventosRango($userId, $inicioIso, $finIso);
+
         return Inertia::render('Calendario', [
             'tareasCargadas' => $tareas,
-            'perfilesDisponibles' => $perfiles
+            'perfilesDisponibles' => $perfiles,
+            'eventosGoogle' => $eventosGoogle,
         ]);
     })->name('calendario');
+
+    // Endpoint JSON para consultar eventos en un rango específico de fechas
+    Route::get('/api/google-calendar/eventos', function (\Illuminate\Http\Request $request, \App\Services\GoogleCalendarService $calendarService) {
+        $userId = Auth::user()->idUsuario;
+        $inicio = $request->query('inicio');
+        $fin = $request->query('fin');
+        return response()->json($calendarService->getEventosRango($userId, $inicio, $fin));
+    })->name('api.google-calendar.eventos');
 
     Route::get('/perfil-usuario', function () {
         $userId = Auth::user()->idUsuario;
@@ -133,8 +150,14 @@ Route::middleware('auth.custom')->group(function () {
             ];
         }
 
+        $integraciones = [
+            'google_calendar' => \App\Models\IntegracionExterna::where('idUsuario', $userId)->where('plataforma', 'GoogleCalendar')->whereNotNull('tokenAcceso')->exists(),
+            'spotify' => \App\Models\IntegracionExterna::where('idUsuario', $userId)->where('plataforma', 'Spotify')->whereNotNull('tokenAcceso')->exists(),
+        ];
+
         return Inertia::render('PerfilUsuario', [
-            'estadisticas' => $estadisticas
+            'estadisticas' => $estadisticas,
+            'integraciones' => $integraciones,
         ]);
     })->name('perfil-usuario');
 
@@ -163,6 +186,20 @@ Route::middleware('auth.custom')->group(function () {
     })->name('invitacion.entrar');
     Route::post('/invitacion/{token}/aceptar', [PerfilCompartidoController::class, 'aceptarInvitacion'])->name('invitacion.aceptar');
     Route::post('/invitacion/{token}/rechazar', [PerfilCompartidoController::class, 'rechazarInvitacion'])->name('invitacion.rechazar');
+
+    // INTEGRACIONES EXTERNAS (RF-M15)
+    // Google Calendar
+    Route::get('/auth/google-calendar/redirect', [GoogleCalendarController::class, 'redirect'])->name('auth.google-calendar.redirect');
+    Route::get('/auth/google-calendar/callback', [GoogleCalendarController::class, 'callback'])->name('auth.google-calendar.callback');
+    Route::delete('/auth/google-calendar/disconnect', [GoogleCalendarController::class, 'disconnect'])->name('auth.google-calendar.disconnect');
+    Route::get('/api/test/google-calendar', [GoogleCalendarController::class, 'smokeTest'])->name('api.test.google-calendar');
+
+    // Spotify
+    Route::get('/auth/spotify/redirect', [SpotifyController::class, 'redirect'])->name('auth.spotify.redirect');
+    Route::get('/auth/spotify/callback', [SpotifyController::class, 'callback'])->name('auth.spotify.callback');
+    Route::delete('/auth/spotify/disconnect', [SpotifyController::class, 'disconnect'])->name('auth.spotify.disconnect');
+    Route::get('/api/spotify/playlists-curadas', [SpotifyController::class, 'getCuratedPlaylists'])->name('api.spotify.playlists-curadas');
+    Route::get('/api/test/spotify', [SpotifyController::class, 'smokeTest'])->name('api.test.spotify');
 });
 
 // Invitación pública — ver invitación sin auth (para que el link del email funcione)

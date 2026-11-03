@@ -35,6 +35,12 @@ class PomodoroController extends Controller
             ->orderBy('fechaCreacion', 'desc')
             ->get();
 
+        $userId = Auth::user()->idUsuario;
+        $spotifyInteg = \App\Models\IntegracionExterna::where('idUsuario', $userId)
+            ->where('plataforma', 'Spotify')
+            ->whereNotNull('tokenAcceso')
+            ->first();
+
         return Inertia::render('pomodoro/SesionZen', [
             'configs' => $configs,
             'tareas' => $tareas,
@@ -42,7 +48,8 @@ class PomodoroController extends Controller
             'sesionActiva' => $sesionActiva,
             'apuntes' => $apuntes,
             'tenorApiKey' => env('TENOR_API_KEY'),
-            'giphyApiKey' => env('GIPHY_API_KEY')
+            'giphyApiKey' => env('GIPHY_API_KEY'),
+            'spotifyConectado' => !is_null($spotifyInteg),
         ]);
     }
 

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { usePage, useForm, Head } from '@inertiajs/vue3';
+import { usePage, useForm, Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AlertModal from '@/Components/AlertModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
@@ -53,8 +53,93 @@ const props = defineProps({
             tiempoTotalPomodoro: 0,
             tareasTotales: 0
         })
+    },
+    integraciones: {
+        type: Object,
+        default: () => ({
+            google_calendar: false,
+            spotify: false
+        })
     }
 });
+
+onMounted(() => {
+    if (page.props.flash?.success) {
+        showCustomAlert('¡Operación Exitosa!', page.props.flash.success);
+    } else if (page.props.flash?.error) {
+        showCustomAlert('Atención', page.props.flash.error);
+    }
+});
+
+// Integraciones Externas Handlers (RF-M15)
+const loadingTestGC = ref(false);
+const loadingTestSp = ref(false);
+
+const probarGoogleCalendar = async () => {
+    loadingTestGC.value = true;
+    try {
+        const res = await fetch(route('api.test.google-calendar'));
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            const count = data.total_eventos_obtenidos || 0;
+            const cals = data.calendarios_consultados && data.calendarios_consultados.length > 0
+                ? `\n\nCalendarios analizados:\n• ${data.calendarios_consultados.join('\n• ')}`
+                : '';
+            showCustomAlert('Conexión Google Calendar Exitosa', `La API de Google Calendar respondió correctamente. Próximos eventos encontrados: ${count}.${cals}`);
+        } else {
+            showCustomAlert('Error en Google Calendar', data.message || 'No se pudo consultar el calendario.');
+        }
+    } catch (err) {
+        showCustomAlert('Error de Red', 'Ocurrió un error al contactar al servidor para verificar Google Calendar.');
+    } finally {
+        loadingTestGC.value = false;
+    }
+};
+
+const desvincularGoogleCalendar = () => {
+    triggerConfirm({
+        title: '¿Desvincular Google Calendar?',
+        message: 'Si desvinculas tu cuenta, tus tareas ya no se exportarán y no se proyectarán tus eventos en el calendario.',
+        confirmText: 'Desvincular',
+        cancelText: 'Conservar',
+        isDanger: true,
+        onConfirm: () => {
+            router.delete(route('auth.google-calendar.disconnect'));
+        }
+    });
+};
+
+const probarSpotify = async () => {
+    loadingTestSp.value = true;
+    try {
+        const res = await fetch(route('api.test.spotify'));
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+            const planText = data.es_premium ? 'Cuenta Premium (Streaming nativo activo)' : 'Cuenta Gratuita (Acceso por Deeplink)';
+            showCustomAlert('Conexión Spotify Exitosa', `¡Conectado como ${data.usuario_spotify}!
+Plan detectado: ${planText}.`);
+        } else {
+            showCustomAlert('Error en Spotify', data.message || 'No se pudo consultar la cuenta de Spotify.');
+        }
+    } catch (err) {
+        showCustomAlert('Error de Red', 'Ocurrió un error al contactar al servidor para verificar Spotify.');
+    } finally {
+        loadingTestSp.value = false;
+    }
+};
+
+const desvincularSpotify = () => {
+    triggerConfirm({
+        title: '¿Desvincular Spotify?',
+        message: 'Si desvinculas Spotify, se desactivará el widget de reproducción y selección de playlists en la Sesión Zen.',
+        confirmText: 'Desvincular',
+        cancelText: 'Conservar',
+        isDanger: true,
+        onConfirm: () => {
+            router.delete(route('auth.spotify.disconnect'));
+        }
+    });
+};
 
 const form = useForm({
     nombre: page.props.auth?.user?.nombre || '',
@@ -319,6 +404,86 @@ const cambiarPassword = () => {
                         </div>
 
                         <!-- Sección de Baja del Sistema removida para la presentación -->
+                    </div>
+
+                    <!-- SECCIÓN: Integraciones y Cuentas Vinculadas (RF-M15) -->
+                    <div class="pt-4 border-top">
+                        <h6 class="text-uppercase text-secondary small fw-bold tracking-wider mb-2">
+                            <i class="bi bi-link-45deg me-2"></i>Cuentas Vinculadas e Integraciones (RF-M15)
+                        </h6>
+                        <p class="text-secondary small mb-3">Conectá tus servicios externos para sincronizar el calendario y habilitar música de estudio en la Sesión Zen.</p>
+
+                        <div class="row g-3">
+                            <!-- Google Calendar -->
+                            <div class="col-12 col-sm-6">
+                                <div class="p-3 border rounded-3 bg-light-subtle h-100 d-flex flex-column">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-calendar-check text-primary fs-4"></i>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">Google Calendar</h6>
+                                                <small class="text-muted">Eventos y recordatorios</small>
+                                            </div>
+                                        </div>
+                                        <span v-if="props.integraciones?.google_calendar" class="badge bg-success-subtle text-success border border-success-subtle">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Conectado
+                                        </span>
+                                        <span v-else class="badge bg-secondary-subtle text-secondary border">
+                                            No vinculado
+                                        </span>
+                                    </div>
+
+                                    <div class="mt-auto pt-2">
+                                        <div v-if="props.integraciones?.google_calendar" class="d-flex gap-2">
+                                            <button @click="probarGoogleCalendar" class="btn btn-sm btn-outline-primary flex-grow-1" :disabled="loadingTestGC">
+                                                <i class="bi bi-lightning me-1"></i>{{ loadingTestGC ? 'Comprobando...' : 'Probar Conexión' }}
+                                            </button>
+                                            <button @click="desvincularGoogleCalendar" class="btn btn-sm btn-outline-danger" title="Desvincular cuenta">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </div>
+                                        <a v-else href="/auth/google-calendar/redirect" class="btn btn-sm btn-outline-marron w-100 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-google"></i> Conectar Calendar
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Spotify -->
+                            <div class="col-12 col-sm-6">
+                                <div class="p-3 border rounded-3 bg-light-subtle h-100 d-flex flex-column">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-spotify text-success fs-4"></i>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">Spotify</h6>
+                                                <small class="text-muted">Playlists de estudio</small>
+                                            </div>
+                                        </div>
+                                        <span v-if="props.integraciones?.spotify" class="badge bg-success-subtle text-success border border-success-subtle">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Conectado
+                                        </span>
+                                        <span v-else class="badge bg-secondary-subtle text-secondary border">
+                                            No vinculado
+                                        </span>
+                                    </div>
+
+                                    <div class="mt-auto pt-2">
+                                        <div v-if="props.integraciones?.spotify" class="d-flex gap-2">
+                                            <button @click="probarSpotify" class="btn btn-sm btn-outline-success flex-grow-1" :disabled="loadingTestSp">
+                                                <i class="bi bi-lightning me-1"></i>{{ loadingTestSp ? 'Comprobando...' : 'Probar Conexión' }}
+                                            </button>
+                                            <button @click="desvincularSpotify" class="btn btn-sm btn-outline-danger" title="Desvincular cuenta">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </div>
+                                        <a v-else href="/auth/spotify/redirect" class="btn btn-sm btn-outline-marron w-100 d-flex align-items-center justify-content-center gap-2">
+                                            <i class="bi bi-spotify text-success"></i> Conectar Spotify
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -628,4 +793,4 @@ body.cn-body-dark .modal-body label {
 body.cn-body-dark .modal-body p.text-muted {
     color: #fcd5b8 !important;
 }
-</style>
+</style>

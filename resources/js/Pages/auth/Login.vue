@@ -78,6 +78,10 @@ onUnmounted(() => {
                     {{ status }}
                 </div>
 
+                <div v-if="$page.props.errors && ($page.props.errors.email || $page.props.errors.error)" class="status-msg" style="background-color: #fde8e8; color: #9b1c1c; border: 1px solid #f8b4b4; margin-bottom: 15px; padding: 10px; border-radius: 8px; font-size: 0.9rem;">
+                    {{ $page.props.errors.email || $page.props.errors.error }}
+                </div>
+
                 <form @submit.prevent="submit">
                     <div class="input-group" :style="{ marginBottom: form.errors.email ? '5px' : '18px' }">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

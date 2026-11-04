@@ -4,6 +4,9 @@ import { useForm, router, usePage, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import CompartirPerfilModal from '@/Components/CompartirPerfilModal.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useGlobalSearch } from '@/Composables/useGlobalSearch';
+
+const { globalSearchQuery, clearGlobalSearch } = useGlobalSearch();
 
 const props = defineProps({
     perfiles: {
@@ -43,12 +46,20 @@ watch(() => [props.perfiles, props.perfilesCompartidos], () => {
 }, { deep: true });
 
 const perfilesFiltrados = computed(() => {
-    const todosPerfiles = [
+    let todosPerfiles = [
         ...props.perfiles,
         ...props.perfilesCompartidos
     ];
+    const queryBusqueda = globalSearchQuery.value.trim().toLowerCase();
+    if (queryBusqueda) {
+        todosPerfiles = todosPerfiles.filter(p => {
+            const titulo = (p.tituloPerfil || '').toLowerCase();
+            const desc = (p.descripcionPerfil || '').toLowerCase();
+            return titulo.includes(queryBusqueda) || desc.includes(queryBusqueda);
+        });
+    }
     if (filtroActivo.value === 'recientes') {
-        return todosPerfiles.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        return [...todosPerfiles].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
     return todosPerfiles;
 });
@@ -291,9 +302,10 @@ const obtenerIniciales = (nombreCompleto) => {
             </div>
         </div>
 
-        <div class="d-flex gap-2 mb-4 overflow-x-auto pb-2 barra-filtros-scroll">
+        <div class="d-flex gap-2 mb-4 overflow-x-auto pb-2 barra-filtros-scroll align-items-center">
             <button class="btn btn-filtro" :class="{ active: filtroActivo === 'todos' }" @click="filtroActivo = 'todos'">Todos los Perfiles</button>
             <button class="btn btn-filtro" :class="{ active: filtroActivo === 'recientes' }" @click="filtroActivo = 'recientes'">Recientes</button>
+            <button v-if="globalSearchQuery" class="btn btn-filtro" @click="clearGlobalSearch">Limpiar búsqueda ({{ globalSearchQuery }})</button>
         </div>
 
         <div class="row g-3 g-md-4" :class="esVistaGrid ? 'vista-grid' : 'vista-lista'" id="contenedor-perfiles">
@@ -392,9 +404,10 @@ const obtenerIniciales = (nombreCompleto) => {
                 <div class="text-muted mb-3">
                     <i class="bi bi-inboxes fs-1"></i>
                 </div>
-                <h5 class="fw-bold text-dark">Aún no tienes perfiles</h5>
-                <p class="text-secondary small">Crea tu primer espacio de trabajo para comenzar a organizarte.</p>
-                <button class="btn btn-marron px-4 mt-2" @click="abrirCrearPerfil">Crear mi primer perfil</button>
+                <h5 class="fw-bold text-dark">{{ globalSearchQuery ? 'No se encontraron perfiles para "' + globalSearchQuery + '"' : 'Aún no tienes perfiles' }}</h5>
+                <p class="text-secondary small">{{ globalSearchQuery ? 'Intenta con otra búsqueda o limpia el filtro.' : 'Crea tu primer espacio de trabajo para comenzar a organizarte.' }}</p>
+                <button v-if="globalSearchQuery" class="btn btn-marron px-4 mt-2" @click="clearGlobalSearch">Ver todos los perfiles</button>
+                <button v-else class="btn btn-marron px-4 mt-2" @click="abrirCrearPerfil">Crear mi primer perfil</button>
             </div>
 
         </div>

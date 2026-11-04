@@ -63,9 +63,9 @@
           </div>
 
           <!-- Mensaje cuando no hay perfiles creados -->
-          <div class="profile-card add-profile-card" @click="irAPerfiles" v-if="todosLosPerfiles.length === 0">
-            <h3 class="profile-name">¡Aún no tienes perfiles creados!</h3>
-            <p class="profile-date">Comienza a organizar tus tareas</p>
+          <div class="profile-card add-profile-card" @click="globalSearchQuery ? clearGlobalSearch() : irAPerfiles()" v-if="todosLosPerfiles.length === 0">
+            <h3 class="profile-name">{{ globalSearchQuery ? 'No hay perfiles que coincidan con "' + globalSearchQuery + '"' : '¡Aún no tienes perfiles creados!' }}</h3>
+            <p class="profile-date">{{ globalSearchQuery ? 'Haz clic aquí para limpiar la búsqueda' : 'Comienza a organizar tus tareas' }}</p>
           </div>
         </div>
 
@@ -145,8 +145,11 @@ import CardDescription from '@/Components/ui/CardDescription.vue';
 import CardContent from '@/Components/ui/CardContent.vue';
 import { Bar, Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement } from 'chart.js';
+import { useGlobalSearch } from '@/Composables/useGlobalSearch';
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement);
+
+const { globalSearchQuery, clearGlobalSearch } = useGlobalSearch();
 
 // Props recibidos desde DashboardController
 const props = defineProps({
@@ -189,10 +192,17 @@ const props = defineProps({
 const animateProgress = ref(false);
 
 const todosLosPerfiles = computed(() => {
-  return [
+  const todos = [
     ...props.perfiles,
     ...props.perfilesCompartidos
   ];
+  const q = globalSearchQuery.value.trim().toLowerCase();
+  if (!q) return todos;
+  return todos.filter(p => {
+    const titulo = (p.tituloPerfil || '').toLowerCase();
+    const desc = (p.descripcionPerfil || '').toLowerCase();
+    return titulo.includes(q) || desc.includes(q);
+  });
 });
 
 const obtenerIniciales = (nombreCompleto) => {

@@ -52,6 +52,12 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/gestion-perfil', [PerfilController::class, 'index'])->name('gestion-perfil');
     Route::get('/gestion-tareas', [TareaController::class, 'index'])->name('gestion-tareas');
 
+    // NOTIFICACIONES DE CAMPANA (Tareas próximas a vencer en 24h) Y BUSCADOR GLOBAL
+    Route::get('/notificaciones/tareas-por-vencer', [TareaController::class, 'proximasAVencer'])
+        ->name('notificaciones.tareas-por-vencer');
+    Route::get('/busqueda-global', [TareaController::class, 'busquedaGlobal'])
+        ->name('busqueda.global');
+
     // PERFILES
     Route::get('/perfiles', [PerfilController::class, 'index'])->name('perfiles.index');
     Route::get('/perfiles/{id}', [PerfilController::class, 'show'])->name('perfiles.show');

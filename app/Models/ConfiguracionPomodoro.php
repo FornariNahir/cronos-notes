@@ -16,6 +16,9 @@ class ConfiguracionPomodoro extends Model
         'duracionDescansoCorto',
         'duracionDescansoLargo',
         'sesionesPrevioDescansoLargo',
+        'sonido_activado',
+        'volumen_sonido',
+        'notificaciones_navegador',
         'fechaCreacionConfiguracion'
     ];
 
@@ -24,6 +27,9 @@ class ConfiguracionPomodoro extends Model
         'duracionDescansoCorto' => 'integer',
         'duracionDescansoLargo' => 'integer',
         'sesionesPrevioDescansoLargo' => 'integer',
+        'sonido_activado' => 'boolean',
+        'volumen_sonido' => 'integer',
+        'notificaciones_navegador' => 'boolean',
         'fechaCreacionConfiguracion' => 'datetime'
     ];
 

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Tarea;
 use App\Models\Perfil;
+use App\Models\Apunte;
 use App\Models\PerfilCompartido;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +26,155 @@ class TareaController extends Controller
         $perfil = Perfil::findOrFail($idPerfil);
         $this->authorize($permiso, $perfil);
         return $perfil;
+    }
+
+    /**
+     * Buscador contextual en tiempo real para el Navbar:
+     * - Si contexto === 'perfiles': busca únicamente en Perfiles del usuario.
+     * - Si contexto === 'tareas': busca únicamente en Tareas del perfil activo actual.
+     */
+    public function busquedaGlobal(Request $request)
+    {
+        $userId = Auth::id();
+        $q = trim((string) $request->query('q', ''));
+        $contexto = trim((string) $request->query('contexto', ''));
+
+        if (!$userId || mb_strlen($q) < 1) {
+            return response()->json(['resultados' => []]);
+        }
+
+        $like = '%' . $q . '%';
+
+        // Caso 1: Búsqueda en la sección "Mis perfiles" -> solo perfiles
+        if ($contexto === 'perfiles') {
+            $perfiles = Perfil::where(function ($query) use ($userId) {
+                    $query->where('idUsuario', $userId)
+                        ->orWhereHas('usuariosCompartidos', function ($sub) use ($userId) {
+                            $sub->where('PerfilCompartido.idUsuario', $userId);
+                        });
+                })
+                ->where(function ($query) use ($like) {
+                    $query->where('tituloPerfil', 'like', $like)
+                        ->orWhere('descripcionPerfil', 'like', $like);
+                })
+                ->limit(8)
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'uid' => 'perfil_' . $p->idPerfil,
+                        'tipo' => 'perfil',
+                        'id' => $p->idPerfil,
+                        'idPerfil' => $p->idPerfil,
+                        'titulo' => $p->tituloPerfil,
+                        'subtitulo' => $p->descripcionPerfil ?: 'Perfil de trabajo',
+                        'badge' => 'Perfil',
+                    ];
+                })
+                ->values();
+
+            return response()->json([
+                'resultados' => $perfiles,
+            ]);
+        }
+
+        // Caso 2: Búsqueda en la sección "Mis tareas" -> solo tareas del perfil activo
+        if ($contexto === 'tareas') {
+            $perfilActivoId = $request->query('idPerfil') ?: session('perfilActivo');
+            if (!$perfilActivoId) {
+                return response()->json(['resultados' => []]);
+            }
+
+            $tareas = Tarea::with('perfil')
+                ->where('idPerfil', $perfilActivoId)
+                ->whereHas('perfil', function ($query) use ($userId) {
+                    $query->where('idUsuario', $userId)
+                        ->orWhereHas('usuariosCompartidos', function ($sub) use ($userId) {
+                            $sub->where('PerfilCompartido.idUsuario', $userId);
+                        });
+                })
+                ->where(function ($query) use ($like) {
+                    $query->where('tituloTarea', 'like', $like)
+                        ->orWhere('descripcionTarea', 'like', $like);
+                })
+                ->orderBy('fechaLimite', 'asc')
+                ->limit(10)
+                ->get()
+                ->map(function ($t) {
+                    return [
+                        'uid' => 'tarea_' . $t->idTarea,
+                        'tipo' => 'tarea',
+                        'id' => $t->idTarea,
+                        'idPerfil' => $t->idPerfil,
+                        'titulo' => $t->tituloTarea,
+                        'subtitulo' => ($t->estadoTarea ?? 'Pendiente') . ' · Prioridad ' . ($t->prioridadTarea ?? 'Media'),
+                        'badge' => 'Tarea',
+                    ];
+                })
+                ->values();
+
+            return response()->json([
+                'resultados' => $tareas,
+            ]);
+        }
+
+        return response()->json([
+            'resultados' => [],
+        ]);
+    }
+
+    /**
+     * Devuelve en formato JSON las tareas pendientes próximas a vencer (en las siguientes 24h)
+     * del usuario autenticado para alimentar la campana de notificaciones del Navbar.
+     */
+    public function proximasAVencer(Request $request)
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['notificaciones' => [], 'total' => 0]);
+        }
+
+        $hoy = Carbon::now()->toDateString();
+        $manana = Carbon::now()->addDay()->toDateString();
+
+        $tareas = Tarea::with('perfil')
+            ->where('estadoTarea', '!=', 'Completado')
+            ->whereNotNull('fechaLimite')
+            ->whereBetween('fechaLimite', [$hoy, $manana])
+            ->whereHas('perfil', function ($query) use ($userId) {
+                $query->where('idUsuario', $userId)
+                    ->orWhereHas('usuariosCompartidos', function ($q) use ($userId) {
+                        $q->where('PerfilCompartido.idUsuario', $userId);
+                    });
+            })
+            ->orderBy('fechaLimite', 'asc')
+            ->get()
+            ->map(function ($tarea) use ($hoy) {
+                $fechaStr = $tarea->fechaLimite instanceof Carbon
+                    ? $tarea->fechaLimite->format('Y-m-d')
+                    : Carbon::parse($tarea->fechaLimite)->format('Y-m-d');
+
+                $vencimiento = Carbon::parse($fechaStr)->endOfDay();
+                $minutosRestantes = Carbon::now()->diffInMinutes($vencimiento, false);
+                $horasRestantes = max(1, min(24, (int) ceil($minutosRestantes / 60)));
+
+                return [
+                    'idTarea' => $tarea->idTarea,
+                    'idPerfil' => $tarea->idPerfil,
+                    'tituloTarea' => $tarea->tituloTarea,
+                    'perfil' => $tarea->perfil?->tituloPerfil ?? 'General',
+                    'prioridadTarea' => $tarea->prioridadTarea ?? 'Media',
+                    'estadoTarea' => $tarea->estadoTarea,
+                    'fechaLimite' => $fechaStr,
+                    'venceHoy' => $fechaStr === $hoy,
+                    'horas_restantes' => $horasRestantes,
+                ];
+            })
+            ->values();
+
+        return response()->json([
+            'notificaciones' => $tareas,
+            'total' => $tareas->count(),
+        ]);
     }
 
     public function index(Request $request)

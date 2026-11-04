@@ -73,7 +73,6 @@ const proceedEndSession = (marcarTareaCompletada) => {
 const page = usePage();
 
 // State variables
-const isDarkMode = ref(false);
 const selectedSound = ref('Ninguno');
 const timeLeft = ref(25 * 60);
 const selectedLandscape = ref('paisaje1');
@@ -242,7 +241,18 @@ const {
   saveStateToStorage,
   totalSeconds,
   localSesionActiva,
-  registerCallbacks
+  registerCallbacks,
+  isPipActive,
+  requestPipWindow,
+  alertEnabled,
+  alertVolume,
+  alertSoundWork,
+  alertSoundBreak,
+  playAlertSound,
+  alertSoundsCatalog,
+  isGlobalDarkMode: isDarkMode,
+  setGlobalDarkMode,
+  syncGlobalDarkModeFromStorage
 } = usePomodoroTimer(props);
 
 watch(() => localSesionActiva.value, () => {
@@ -299,14 +309,7 @@ const closeOnOutsideClick = (e) => {
 };
 
 onMounted(() => {
-  isDarkMode.value = localStorage.getItem('cn-theme') === 'dark';
-  if (isDarkMode.value) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-  }
+  syncGlobalDarkModeFromStorage();
 
   // Registrar los callbacks del temporizador al montar el componente
   registerCallbacks(null, () => {
@@ -389,15 +392,7 @@ const phaseText = computed(() => {
 });
 
 const aplicarCambioModo = (oscuro) => {
-  isDarkMode.value = oscuro;
-  localStorage.setItem('cn-theme', oscuro ? 'dark' : 'light');
-  if (oscuro) {
-    document.body.classList.remove('cn-body-light');
-    document.body.classList.add('cn-body-dark');
-  } else {
-    document.body.classList.remove('cn-body-dark');
-    document.body.classList.add('cn-body-light');
-  }
+  setGlobalDarkMode(oscuro);
 };
 
 // Removed legacy toggleSound logic
@@ -425,44 +420,15 @@ const cerrarModalAvanzado = () => {
 };
 
 // --- WIDGET DE GIF LOGIC ---
-const showGifWidget = ref(false);
-const isGifMinimized = ref(false);
-const selectedGifUrl = ref('https://media.giphy.com/media/j9MVR3yo539S0/giphy.gif');
-const gifSearchQuery = ref('');
-const gifResults = ref([]);
-const isSearchingGifs = ref(false);
-const hasSearchedGifs = ref(false);
-const gifWidget = ref(null);
-const showGifSearch = ref(false);
 
+const showGifWidget = ref(false);
 const activeGiphyKey = computed(() => props.giphyApiKey || props.tenorApiKey || localStorage.getItem('cn_giphy_key') || localStorage.getItem('cn_tenor_key') || '');
 
-const quickGifsList = [
-  { name: 'Lofi Girl', url: 'https://media.giphy.com/media/j9MVR3yo539S0/giphy.gif' },
-  { name: 'Gatito', url: 'https://media.giphy.com/media/C9x8gX5j56C6C74QXA/giphy.gif' },
-  { name: 'Lluvia', url: 'https://media.giphy.com/media/PI3f2f84WNo88/giphy.gif' },
-  { name: 'Estudio', url: 'https://media.giphy.com/media/13HgwGsXF0PFK0/giphy.gif' },
-  { name: 'Fogata', url: 'https://media.giphy.com/media/3o6gb0F0aBiUA7ZG3C/giphy.gif' }
-];
 
 const toggleGifWidget = () => {
   showGifWidget.value = !showGifWidget.value;
 };
 
-const searchGifs = async () => {
-  if (!gifSearchQuery.value.trim() || !activeGiphyKey.value) return;
-  isSearchingGifs.value = true;
-  hasSearchedGifs.value = true;
-  try {
-    const response = await fetch(`https://api.giphy.com/v1/gifs/search?q=${encodeURIComponent(gifSearchQuery.value)}&api_key=${activeGiphyKey.value}&limit=6`);
-    const data = await response.json();
-    gifResults.value = data.data || [];
-  } catch (error) {
-    console.error("Error fetching GIFs from Giphy:", error);
-  } finally {
-    isSearchingGifs.value = false;
-  }
-};
 
 // --- WIDGET DE APUNTES LOGIC ---
 const localApuntes = ref([...props.apuntes]);
@@ -761,12 +727,13 @@ watch(cornellTab, async () => {
               <i class="bi" :class="showNotesWidget ? 'bi-journal-richtext' : 'bi-journal'"></i>
             </button>
             <button 
-              @click="toggleGifWidget" 
+              v-if="localSesionActiva"
+              @click="requestPipWindow" 
               class="floating-btn" 
-              :class="{ 'gif-active-btn': showGifWidget }"
-              :title="showGifWidget ? 'Ocultar Compañero GIF' : 'Mostrar Compañero GIF'"
+              :class="{ 'notes-active-btn': isPipActive }"
+              :title="isPipActive ? 'Cerrar Mini-Timer Flotante' : 'Abrir Mini-Timer Flotante (PiP)'"
             >
-              <i class="bi" :class="showGifWidget ? 'bi-image-fill' : 'bi-image'"></i>
+              <i class="bi bi-pip"></i>
             </button>
             <Link 
               href="/dashboard" 
@@ -871,7 +838,11 @@ watch(cornellTab, async () => {
             </div>
             <div id="timer-display" class="timer-display">{{ displayTime }}</div>
             
-            <div class="d-flex gap-2 mt-3 w-100 justify-content-center align-items-center">
+            <div class="d-flex flex-wrap gap-2 mt-3 w-100 justify-content-center align-items-center">
+              <button @click="requestPipWindow" class="btn-zen-mode-toggle" :title="isPipActive ? 'Cerrar Mini-Timer Flotante' : 'Desacoplar Mini-Timer en ventana flotante Always-on-Top'">
+                <i class="bi bi-pip"></i>
+                {{ isPipActive ? 'Cerrar PiP' : 'Mini-Timer' }}
+              </button>
               <button @click="toggleDistractionFree" class="btn-zen-mode-toggle">
                 <i class="bi" :class="isDistractionFree ? 'bi-eye-fill' : 'bi-eye-slash-fill'"></i>
                 {{ isDistractionFree ? 'Salir Modo Zen' : 'Modo Zen' }}
@@ -957,6 +928,49 @@ watch(cornellTab, async () => {
         <div class="settings-panel" :class="{ open: settingsPanelOpen }">
           <div class="settings-content">
             
+            <div class="sound-header mt-1 d-flex justify-content-between align-items-center">
+              <span>ALERTAS DE FIN DE CICLO</span>
+              <input type="checkbox" v-model="alertEnabled" title="Activar/Desactivar alarma sonora" style="cursor: pointer; accent-color: #7b413f;" />
+            </div>
+            <div class="mb-3 p-2 rounded" style="background: rgba(123, 65, 63, 0.08); border: 1px solid rgba(123, 65, 63, 0.18);">
+              <div class="mb-2">
+                <label class="d-block mb-1" style="font-size: 11px; font-weight: 600;">Al terminar Pomodoro (Trabajo)</label>
+                <div class="d-flex gap-1 align-items-center">
+                  <select v-model="alertSoundWork" :disabled="!alertEnabled" class="form-select-zen" style="font-size: 12px; padding: 4px 8px; flex: 1;">
+                    <option v-for="s in alertSoundsCatalog" :key="s.id" :value="s.id">{{ s.emoji }} {{ s.nombre }}</option>
+                  </select>
+                  <button type="button" @click="playAlertSound(alertSoundWork, true)" class="btn-zen-mode-toggle" style="padding: 4px 8px; font-size: 12px;" title="Escuchar sonido">
+                    ▶
+                  </button>
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="d-block mb-1" style="font-size: 11px; font-weight: 600;">Al terminar Descanso</label>
+                <div class="d-flex gap-1 align-items-center">
+                  <select v-model="alertSoundBreak" :disabled="!alertEnabled" class="form-select-zen" style="font-size: 12px; padding: 4px 8px; flex: 1;">
+                    <option v-for="s in alertSoundsCatalog" :key="s.id" :value="s.id">{{ s.emoji }} {{ s.nombre }}</option>
+                  </select>
+                  <button type="button" @click="playAlertSound(alertSoundBreak, true)" class="btn-zen-mode-toggle" style="padding: 4px 8px; font-size: 12px;" title="Escuchar sonido">
+                    ▶
+                  </button>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2 mt-1">
+                <span style="font-size: 11px; font-weight: 600;">Volumen Alerta:</span>
+                <input
+                  type="range"
+                  class="mixer-slider"
+                  style="flex: 1;"
+                  v-model.number="alertVolume"
+                  min="0.05"
+                  max="1"
+                  step="0.05"
+                  :disabled="!alertEnabled"
+                />
+                <span style="font-size: 11px; min-width: 32px; text-align: right;">{{ Math.round(alertVolume * 100) }}%</span>
+              </div>
+            </div>
+
             <div class="sound-header mt-2">MEZCLADOR DE SONIDOS</div>
             <div class="sound-options mixer-options">
               <div 
@@ -3063,231 +3077,4 @@ body.dark-mode .zen-custom-modal {
   50% { transform: scale(1.18); opacity: 1; }
 }
 
-/* GIF Widget Glassmorphic Styles */
-.gif-widget {
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(107, 76, 63, 0.25);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(107, 76, 63, 0.15);
-  padding: 16px 20px 20px 20px;
-  transition: all 0.3s ease;
-  color: #4a3025;
-  display: flex;
-  flex-direction: column;
-}
-
-.gif-widget:not(.minimized) {
-  resize: both;
-  overflow: hidden;
-  min-width: 300px;
-  min-height: 280px;
-  height: 380px;
-}
-
-.gif-widget.minimized {
-  width: auto !important;
-  height: auto !important;
-  resize: none !important;
-}
-
-.gif-widget:not(.minimized) .gif-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-.gif-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 8px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(107, 76, 63, 0.2);
-}
-
-.gif-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.gif-drag-handle {
-  cursor: grab;
-  color: #8a7065;
-  opacity: 0.6;
-  display: flex;
-  align-items: center;
-}
-
-.gif-drag-handle:hover {
-  opacity: 1;
-}
-
-.gif-header-title {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.gif-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gif-header-btn {
-  background: transparent;
-  border: none;
-  color: #8a7065;
-  padding: 2px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-}
-
-.gif-header-btn:hover {
-  color: #6b4c3f;
-}
-
-.gif-minimized-view {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  font-weight: 700;
-  color: #6b4c3f;
-  font-size: 12px;
-}
-
-.gif-display-area {
-  flex: 1;
-  min-height: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f7fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(107, 76, 63, 0.15);
-}
-
-.gif-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.gif-placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #8a7065;
-}
-
-.gif-search-container {
-  margin-top: 8px;
-  flex-shrink: 0;
-}
-
-.gif-results-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  max-height: 110px;
-  overflow-y: auto;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
-  margin-top: 6px;
-}
-
-.gif-result-item {
-  aspect-ratio: 4/3;
-  border-radius: 6px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-}
-
-.gif-result-item:hover {
-  border-color: #6b4c3f;
-  transform: scale(1.05);
-}
-
-.gif-result-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.btn-outline-zen {
-  background: transparent;
-  border: 1px solid rgba(107, 76, 63, 0.3);
-  color: #6b4c3f;
-  transition: all 0.2s;
-}
-
-.btn-outline-zen:hover {
-  background: rgba(107, 76, 63, 0.08);
-  color: #6b4c3f;
-}
-
-/* Dark mode overrides for GIF Widget */
-.pomodoro-zen-container.dark-mode .gif-widget {
-  background: rgba(97, 44, 45, 0.94) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  color: #ffffff !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-drag-handle,
-.pomodoro-zen-container.dark-mode .gif-header-btn {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-drag-handle:hover,
-.pomodoro-zen-container.dark-mode .gif-header-btn:hover {
-  color: #ffffff !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-minimized-view {
-  color: #ffffff !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-display-area {
-  background: rgba(0, 0, 0, 0.2) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.pomodoro-zen-container.dark-mode .btn-outline-zen {
-  border-color: rgba(255, 255, 255, 0.25) !important;
-  color: #ffffff !important;
-}
-
-.pomodoro-zen-container.dark-mode .btn-outline-zen:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.gif-active-btn {
-  background: rgba(107, 76, 63, 0.2) !important;
-  color: #6b4c3f !important;
-  border-color: #6b4c3f !important;
-}
-
-.pomodoro-zen-container.dark-mode .gif-active-btn {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-}
 </style>

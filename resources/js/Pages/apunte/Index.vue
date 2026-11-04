@@ -15,18 +15,23 @@
             </span>
           </p>
         </div>
-        <Link v-if="perfilActivo?.permisoCompartido !== 'Lector'" :href="route('apuntes.create')" class="btn-create">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nuevo apunte
-        </Link>
+        <div class="d-flex align-items-center gap-2">
+          <button v-if="globalSearchQuery" class="btn btn-sm btn-outline-secondary rounded-pill px-3" @click="clearGlobalSearch">
+            Limpiar búsqueda ({{ globalSearchQuery }})
+          </button>
+          <Link v-if="perfilActivo?.permisoCompartido !== 'Lector'" :href="route('apuntes.create')" class="btn-create">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nuevo apunte
+          </Link>
+        </div>
       </div>
 
       <!-- Grid de Apuntes -->
       <div class="notes-grid">
-        <div v-for="apunte in apuntes" :key="apunte.idApunte" class="note-card">
+        <div v-for="apunte in apuntesFiltrados" :key="apunte.idApunte" class="note-card">
           <div class="note-card-content" @click="editNote(apunte.idApunte)">
             <h3 class="note-title">{{ apunte.tituloApunte }}</h3>
             <span class="note-date d-flex align-items-center flex-wrap gap-2">
@@ -54,15 +59,15 @@
         </div>
 
         <!-- Estado Vacío -->
-        <div class="empty-state" v-if="apuntes.length === 0" :class="{ 'cursor-default': perfilActivo?.permisoCompartido === 'Lector' }" @click="perfilActivo?.permisoCompartido !== 'Lector' ? createNote() : null">
+        <div class="empty-state" v-if="apuntesFiltrados.length === 0" :class="{ 'cursor-default': perfilActivo?.permisoCompartido === 'Lector' && !globalSearchQuery }" @click="globalSearchQuery ? clearGlobalSearch() : (perfilActivo?.permisoCompartido !== 'Lector' ? createNote() : null)">
           <div class="empty-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
             </svg>
           </div>
-          <h3>{{ perfilActivo?.permisoCompartido === 'Lector' ? 'Sin apuntes' : 'Crea tu primer apunte' }}</h3>
-          <p>{{ perfilActivo?.permisoCompartido === 'Lector' ? 'Este perfil no cuenta con apuntes creados.' : 'Graba audios de clase y escribe notas de estudio en este perfil.' }}</p>
+          <h3>{{ globalSearchQuery ? 'No se encontraron apuntes para "' + globalSearchQuery + '"' : (perfilActivo?.permisoCompartido === 'Lector' ? 'Sin apuntes' : 'Crea tu primer apunte') }}</h3>
+          <p>{{ globalSearchQuery ? 'Haz clic aquí para limpiar la búsqueda y ver todos los apuntes.' : (perfilActivo?.permisoCompartido === 'Lector' ? 'Este perfil no cuenta con apuntes creados.' : 'Graba audios de clase y escribe notas de estudio en este perfil.') }}</p>
         </div>
       </div>
     </div>
@@ -87,13 +92,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Link, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { useGlobalSearch } from '@/Composables/useGlobalSearch';
+
+const { globalSearchQuery, clearGlobalSearch } = useGlobalSearch();
 
 const props = defineProps({
   apuntes: Array,
   perfilActivo: Object
+});
+
+const apuntesFiltrados = computed(() => {
+  const lista = props.apuntes || [];
+  const q = globalSearchQuery.value.trim().toLowerCase();
+  if (!q) return lista;
+  return lista.filter(a => {
+    const titulo = (a.tituloApunte || '').toLowerCase();
+    const contenido = (a.contenidoApunte || '').replace(/<[^>]*>?/gm, ' ').toLowerCase();
+    return titulo.includes(q) || contenido.includes(q);
+  });
 });
 
 const showConfirmDeleteModal = ref(false);
@@ -447,6 +466,7 @@ const confirmDelete = () => {
 .profile-info h4 {
   font-size: 16px;
   color: #333;
+  margin-right: 16px;
   margin: 0;
 }
 
@@ -730,4 +750,3 @@ body.cn-body-dark .profile-info h4 {
   color: #ffffff !important;
 }
 </style>
-

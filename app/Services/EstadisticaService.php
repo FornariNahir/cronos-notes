@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Estadistica;
 use App\Models\Racha;
 use App\Models\SesionPomodoro;
+use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 
 class EstadisticaService
@@ -14,6 +15,11 @@ class EstadisticaService
      */
     public function verificarRachaPerdida($idUsuario)
     {
+        $cacheKey = "racha_verificada_{$idUsuario}_" . Carbon::today()->toDateString();
+        if (!app()->environment('testing') && Cache::has($cacheKey)) {
+            return;
+        }
+
         $estadistica = Estadistica::firstOrCreate(
             ['idUsuario' => $idUsuario],
             [
@@ -50,7 +56,12 @@ class EstadisticaService
                 ]);
             }
         }
+
+        if (!app()->environment('testing')) {
+            Cache::put($cacheKey, true, 600);
+        }
     }
+
     /**
      * Registra el tiempo de trabajo y actualiza las horas diarias.
      */
@@ -181,6 +192,8 @@ class EstadisticaService
             'rachaActual' => $nuevaRachaActual,
             'rachaMasLarga' => $rachaMasLarga
         ]);
+
+        Cache::forget("racha_verificada_{$idUsuario}_" . $hoy->toDateString());
     }
 
     /**

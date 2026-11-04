@@ -3,6 +3,9 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useForm, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import { useGlobalSearch } from '@/Composables/useGlobalSearch';
+
+const { globalSearchQuery, clearGlobalSearch } = useGlobalSearch();
 
 const props = defineProps({
     tareas: {
@@ -75,10 +78,14 @@ const filtroEstado = ref('Todos');
 const filtroPrioridad = ref('Todas');
 
 const tareasFiltradas = computed(() => {
+    const q = globalSearchQuery.value.trim().toLowerCase();
     return tareasList.value.filter(t => {
         const coincideEstado = filtroEstado.value === 'Todos' || t.estadoTarea === filtroEstado.value;
         const coincidePrioridad = filtroPrioridad.value === 'Todas' || t.prioridadTarea === filtroPrioridad.value;
-        return coincideEstado && coincidePrioridad;
+        const coincideBusqueda = !q ||
+            (t.tituloTarea || '').toLowerCase().includes(q) ||
+            (t.descripcionTarea || '').toLowerCase().includes(q);
+        return coincideEstado && coincidePrioridad && coincideBusqueda;
     });
 });
 
@@ -286,7 +293,7 @@ const textoEstado = (estado) => {
                     </select>
                 </div>
                 <div>
-                    <button class="btn btn-light btn-sm text-secondary px-3 py-2 border" @click="filtroEstado='Todos'; filtroPrioridad='Todas'" title="Limpiar filtros">
+                    <button class="btn btn-light btn-sm text-secondary px-3 py-2 border" @click="filtroEstado='Todos'; filtroPrioridad='Todas'; clearGlobalSearch()" title="Limpiar filtros">
                         <i class="bi bi-eraser-fill"></i> Limpiar
                     </button>
                 </div>
@@ -346,9 +353,9 @@ const textoEstado = (estado) => {
                     <i class="bi fs-1" :class="tareasList.length > 0 ? 'bi-funnel' : 'bi-card-checklist'"></i>
                 </div>
                 <h5 class="fw-bold text-dark">{{ tareasList.length > 0 ? 'No se encontraron tareas' : 'Sin tareas asignadas' }}</h5>
-                <p class="text-secondary small">{{ tareasList.length > 0 ? 'Probá cambiando los filtros seleccionados.' : 'Este perfil aún no cuenta con tareas pendientes o finalizadas.' }}</p>
+                <p class="text-secondary small">{{ tareasList.length > 0 ? 'Probá cambiando los filtros o limpiando la búsqueda.' : 'Este perfil aún no cuenta con tareas pendientes o finalizadas.' }}</p>
                 <button v-if="tareasList.length === 0" class="btn btn-outline-secondary px-4 mt-2" @click="abrirCrearTarea">Añadir Tarea</button>
-                <button v-else class="btn btn-outline-secondary px-4 mt-2" @click="filtroEstado='Todos'; filtroPrioridad='Todas'">Limpiar Filtros</button>
+                <button v-else class="btn btn-outline-secondary px-4 mt-2" @click="filtroEstado='Todos'; filtroPrioridad='Todas'; clearGlobalSearch()">Limpiar Filtros</button>
             </div>
 
         </div>

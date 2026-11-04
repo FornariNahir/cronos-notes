@@ -149,6 +149,11 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                  <!-- Copy Invitation Link Button -->
+                  <button v-if="esPropietario && invitacion.token" type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-2 py-0" style="font-size: 11px;" @click="copiarLinkInvitacion(invitacion)" title="Copiar enlace directo de invitación">
+                    <i class="bi me-1" :class="tokenCopiado === invitacion.idInvitacion ? 'bi-check2 text-success' : 'bi-link-45deg'"></i>
+                    {{ tokenCopiado === invitacion.idInvitacion ? '¡Copiado!' : 'Copiar link' }}
+                  </button>
                   <!-- Cancel Invitation Button -->
                   <button 
                     v-if="esPropietario" 
@@ -310,6 +315,14 @@ const revocarAcceso = (idUsuario) => {
       });
     }
   });
+};
+
+const tokenCopiado = ref(null);
+const copiarLinkInvitacion = async (invitacion) => {
+  const link = `${window.location.origin}/invitacion/${invitacion.token}`;
+  await navigator.clipboard.writeText(link);
+  tokenCopiado.value = invitacion.idInvitacion;
+  setTimeout(() => { tokenCopiado.value = null; }, 2500);
 };
 
 const cancelarInvitacion = (idInvitacion) => {

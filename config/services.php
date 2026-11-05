@@ -39,12 +39,18 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'guzzle' => [
+            'verify' => env('CURL_SSL_VERIFY', env('APP_ENV') === 'production'),
+        ],
     ],
 
     'google_calendar' => [
         'client_id' => env('GOOGLE_CALENDAR_CLIENT_ID', env('GOOGLE_CLIENT_ID')),
         'client_secret' => env('GOOGLE_CALENDAR_CLIENT_SECRET', env('GOOGLE_CLIENT_SECRET')),
         'redirect' => env('GOOGLE_CALENDAR_REDIRECT_URI', 'http://127.0.0.1:8000/auth/google-calendar/callback'),
+        'guzzle' => [
+            'verify' => env('CURL_SSL_VERIFY', env('APP_ENV') === 'production'),
+        ],
     ],
 
     'spotify' => [

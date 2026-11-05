@@ -104,6 +104,7 @@
         </li>
 
       </ul>
+      <slot name="sidebar-extra" />
     </aside>
 
     <!-- Contenido principal de cada página -->

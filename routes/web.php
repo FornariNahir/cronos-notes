@@ -113,14 +113,18 @@ Route::middleware('auth.custom')->group(function () {
 
         // Cargar eventos de Google Calendar (RF-M15)
         // Rango de visualización ampliado: desde el mes anterior hasta los próximos 3 meses
-        $inicioIso = now()->subMonth()->startOfMonth()->toRfc3339String();
-        $finIso = now()->addMonths(3)->endOfMonth()->toRfc3339String();
+        $inicioIso = now()->subMonths(6)->startOfMonth()->toRfc3339String();
+        $finIso = now()->addMonths(12)->endOfMonth()->toRfc3339String();
         $eventosGoogle = $calendarService->getEventosRango($userId, $inicioIso, $finIso);
 
         return Inertia::render('Calendario', [
             'tareasCargadas' => $tareas,
             'perfilesDisponibles' => $perfiles,
             'eventosGoogle' => $eventosGoogle,
+            'estaVinculadoGoogle' => \App\Models\IntegracionExterna::where('idUsuario', $userId)
+                ->where('plataforma', 'GoogleCalendar')
+                ->whereNotNull('tokenAcceso')
+                ->exists(),
         ]);
     })->name('calendario');
 

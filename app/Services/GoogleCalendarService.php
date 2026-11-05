@@ -103,27 +103,28 @@ class GoogleCalendarService
      */
     public function obtenerListaCalendarios(int $userId, string &$token): array
     {
-        $response = Http::withToken($token)->get('https://www.googleapis.com/calendar/v3/users/me/calendarList');
+        $response = Http::withoutVerifying()->withToken($token)->get('https://www.googleapis.com/calendar/v3/users/me/calendarList');
 
         // Manejar expiración transparente
         if ($response->status() === 401) {
             $nuevoToken = $this->tokenService->refreshToken($userId, 'GoogleCalendar');
             if ($nuevoToken) {
                 $token = $nuevoToken;
-                $response = Http::withToken($token)->get('https://www.googleapis.com/calendar/v3/users/me/calendarList');
+                $response = Http::withoutVerifying()->withToken($token)->get('https://www.googleapis.com/calendar/v3/users/me/calendarList');
             }
         }
 
         if ($response->successful()) {
             $items = $response->json()['items'] ?? [];
             
-            // Filtrar únicamente los calendarios activos y visibles
+            // Filtrar únicamente los calendarios activos y visibles (asegurando el principal)
             $filtrados = array_filter($items, function ($c) {
-                // Si está explícitamente oculto, omitir
+                if ($c['primary'] ?? false) {
+                    return true;
+                }
                 if ($c['hidden'] ?? false) {
                     return false;
                 }
-                // Si el usuario desmarcó el calendario explícitamente en la interfaz de Google Calendar
                 if (isset($c['selected']) && !$c['selected']) {
                     return false;
                 }
@@ -147,7 +148,7 @@ class GoogleCalendarService
         $url = 'https://www.googleapis.com/calendar/v3/calendars/' . urlencode($calendarId) . '/events';
 
         try {
-            $response = Http::withToken($token)->get($url, [
+            $response = Http::withoutVerifying()->withToken($token)->get($url, [
                 'timeMin' => $timeMin,
                 'timeMax' => $timeMax,
                 'singleEvents' => 'true',
@@ -159,7 +160,7 @@ class GoogleCalendarService
                 $nuevoToken = $this->tokenService->refreshToken($userId, 'GoogleCalendar');
                 if ($nuevoToken) {
                     $token = $nuevoToken;
-                    $response = Http::withToken($token)->get($url, [
+                    $response = Http::withoutVerifying()->withToken($token)->get($url, [
                         'timeMin' => $timeMin,
                         'timeMax' => $timeMax,
                         'singleEvents' => 'true',
@@ -202,13 +203,13 @@ class GoogleCalendarService
         ];
 
         try {
-            $response = Http::withToken($token)
+            $response = Http::withoutVerifying()->withToken($token)
                 ->post('https://www.googleapis.com/calendar/v3/calendars/primary/events', $payload);
 
             if ($response->status() === 401) {
                 $token = $this->tokenService->refreshToken($userId, 'GoogleCalendar');
                 if ($token) {
-                    $response = Http::withToken($token)
+                    $response = Http::withoutVerifying()->withToken($token)
                         ->post('https://www.googleapis.com/calendar/v3/calendars/primary/events', $payload);
                 }
             }

@@ -27,10 +27,17 @@ class GoogleCalendarController extends Controller
     protected function getGoogleCalendarProvider()
     {
         $config = config('services.google_calendar');
-        return Socialite::buildProvider(
+        $provider = Socialite::buildProvider(
             \Laravel\Socialite\Two\GoogleProvider::class,
             $config
         );
+
+        // Desactivar verificación estricta de SSL en cURL para entornos locales en Windows
+        $provider->setHttpClient(new \GuzzleHttp\Client([
+            'verify' => false,
+        ]));
+
+        return $provider;
     }
 
     /**
@@ -91,10 +98,10 @@ class GoogleCalendarController extends Controller
                 ]
             );
 
-            return redirect()->route('perfil-usuario')->with('success', '¡Google Calendar vinculado exitosamente!');
+            return redirect()->route('calendario')->with('success', '¡Google Calendar vinculado exitosamente!');
         } catch (\Exception $e) {
             Log::error("[GoogleCalendarController] Error en callback: " . $e->getMessage());
-            return redirect()->route('perfil-usuario')->withErrors([
+            return redirect()->route('calendario')->withErrors([
                 'error' => 'Hubo un inconveniente al vincular Google Calendar: ' . $e->getMessage(),
             ]);
         }

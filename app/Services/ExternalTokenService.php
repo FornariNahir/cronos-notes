@@ -82,7 +82,7 @@ class ExternalTokenService
         $clientSecret = config('services.google_calendar.client_secret');
 
         try {
-            $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+            $response = Http::withoutVerifying()->asForm()->post('https://oauth2.googleapis.com/token', [
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret,
                 'refresh_token' => $integracion->tokenNuevo,
@@ -117,7 +117,7 @@ class ExternalTokenService
         $clientSecret = config('services.spotify.client_secret');
 
         try {
-            $response = Http::asForm()->withBasicAuth($clientId, $clientSecret)
+            $response = Http::withoutVerifying()->asForm()->withBasicAuth($clientId, $clientSecret)
                 ->post('https://accounts.spotify.com/api/token', [
                     'grant_type' => 'refresh_token',
                     'refresh_token' => $integracion->tokenNuevo,

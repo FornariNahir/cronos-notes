@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch, ref } from 'vue';
+import { onMounted, watch, ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router, Head } from '@inertiajs/vue3';
 import AlertModal from '@/Components/AlertModal.vue';
@@ -57,7 +57,15 @@ const props = defineProps({
     eventosGoogle: {
         type: Array,
         default: () => []
+    },
+    estaVinculadoGoogle: {
+        type: Boolean,
+        default: false
     }
+});
+
+const googleConectado = computed(() => {
+    return !!(props.estaVinculadoGoogle || (props.eventosGoogle && props.eventosGoogle.length > 0));
 });
 
 onMounted(() => {
@@ -177,45 +185,50 @@ function inicializarLogicaDOM() {
             const diaFormateado = String(dia).padStart(2, '0');
             const stringFechaFiltro = `${año}-${mesFormateado}-${diaFormateado}`;
 
-            // 1. Filtrar y renderizar eventos sincronizados de Google Calendar (RF-M15)
+            // 1. Filtrar y renderizar tareas nativas de Cronos asignadas a este día específico
+            const tareasDelDia = tareasDB.filter(t => t.fecha === stringFechaFiltro);
+            if (tareasDelDia.length > 0) {
+                const bloqueCronos = document.createElement("div");
+                bloqueCronos.className = "bloque-cronos-tarea-grupo";
+                const nombresTareas = tareasDelDia.map(t => t.nombre).join(" • ");
+                bloqueCronos.title = nombresTareas;
+
+                // Barra horizontal bicolor (marrón a la izquierda y durazno claro a la derecha)
+                const barra = document.createElement("div");
+                barra.className = "barra-bicolor-tarea";
+                bloqueCronos.appendChild(barra);
+
+                // Texto contador "1 TAREA" o "X TAREAS"
+                const textoContador = document.createElement("div");
+                textoContador.className = "texto-contador-tarea";
+                textoContador.textContent = `${tareasDelDia.length} ${tareasDelDia.length === 1 ? 'TAREA' : 'TAREAS'}`;
+                bloqueCronos.appendChild(textoContador);
+
+                // Clic en la barra o texto abre el modal existente de Cronos
+                bloqueCronos.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    abrirModalDetalle(tareasDelDia[0]);
+                });
+
+                listaTareasContenedor.appendChild(bloqueCronos);
+            }
+
+            // 2. Filtrar y renderizar eventos sincronizados de Google Calendar (RF-M15)
             const eventosDelDia = eventosGoogleDB.filter(e => e.fecha === stringFechaFiltro);
             eventosDelDia.forEach(evento => {
                 const bloqueEvento = document.createElement("div");
-                bloqueEvento.className = "bloque-google-item";
-                
-                const colorBorde = evento.color || "#4285F4";
-                bloqueEvento.style.borderLeftColor = colorBorde;
-                
-                const textoHora = evento.hora_inicio ? `${evento.hora_inicio} ` : '';
-                bloqueEvento.innerHTML = `<i class="bi bi-calendar2-event me-1 opacity-75"></i><span class="text-truncate">${textoHora}${evento.titulo}</span>`;
-                bloqueEvento.title = `[${evento.calendario_nombre}] ${evento.titulo} ${textoHora ? '(' + textoHora + ')' : ''}`;
+                bloqueEvento.className = "item-google-calendar-texto";
+                bloqueEvento.textContent = evento.titulo || '(Sin título)';
+                const textoHora = evento.hora_inicio ? ` (${evento.hora_inicio})` : '';
+                bloqueEvento.title = `[Google Calendar] ${evento.titulo}${textoHora}`;
 
-                // EVENTO CLICK: Abre el modal de detalle del evento de Google
+                // Clic en el evento de Google abre el modal especial de Google Calendar
                 bloqueEvento.addEventListener("click", function (e) {
                     e.stopPropagation();
                     abrirModalDetalleGoogle(evento);
                 });
 
                 listaTareasContenedor.appendChild(bloqueEvento);
-            });
-
-            // 2. Filtrar y renderizar tareas nativas de Cronos asignadas a este día específico
-            const tareasDelDia = tareasDB.filter(t => t.fecha === stringFechaFiltro);
-            tareasDelDia.forEach(tarea => {
-                const bloqueTarea = document.createElement("div");
-                let clasePrioridad = tarea.prioridad === "Alta" ? "t-alta" : (tarea.prioridad === "Media" ? "t-media" : "t-baja");
-                
-                bloqueTarea.className = `bloque-tarea-item ${clasePrioridad}`;
-                bloqueTarea.textContent = tarea.nombre;
-                bloqueTarea.title = tarea.nombre;
-
-                // EVENTO CLICK: Abre el modal con las características exactas de la tarea seleccionada
-                bloqueTarea.addEventListener("click", function (e) {
-                    e.stopPropagation(); // Evitar disparadores de la celda completa
-                    abrirModalDetalle(tarea);
-                });
-
-                listaTareasContenedor.appendChild(bloqueTarea);
             });
 
             grillaDiasContainer.appendChild(div);
@@ -261,41 +274,39 @@ function inicializarLogicaDOM() {
     // ==========================================
     function abrirModalDetalleGoogle(evento) {
         eventoGoogleSeleccionado = evento;
-        document.getElementById("google-detalle-titulo").textContent = evento.titulo;
-        document.getElementById("google-calendario-nombre").innerHTML = `<i class="bi bi-google me-1"></i> ${evento.calendario_nombre || 'Google Calendar'}`;
-        
-        const headerEl = document.getElementById("google-detalle-header");
-        if (headerEl) {
-            headerEl.style.backgroundColor = evento.color || '#1a73e8';
+        const tituloEl = document.getElementById("google-detalle-titulo");
+        if (tituloEl) {
+            tituloEl.textContent = evento.titulo || 'Evento de Google Calendar';
         }
 
-        // Formatear fecha para legibilidad humana en el modal
-        if (evento.fecha) {
-            const partes = evento.fecha.split("-");
-            document.getElementById("google-detalle-fecha").textContent = `${partes[2]}/${partes[1]}/${partes[0]}`;
-        } else {
-            document.getElementById("google-detalle-fecha").textContent = 'Sin fecha';
-        }
-
-        // Formatear horario
-        const horaSpan = document.getElementById("google-detalle-hora");
-        if (evento.es_todo_el_dia || !evento.hora_inicio) {
-            horaSpan.textContent = 'Todo el día';
-        } else {
-            horaSpan.textContent = evento.hora_fin ? `${evento.hora_inicio} a ${evento.hora_fin}` : evento.hora_inicio;
+        // Formatear fecha
+        const fechaEl = document.getElementById("google-detalle-fecha");
+        if (fechaEl) {
+            if (evento.fecha) {
+                if (!evento.es_todo_el_dia && evento.hora_inicio) {
+                    fechaEl.textContent = `${evento.fecha} (${evento.hora_inicio}${evento.hora_fin ? ' - ' + evento.hora_fin : ''})`;
+                } else {
+                    fechaEl.textContent = evento.fecha;
+                }
+            } else {
+                fechaEl.textContent = 'Sin fecha';
+            }
         }
 
         // Descripción del evento
         const descEl = document.getElementById("google-detalle-descripcion");
-        descEl.textContent = evento.descripcion || "Sin descripción proporcionada en Google Calendar.";
+        if (descEl) {
+            descEl.textContent = evento.descripcion && evento.descripcion.trim() ? evento.descripcion : "Sin descripción disponible.";
+        }
 
         // Link directo a Google Calendar
         const linkBtn = document.getElementById("btn-ver-en-google");
-        if (evento.html_link) {
-            linkBtn.href = evento.html_link;
-            linkBtn.style.display = "inline-flex";
-        } else {
-            linkBtn.style.display = "none";
+        if (linkBtn) {
+            if (evento.html_link) {
+                linkBtn.href = evento.html_link;
+            } else {
+                linkBtn.href = "https://calendar.google.com/calendar/";
+            }
         }
 
         if (modalDetalleGoogle) {
@@ -408,6 +419,14 @@ function inicializarLogicaDOM() {
     }
 
     // Controladores dinámicos de las flechas de navegación de meses
+    const btnHoy = document.getElementById("btn-hoy-mes");
+    if (btnHoy) {
+        btnHoy.addEventListener("click", function () {
+            fechaActual = new Date();
+            renderizarCalendario();
+        });
+    }
+
     const btnPrev = document.getElementById("btn-prev-mes");
     if (btnPrev) {
         btnPrev.addEventListener("click", function () {
@@ -433,31 +452,43 @@ function inicializarLogicaDOM() {
 <template>
   <Head title="Calendario" />
   <AppLayout>
+    <template #sidebar-extra>
+      <div v-if="!googleConectado" class="sidebar-google-section mt-auto pt-3 pb-3 px-2">
+        <a href="/auth/google-calendar/redirect" class="btn-vincular-google" title="Vincular con Google Calendar">
+          <span class="google-icon-wrapper">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/>
+            </svg>
+          </span>
+          <span class="btn-vincular-google-texto">Vincular con Google Calendar</span>
+        </a>
+      </div>
+    </template>
+
     <div class="main-layout-calendario p-3 p-md-4">
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
             <div>
-                <h1 style="font-size: 28px; font-weight: 700; color: #69342e; text-align: left; margin-left: -2px;">Calendario de Tareas</h1>
-                <p style="font-size: 15px; font-weight: 500; color: #a55e57;" class="m-0">Organiza y prioriza tus entregas.</p>
-                <div v-if="props.eventosGoogle && props.eventosGoogle.length > 0" class="mt-2">
-                    <span class="badge rounded-pill bg-white text-secondary border px-2.5 py-1.5 small fw-normal d-inline-flex align-items-center gap-1.5 shadow-sm">
-                        <i class="bi bi-google text-primary"></i>
-                        <span>Sincronizado con Google Calendar ({{ props.eventosGoogle.length }} eventos)</span>
-                    </span>
+                <h1 class="calendario-titulo-mes" id="display-mes-año">Abril 2026</h1>
+                <div class="calendario-subtitulo d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Vista mensual de actividades académicas</span>
                 </div>
             </div>
             
             <div class="d-flex align-items-center gap-3">
-                <div class="btn-group shadow-sm bg-white rounded-3 p-1 border">
-                    <button class="btn btn-nav-mes py-1 px-2.5" id="btn-prev-mes"><i class="bi bi-chevron-left"></i></button>
-                    <span class="fw-semibold text-dark px-3 align-self-center text-month-year" id="display-mes-año">Junio 2026</span>
-                    <button class="btn btn-nav-mes py-1 px-2.5" id="btn-next-mes"><i class="bi bi-chevron-right"></i></button>
+                <div class="btn-group-nav-calendario shadow-sm bg-white rounded-3 p-1 border d-flex align-items-center">
+                    <button class="btn btn-nav-mes py-1 px-2.5" id="btn-prev-mes" title="Mes anterior"><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn btn-nav-hoy py-1 px-3 fw-semibold text-dark" id="btn-hoy-mes">Hoy</button>
+                    <button class="btn btn-nav-mes py-1 px-2.5" id="btn-next-mes" title="Mes siguiente"><i class="bi bi-chevron-right"></i></button>
                 </div>
                 <button class="btn btn-marron d-flex align-items-center gap-2 px-3 py-2 shadow-sm" id="btn-abrir-crear" type="button">
                     <i class="bi bi-plus-lg"></i> Agregar nueva tarea
                 </button>
             </div>
         </div>
+            
+
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
             <div class="grid-semana-cabecera bg-white border-bottom text-center py-2 text-secondary small fw-medium">
@@ -535,57 +566,49 @@ function inicializarLogicaDOM() {
         <div class="modal fade" id="modalVerDetalleGoogle" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-esbelto-vertical">
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="header-detalle-google p-4 text-white position-relative" id="google-detalle-header" style="background-color: #1a73e8;">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <span class="badge bg-white text-dark rounded-pill px-2.5 py-1 small fw-semibold" id="google-calendario-nombre">
-                                <i class="bi bi-google me-1"></i> Google Calendar
-                            </span>
-                            <span class="badge rounded-pill px-2.5 py-1 small fw-medium text-white" id="google-tipo-tag" style="background-color: rgba(255,255,255,0.25);">
-                                Recordatorio
+                    <div class="header-detalle-marron p-4 text-white position-relative" style="background-color: #612c2d;">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-white rounded-pill px-3 py-1.5 fw-bold" style="color: #1a73e8; font-size: 0.75rem;">
+                                Evento de Google Calendar
                             </span>
                         </div>
-                        <h3 class="h5 fw-bold m-0 text-white" id="google-detalle-titulo">Título del Evento</h3>
-                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h3 class="h4 fw-bold m-0 text-white mt-2" id="google-detalle-titulo">Título del Evento</h3>
+                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-4" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4 bg-white">
-                        <div class="mb-3">
-                            <div class="small text-uppercase text-secondary fw-bold mb-1"><i class="bi bi-clock me-1"></i> Horario y Fecha</div>
-                            <div class="d-flex align-items-center gap-2 fw-semibold text-dark small">
-                                <span id="google-detalle-fecha">--/--/----</span>
-                                <span class="text-secondary">•</span>
-                                <span id="google-detalle-hora">Todo el día</span>
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-dark small fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                <i class="bi bi-calendar3" style="color: #4b5563;"></i>
+                                <span class="text-uppercase" style="color: #374151;">DESCRIPCIÓN DEL EVENTO</span>
                             </div>
-                        </div>
-
-                        <div class="mb-4" id="google-desc-container">
-                            <div class="small text-uppercase text-secondary fw-bold mb-1"><i class="bi bi-card-text me-1"></i> Descripción</div>
-                            <p class="text-muted small lh-base m-0" id="google-detalle-descripcion">Sin descripción disponible.</p>
-                        </div>
-
-                        <div class="p-3 mb-4 rounded-3" style="background-color: #f8f9fa; border: 1px dashed #dee2e6;">
-                            <div class="small fw-semibold text-dark mb-1">
-                                <i class="bi bi-info-circle text-primary me-1"></i> Evento de Agenda Externa
-                            </div>
-                            <p class="text-secondary small m-0" style="font-size: 0.8rem;">
-                                Este evento proviene de tu Google Calendar sincronizado y no altera tus métricas ni rachas de Cronos. Puedes convertirlo en una tarea de Cronos para dedicarle sesiones Pomodoro.
+                            <p class="text-secondary small lh-base m-0" id="google-detalle-descripcion" style="font-size: 0.88rem; color: #4b5563 !important;">
+                                Sin descripción disponible.
                             </p>
                         </div>
 
-                        <div class="d-flex flex-column gap-2 pt-2 border-top">
-                            <button type="button" class="btn btn-marron btn-sm py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm" id="btn-convertir-a-tarea">
-                                <i class="bi bi-plus-circle"></i> Convertir en Tarea de Cronos
-                            </button>
-                            <div class="d-flex justify-content-between gap-2 mt-1">
-                                <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary btn-sm px-3 d-flex align-items-center gap-1" id="btn-ver-en-google">
-                                    <i class="bi bi-box-arrow-up-right"></i> Abrir en Google
-                                </a>
-                                <button class="btn btn-cancelar-modal btn-sm px-3" data-bs-dismiss="modal">Cerrar</button>
+                        <div class="mb-4">
+                            <div class="text-uppercase text-muted fw-bold mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px; color: #6b7280;">
+                                FECHA
                             </div>
+                            <div class="d-flex align-items-center gap-2 fw-semibold text-dark small" style="font-size: 0.95rem;">
+                                <i class="bi bi-calendar" style="color: #612c2d;"></i>
+                                <span id="google-detalle-fecha" style="color: #111827;">--/--/----</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-top d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2 small fw-medium" data-bs-dismiss="modal" style="border-radius: 8px; border-color: #d1d5db; color: #374151; font-size: 0.88rem; background-color: #ffffff;">
+                                Cerrar
+                            </button>
+                            <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary px-4 py-2 small fw-semibold d-inline-flex align-items-center justify-content-center text-white" id="btn-ver-en-google" style="border-radius: 8px; background-color: #1a73e8; border-color: #1a73e8; font-size: 0.88rem;">
+                                Ver en Google Calendar
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="modal fade" id="modalVerDetalleTarea" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-esbelto-vertical">
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -890,6 +913,167 @@ body.cn-body-dark .bloque-google-item:hover {
 }
 
 body.cn-body-dark .badge.bg-white.text-secondary {
+    background-color: #612c2d !important;
+    color: #fcd5b8 !important;
+    border-color: #7b413f !important;
+}
+
+/* ESTILOS ESPECÍFICOS DISEÑO CALENDARIO Y GOOGLE CALENDAR */
+.calendario-titulo-mes {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.calendario-subtitulo {
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.btn-nav-hoy {
+    border: none;
+    background: transparent;
+    font-size: 0.88rem;
+    transition: background-color 0.15s;
+    border-radius: 6px;
+}
+.btn-nav-hoy:hover {
+    background-color: #f1f5f9;
+}
+
+.sidebar-google-section {
+    width: 100%;
+}
+
+.btn-vincular-google {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #1682ec;
+    color: #ffffff !important;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    width: 100%;
+    line-height: 1.25;
+}
+.btn-vincular-google:hover {
+    background-color: #126ec8;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+}
+
+.google-icon-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-vincular-google-texto {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* TAREAS CRONOS EN LA CELDA (Barra bicolor + texto contador) */
+.bloque-cronos-tarea-grupo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    cursor: pointer;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.bloque-cronos-tarea-grupo:hover {
+    transform: translateY(-1px);
+    opacity: 0.85;
+}
+.barra-bicolor-tarea {
+    width: 62px;
+    height: 5px;
+    border-radius: 9999px;
+    background: linear-gradient(to right, #612c2d 0%, #612c2d 58%, #f4be95 58%, #f4be95 100%);
+}
+.texto-contador-tarea {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 3px;
+    line-height: 1;
+}
+
+/* TAREAS / EVENTOS GOOGLE CALENDAR EN LA CELDA */
+.item-google-calendar-texto {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #0084ff;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin-top: 4px;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+.item-google-calendar-texto:hover {
+    opacity: 0.75;
+    text-decoration: underline;
+}
+
+/* Soporte modo oscuro para nuevos elementos */
+body.cn-body-dark .calendario-titulo-mes {
+    color: #ffffff !important;
+}
+body.cn-body-dark .calendario-subtitulo {
+    color: #fcd5b8 !important;
+}
+body.cn-body-dark .barra-bicolor-tarea {
+    background: linear-gradient(to right, #f4be95 0%, #f4be95 58%, #612c2d 58%, #612c2d 100%) !important;
+}
+body.cn-body-dark .texto-contador-tarea {
+    color: #fcd5b8 !important;
+}
+body.cn-body-dark .item-google-calendar-texto {
+    color: #60a5fa !important;
+}
+body.cn-body-dark #btn-hoy-mes {
+    color: #ffffff !important;
+}
+body.cn-body-dark .btn-group-nav-calendario {
+    background-color: #e38e76 !important;
+    border-color: #e38e76 !important;
+}
+body.cn-body-dark .btn-nav-hoy {
+    color: #ffffff !important;
+}
+body.cn-body-dark #modalVerDetalleGoogle .modal-body {
+    background-color: #4d2323 !important;
+    color: #ffffff !important;
+}
+body.cn-body-dark #modalVerDetalleGoogle .text-dark,
+body.cn-body-dark #modalVerDetalleGoogle #google-detalle-fecha {
+    color: #ffffff !important;
+}
+body.cn-body-dark #modalVerDetalleGoogle .text-secondary,
+body.cn-body-dark #modalVerDetalleGoogle #google-detalle-descripcion {
+    color: #fcd5b8 !important;
+}
+body.cn-body-dark #modalVerDetalleGoogle .btn-outline-secondary {
     background-color: #612c2d !important;
     color: #fcd5b8 !important;
     border-color: #7b413f !important;

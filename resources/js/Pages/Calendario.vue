@@ -185,33 +185,24 @@ function inicializarLogicaDOM() {
             const diaFormateado = String(dia).padStart(2, '0');
             const stringFechaFiltro = `${año}-${mesFormateado}-${diaFormateado}`;
 
-            // 1. Filtrar y renderizar tareas nativas de Cronos asignadas a este día específico
+            // 1. Filtrar y renderizar tareas nativas de Cronos asignadas a este día específico (cada tarea separada con su nombre)
             const tareasDelDia = tareasDB.filter(t => t.fecha === stringFechaFiltro);
-            if (tareasDelDia.length > 0) {
-                const bloqueCronos = document.createElement("div");
-                bloqueCronos.className = "bloque-cronos-tarea-grupo";
-                const nombresTareas = tareasDelDia.map(t => t.nombre).join(" • ");
-                bloqueCronos.title = nombresTareas;
+            tareasDelDia.forEach(tarea => {
+                const bloqueTarea = document.createElement("div");
+                let clasePrioridad = tarea.prioridad === "Alta" ? "t-alta" : (tarea.prioridad === "Media" ? "t-media" : "t-baja");
+                
+                bloqueTarea.className = `bloque-tarea-item ${clasePrioridad}`;
+                bloqueTarea.textContent = tarea.nombre;
+                bloqueTarea.title = tarea.nombre;
 
-                // Barra horizontal bicolor (marrón a la izquierda y durazno claro a la derecha)
-                const barra = document.createElement("div");
-                barra.className = "barra-bicolor-tarea";
-                bloqueCronos.appendChild(barra);
-
-                // Texto contador "1 TAREA" o "X TAREAS"
-                const textoContador = document.createElement("div");
-                textoContador.className = "texto-contador-tarea";
-                textoContador.textContent = `${tareasDelDia.length} ${tareasDelDia.length === 1 ? 'TAREA' : 'TAREAS'}`;
-                bloqueCronos.appendChild(textoContador);
-
-                // Clic en la barra o texto abre el modal existente de Cronos
-                bloqueCronos.addEventListener("click", function (e) {
+                // EVENTO CLICK: Abre el modal exacto de la tarea seleccionada
+                bloqueTarea.addEventListener("click", function (e) {
                     e.stopPropagation();
-                    abrirModalDetalle(tareasDelDia[0]);
+                    abrirModalDetalle(tarea);
                 });
 
-                listaTareasContenedor.appendChild(bloqueCronos);
-            }
+                listaTareasContenedor.appendChild(bloqueTarea);
+            });
 
             // 2. Filtrar y renderizar eventos sincronizados de Google Calendar (RF-M15)
             const eventosDelDia = eventosGoogleDB.filter(e => e.fecha === stringFechaFiltro);
@@ -469,10 +460,9 @@ function inicializarLogicaDOM() {
         
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
             <div>
-                <h1 class="calendario-titulo-mes" id="display-mes-año">Abril 2026</h1>
+                <h1 class="h3 fw-bold m-0" id="display-mes-año" style="color: var(--text-marron-institucional);">Abril 2026</h1>
                 <div class="calendario-subtitulo d-flex align-items-center gap-2">
-                    <i class="bi bi-calendar3"></i>
-                    <span>Vista mensual de actividades académicas</span>
+                     <h2 class="h3 m-0" style="font-size: 15px; font-weight: 500; color: #a55e57;">Vista mensual de tus actividades</h2>
                 </div>
             </div>
             
@@ -736,13 +726,13 @@ function inicializarLogicaDOM() {
 .bloque-google-item {
     font-size: 0.72rem; padding: 3px 6px; border-radius: 6px;
     font-weight: 600; white-space: nowrap; text-overflow: ellipsis;
-    overflow: hidden; cursor: pointer; border-left: 3px solid #4285F4;
-    background-color: #eef3fc; color: #1967d2;
+    overflow: hidden; cursor: pointer; border-left: 3px solid #56241e;
+    background-color: #eef3fc; color: #56241e;
     transition: transform 0.15s ease, filter 0.15s ease;
     display: flex; align-items: center;
 }
 .bloque-google-item:hover { transform: translateY(-1px); filter: brightness(0.95); }
-.header-detalle-google { background-color: #1a73e8; }
+.header-detalle-google { background-color: #56241e; }
 
 .t-alta { background-color: var(--alta-bg); color: var(--alta-borde); border-left-color: var(--alta-borde); }
 .t-media { background-color: var(--media-bg); color: var(--media-borde); border-left-color: var(--media-borde); }
@@ -1018,7 +1008,7 @@ body.cn-body-dark .badge.bg-white.text-secondary {
 .item-google-calendar-texto {
     font-size: 0.68rem;
     font-weight: 700;
-    color: #0084ff;
+    color: #612c2d;
     text-transform: uppercase;
     letter-spacing: 0.2px;
     line-height: 1.25;
@@ -1035,6 +1025,14 @@ body.cn-body-dark .badge.bg-white.text-secondary {
     text-decoration: underline;
 }
 
+.bloque-tarea-item {
+    font-size: 0.72rem; padding: 4px 6px; border-radius: 6px;
+    font-weight: 600; white-space: nowrap; text-overflow: ellipsis;
+    overflow: hidden; cursor: pointer; border-left: 3px solid transparent;
+    transition: transform 0.15s ease;
+}
+.bloque-tarea-item:hover { transform: translateY(-1px); filter: brightness(0.95); }
+
 /* Soporte modo oscuro para nuevos elementos */
 body.cn-body-dark .calendario-titulo-mes {
     color: #ffffff !important;
@@ -1049,7 +1047,7 @@ body.cn-body-dark .texto-contador-tarea {
     color: #fcd5b8 !important;
 }
 body.cn-body-dark .item-google-calendar-texto {
-    color: #60a5fa !important;
+    color: #612c2d !important;
 }
 body.cn-body-dark #btn-hoy-mes {
     color: #ffffff !important;

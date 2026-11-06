@@ -33,8 +33,9 @@ class GoogleCalendarController extends Controller
         );
 
         // Desactivar verificación estricta de SSL en cURL para entornos locales en Windows
+        $verifySsl = config('services.google_calendar.guzzle.verify', env('CURL_SSL_VERIFY', !app()->isProduction() ? false : true));
         $provider->setHttpClient(new \GuzzleHttp\Client([
-            'verify' => false,
+            'verify' => $verifySsl,
         ]));
 
         return $provider;

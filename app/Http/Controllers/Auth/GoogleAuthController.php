@@ -11,17 +11,34 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use GuzzleHttp\Client;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleAuthController extends Controller
 {
     /**
+     * Obtener el proveedor de Socialite para Google con configuración SSL adaptada al entorno.
+     */
+    protected function getGoogleProvider()
+    {
+        $provider = Socialite::driver('google');
+
+        // Desactivar verificación estricta de SSL en cURL para entornos locales en Windows
+        $verifySsl = config('services.google.guzzle.verify', env('CURL_SSL_VERIFY', !app()->isProduction() ? false : true));
+        $provider->setHttpClient(new Client([
+            'verify' => $verifySsl,
+        ]));
+
+        return $provider;
+    }
+
+    /**
      * Redirigir al usuario a la página de autenticación de Google.
      */
     public function redirect(): RedirectResponse
     {
-        return Socialite::driver('google')
+        return $this->getGoogleProvider()
             ->with(['prompt' => 'select_account'])
             ->redirect();
     }
@@ -34,10 +51,10 @@ class GoogleAuthController extends Controller
         try {
             // 1. Obtener usuario de Google (con tolerancia a desincronización de estado/sesión en entornos locales)
             try {
-                $googleUser = Socialite::driver('google')->user();
+                $googleUser = $this->getGoogleProvider()->user();
             } catch (InvalidStateException $e) {
                 Log::warning('[GoogleAuthController] InvalidStateException en callback de Google. Reintentando con stateless() para resolver posible inconsistencia de sesión/puerto.');
-                $googleUser = Socialite::driver('google')->stateless()->user();
+                $googleUser = $this->getGoogleProvider()->stateless()->user();
             }
 
             if (!$googleUser || !$googleUser->getEmail()) {

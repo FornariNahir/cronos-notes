@@ -1394,7 +1394,7 @@ watch(cornellTab, async () => {
 
     <!-- Modal Personalizado para Promoción de Registro -->
     <Teleport to="body" :disabled="isFullscreen">
-      <div v-if="modalRegistroOpen" class="zen-custom-modal-overlay">
+      <div v-if="modalRegistroOpen" class="zen-custom-modal-overlay" :class="{ 'dark-mode': isDarkMode }">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
             <i class="bi bi-star-fill text-warning"></i>
@@ -1410,7 +1410,7 @@ watch(cornellTab, async () => {
     </Teleport>
     <!-- Modal de Confirmación para Terminar Sesión -->
     <Teleport to="body" :disabled="isFullscreen">
-      <div v-if="showConfirmEndModal" class="zen-custom-modal-overlay">
+      <div v-if="showConfirmEndModal" class="zen-custom-modal-overlay" :class="{ 'dark-mode': isDarkMode }">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
             <i class="bi bi-exclamation-triangle-fill text-warning"></i>
@@ -1427,7 +1427,7 @@ watch(cornellTab, async () => {
 
     <!-- Modal de Pregunta sobre la Tarea Activa -->
     <Teleport to="body" :disabled="isFullscreen">
-      <div v-if="showTaskCompletePrompt" class="zen-custom-modal-overlay">
+      <div v-if="showTaskCompletePrompt" class="zen-custom-modal-overlay" :class="{ 'dark-mode': isDarkMode }">
         <div class="zen-custom-modal">
           <div class="zen-modal-icon">
             <i class="bi bi-check-circle-fill text-success"></i>
@@ -2578,41 +2578,53 @@ body.distraction-free-mode .task-badge {
   align-items: center;
   justify-content: center;
   z-index: 99999;
+  padding: 16px;
 }
 .zen-custom-modal {
-  background: white;
+  background: #ffffff;
+  border: 1px solid #eadcd7;
   border-radius: 16px;
-  padding: 30px;
-  max-width: 400px;
+  padding: 28px;
+  width: 100%;
+  max-width: 410px;
   text-align: center;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+  animation: modalIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-custom-modal,
+.zen-custom-modal-overlay.dark-mode .zen-custom-modal,
+body.cn-body-dark .zen-custom-modal,
 body.dark-mode .zen-custom-modal {
-  background: #2a2a2a;
-  color: white;
+  background: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.5) !important;
 }
 .zen-modal-icon {
-  font-size: 3rem;
+  font-size: 2.6rem;
   margin-bottom: 10px;
 }
 .zen-modal-title {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 10px;
-  color: #333;
+  color: #4d2323 !important;
 }
-.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-title {
-  color: #fff;
+.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-title,
+.zen-custom-modal-overlay.dark-mode .zen-modal-title,
+body.cn-body-dark .zen-modal-title {
+  color: #ffffff !important;
 }
 .zen-modal-text {
   font-size: 0.95rem;
-  color: #666;
-  margin-bottom: 25px;
+  color: #5b3b3a !important;
+  margin-bottom: 24px;
+  line-height: 1.5;
 }
-.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-text {
-  color: #ccc;
+.pomodoro-zen-container.dark-mode .zen-custom-modal-overlay .zen-modal-text,
+.zen-custom-modal-overlay.dark-mode .zen-modal-text,
+body.cn-body-dark .zen-modal-text {
+  color: #fcd5b8 !important;
 }
 .zen-modal-actions {
   display: flex;
@@ -2620,33 +2632,56 @@ body.dark-mode .zen-custom-modal {
 }
 .zen-btn-secondary {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
-  background: transparent;
-  color: #666;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid #dcc5be;
+  background: #faf3ef;
+  color: #612c2d;
+  border-radius: 9px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 .zen-btn-secondary:hover {
-  background: #f0f0f0;
+  background: #f2e4dc;
+}
+.zen-custom-modal-overlay.dark-mode .zen-btn-secondary,
+body.cn-body-dark .zen-btn-secondary {
+  background: #612c2d !important;
+  color: #fcd5b8 !important;
+  border-color: #7b413f !important;
+}
+.zen-custom-modal-overlay.dark-mode .zen-btn-secondary:hover,
+body.cn-body-dark .zen-btn-secondary:hover {
+  background: #7b413f !important;
+  color: #ffffff !important;
 }
 .zen-btn-primary {
   flex: 1;
-  padding: 10px;
-  background: #f7a072;
-  color: white;
+  padding: 10px 14px;
+  background: #612c2d;
+  color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s;
 }
 .zen-btn-primary:hover {
-  background: #e68d5e;
-  color: white;
+  background: #7b413f;
+  color: #ffffff;
+}
+.zen-custom-modal-overlay.dark-mode .zen-btn-primary:not(.bg-danger),
+body.cn-body-dark .zen-btn-primary:not(.bg-danger) {
+  background: #f4be95 !important;
+  color: #4d2323 !important;
+}
+.zen-custom-modal-overlay.dark-mode .zen-btn-primary:not(.bg-danger):hover,
+body.cn-body-dark .zen-btn-primary:not(.bg-danger):hover {
+  background: #fcd5b8 !important;
+  color: #4d2323 !important;
 }
 
 @keyframes modalIn {

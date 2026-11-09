@@ -6,6 +6,7 @@ use App\Models\IntegracionExterna;
 use App\Models\Perfil;
 use App\Models\PerfilCompartido;
 use App\Models\SalaEstudio;
+use App\Models\Tarea;
 use App\Services\GoogleMeetService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,6 +17,15 @@ use Inertia\Inertia;
 
 class SalaEstudioController extends Controller
 {
+    /**
+     * Tiempo máximo (en minutos) que una sala puede permanecer abierta sin participantes activos.
+     */
+    protected const MINUTOS_SIN_PARTICIPANTES = 10;
+
+    /**
+     * Tiempo máximo (en minutos) que una sala puede permanecer con el reloj en pausa sin ninguna interacción.
+     */
+    protected const MINUTOS_INACTIVIDAD_MAX = 30;
     /**
      * Obtiene los IDs de todos los perfiles a los que el usuario tiene acceso (propios y compartidos).
      */
@@ -73,6 +83,8 @@ class SalaEstudioController extends Controller
 
         $salasActivas = collect();
         if ($perfilIds->isNotEmpty()) {
+            $this->verificarYDesactivarSalasInactivas($perfilIds->all());
+
             $umbralActivo = Carbon::now()->subMinutes(2);
 
             $conteoParticipantesPorPerfil = DB::table('PresenciaSalaEstudio')
@@ -92,6 +104,9 @@ class SalaEstudioController extends Controller
                 ->get()
                 ->map(function ($sala) use ($perfilesMap, $conteoParticipantesPorPerfil) {
                     $perfilInfo = $perfilesMap->get($sala->idPerfil);
+                    $pomodoro = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
+                    $ultimaActividadTs = $pomodoro['ultimaActividadAt'] ?? ($sala->fechaCreacion ? $sala->fechaCreacion->timestamp : time());
+
                     return [
                         'idSalaEstudio' => $sala->idSalaEstudio,
                         'idPerfil' => $sala->idPerfil,
@@ -103,9 +118,11 @@ class SalaEstudioController extends Controller
                         'creadorNombre' => $sala->creador ? ($sala->creador->nombre . ' ' . $sala->creador->apellido) : 'Anfitrión',
                         'idUsuarioCreador' => $sala->idUsuarioCreador,
                         'perfilTitulo' => $perfilInfo?->tituloPerfil ?? 'Perfil',
+                        'perfilIcono' => $perfilInfo?->iconoPerfil ?? 'bi-folder-fill',
                         'esCompartido' => (bool) ($perfilInfo?->esCompartido || ($perfilInfo?->usuarios_compartidos_count ?? 0) > 0),
                         'conectadosCount' => (int) ($conteoParticipantesPorPerfil[$sala->idPerfil] ?? 0),
-                        'pomodoro' => $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio),
+                        'pomodoro' => $pomodoro,
+                        'minutosInactiva' => max(0, (int) floor((time() - $ultimaActividadTs) / 60)),
                     ];
                 });
         }
@@ -119,6 +136,7 @@ class SalaEstudioController extends Controller
             'perfiles' => $perfiles,
             'perfilActivoId' => session('perfilActivo') ? (int) session('perfilActivo') : ($perfiles->first()?->idPerfil ?? null),
             'tieneGoogleVinculado' => $tieneGoogleVinculado,
+            'minutosInactividadMax' => self::MINUTOS_INACTIVIDAD_MAX,
         ]);
     }
 
@@ -188,6 +206,7 @@ class SalaEstudioController extends Controller
             'segundosRestantesAlPausar' => $duracionTrabajo * 60,
             'finFaseTimestamp' => null,
             'actualizadoPor' => $user->nombre . ' ' . $user->apellido,
+            'ultimaActividadAt' => time(),
         ];
 
         Cache::put("sala_pomodoro_{$sala->idSalaEstudio}", $estadoInicialPomodoro, now()->addHours(12));
@@ -213,9 +232,14 @@ class SalaEstudioController extends Controller
             abort(403, 'No tenés permiso para ingresar a esta sala de estudio.');
         }
 
-        if ($sala->estado !== 'Activa') {
+        $pomodoroGrupal = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
+
+        if ($sala->estado !== 'Activa' || $this->salaExpiroPorInactividad($sala, $pomodoroGrupal)) {
+            if ($sala->estado === 'Activa') {
+                $this->cerrarSalaAutomaticamente($sala);
+            }
             return redirect()->route('salas.index')
-                ->with('error', 'Esta sala de estudio ya ha finalizado.');
+                ->with('error', 'Esta sala de estudio se cerró automáticamente por inactividad o ya ha finalizado.');
         }
 
         // Registrar o mantener el estado activo del usuario al entrar
@@ -229,9 +253,11 @@ class SalaEstudioController extends Controller
             : 'EnLinea';
 
         $this->registrarPresencia($sala->idPerfil, $user->idUsuario, $estadoInicial);
+        $this->tocarActividadSala($sala->idSalaEstudio);
 
         $pomodoroGrupal = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
         $participantes = $this->obtenerParticipantesSala($sala->idPerfil);
+        $tareasPerfil = $this->obtenerTareasPendientesPerfil($sala->idPerfil);
 
         $esAnfitrionOAdmin = $sala->idUsuarioCreador === $user->idUsuario
             || $sala->perfil?->idUsuario === $user->idUsuario
@@ -251,11 +277,14 @@ class SalaEstudioController extends Controller
                 'estado' => $sala->estado,
                 'creadorNombre' => $sala->creador ? ($sala->creador->nombre . ' ' . $sala->creador->apellido) : 'Anfitrión',
                 'perfilTitulo' => $sala->perfil?->tituloPerfil ?? 'Equipo',
+                'fechaCreacionTexto' => $sala->fechaCreacion?->diffForHumans() ?? 'Recién iniciada',
             ],
             'participantesIniciales' => $participantes,
             'pomodoroInicial' => $pomodoroGrupal,
+            'tareasPerfil' => $tareasPerfil,
             'miEstadoInicial' => $estadoInicial,
             'puedeControlarSala' => $esAnfitrionOAdmin,
+            'minutosInactividadMax' => self::MINUTOS_INACTIVIDAD_MAX,
             'serverTime' => time(),
         ]);
     }
@@ -271,6 +300,17 @@ class SalaEstudioController extends Controller
         if ($sala->estado !== 'Activa') {
             return response()->json([
                 'finalizada' => true,
+                'motivo' => 'manual',
+            ]);
+        }
+
+        $pomodoroGrupal = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
+
+        if ($this->salaExpiroPorInactividad($sala, $pomodoroGrupal)) {
+            $this->cerrarSalaAutomaticamente($sala);
+            return response()->json([
+                'finalizada' => true,
+                'motivo' => 'inactividad',
             ]);
         }
 
@@ -280,9 +320,13 @@ class SalaEstudioController extends Controller
             $nuevoEstadoUsuario = null;
         }
 
+        if ($request->boolean('actividadUsuario')) {
+            $this->tocarActividadSala($sala->idSalaEstudio);
+            $pomodoroGrupal = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
+        }
+
         $this->registrarPresencia($sala->idPerfil, $user->idUsuario, $nuevoEstadoUsuario);
 
-        $pomodoroGrupal = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
         $participantes = $this->obtenerParticipantesSala($sala->idPerfil);
 
         return response()->json([
@@ -359,6 +403,7 @@ class SalaEstudioController extends Controller
         }
 
         $state['actualizadoPor'] = $user->nombre . ' ' . $user->apellido;
+        $state['ultimaActividadAt'] = $ahora;
         $state['segundosRestantes'] = $state['corriendo']
             ? max(0, (int) ($state['finFaseTimestamp'] - $ahora))
             : (int) $state['segundosRestantesAlPausar'];
@@ -400,6 +445,8 @@ class SalaEstudioController extends Controller
             'googleMeetUrl' => $urlNormalizada,
             'googleMeetId' => $meetId,
         ]);
+
+        $this->tocarActividadSala($sala->idSalaEstudio);
 
         return response()->json([
             'googleMeetUrl' => $sala->googleMeetUrl,
@@ -518,6 +565,7 @@ class SalaEstudioController extends Controller
     {
         $cacheKey = "sala_pomodoro_{$idSalaEstudio}";
         $state = Cache::get($cacheKey);
+        $ahora = time();
 
         if (!$state) {
             $state = [
@@ -532,26 +580,135 @@ class SalaEstudioController extends Controller
                 'segundosRestantesAlPausar' => 25 * 60,
                 'finFaseTimestamp' => null,
                 'actualizadoPor' => 'Sistema',
+                'ultimaActividadAt' => $ahora,
             ];
             Cache::put($cacheKey, $state, now()->addHours(12));
         }
 
-        $ahora = time();
+        if (empty($state['ultimaActividadAt'])) {
+            $state['ultimaActividadAt'] = $ahora;
+        }
+
         if ($state['corriendo'] && !empty($state['finFaseTimestamp'])) {
             $restantes = (int) ($state['finFaseTimestamp'] - $ahora);
             if ($restantes <= 0) {
                 // La fase concluyó -> transicionar automáticamente a la siguiente fase (pausada lista para iniciar o en espera)
                 $state = $this->avanzarSiguienteFaseGrupal($state, false);
+                $state['ultimaActividadAt'] = $ahora;
                 Cache::put($cacheKey, $state, now()->addHours(12));
                 $state['segundosRestantes'] = (int) $state['segundosRestantesAlPausar'];
             } else {
                 $state['segundosRestantes'] = $restantes;
+                $state['ultimaActividadAt'] = $ahora;
             }
         } else {
             $state['segundosRestantes'] = (int) ($state['segundosRestantesAlPausar'] ?? ($state['duracionTrabajo'] * 60));
         }
 
         return $state;
+    }
+
+    protected function tocarActividadSala(int $idSalaEstudio): void
+    {
+        $cacheKey = "sala_pomodoro_{$idSalaEstudio}";
+        $state = Cache::get($cacheKey);
+        if ($state) {
+            $state['ultimaActividadAt'] = time();
+            Cache::put($cacheKey, $state, now()->addHours(12));
+        }
+    }
+
+    protected function verificarYDesactivarSalasInactivas(array $perfilIds): void
+    {
+        if (empty($perfilIds)) {
+            return;
+        }
+
+        $salas = SalaEstudio::whereIn('idPerfil', $perfilIds)
+            ->where('estado', 'Activa')
+            ->get();
+
+        foreach ($salas as $sala) {
+            $pomodoroState = $this->obtenerEstadoPomodoroGrupal($sala->idSalaEstudio);
+            if ($this->salaExpiroPorInactividad($sala, $pomodoroState)) {
+                $this->cerrarSalaAutomaticamente($sala);
+            }
+        }
+    }
+
+    protected function salaExpiroPorInactividad(SalaEstudio $sala, array $pomodoroState): bool
+    {
+        // Si el reloj grupal está corriendo activamente, la sala sigue activa
+        if (!empty($pomodoroState['corriendo']) && !empty($pomodoroState['finFaseTimestamp']) && $pomodoroState['finFaseTimestamp'] > time()) {
+            return false;
+        }
+
+        $ahora = Carbon::now();
+        $creacionSala = $sala->fechaCreacion ? Carbon::parse($sala->fechaCreacion) : $ahora;
+
+        // 1. Verificar si no hay ningún participante activo en los últimos MINUTOS_SIN_PARTICIPANTES
+        $umbralParticipantes = $ahora->copy()->subMinutes(self::MINUTOS_SIN_PARTICIPANTES);
+        $hayParticipanteReciente = DB::table('PresenciaSalaEstudio')
+            ->where('idPerfil', $sala->idPerfil)
+            ->where('estadoUsuario', '!=', 'Desconectado')
+            ->where('ultimoPing', '>=', $umbralParticipantes)
+            ->exists();
+
+        if (!$hayParticipanteReciente && $creacionSala->lte($umbralParticipantes)) {
+            return true;
+        }
+
+        // 2. Verificar si el reloj lleva en pausa más de MINUTOS_INACTIVIDAD_MAX sin ninguna interacción ni nadie en Meet
+        $hayAlguienEnMeet = DB::table('PresenciaSalaEstudio')
+            ->where('idPerfil', $sala->idPerfil)
+            ->where('estadoUsuario', 'EnMeet')
+            ->where('ultimoPing', '>=', $ahora->copy()->subMinutes(5))
+            ->exists();
+
+        if (!$hayAlguienEnMeet) {
+            $ultimaActividadTs = (int) ($pomodoroState['ultimaActividadAt'] ?? $creacionSala->timestamp);
+            if ((time() - $ultimaActividadTs) >= (self::MINUTOS_INACTIVIDAD_MAX * 60)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function cerrarSalaAutomaticamente(SalaEstudio $sala): void
+    {
+        $sala->update([
+            'estado' => 'Finalizada',
+            'fechaFin' => Carbon::now(),
+        ]);
+
+        DB::table('PresenciaSalaEstudio')
+            ->where('idPerfil', $sala->idPerfil)
+            ->update(['estadoUsuario' => 'Desconectado']);
+
+        Perfil::where('idPerfil', $sala->idPerfil)->update(['es_sala_estudio' => false]);
+        Cache::forget("sala_pomodoro_{$sala->idSalaEstudio}");
+    }
+
+    protected function obtenerTareasPendientesPerfil(int $idPerfil): array
+    {
+        return Tarea::where('idPerfil', $idPerfil)
+            ->where('estadoTarea', '!=', 'Completada')
+            ->orderByRaw("CASE prioridadTarea WHEN 'Alta' THEN 1 WHEN 'Media' THEN 2 ELSE 3 END")
+            ->orderBy('fechaLimite')
+            ->take(8)
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'idTarea' => $t->idTarea,
+                    'tituloTarea' => $t->tituloTarea,
+                    'prioridadTarea' => $t->prioridadTarea,
+                    'estadoTarea' => $t->estadoTarea,
+                    'fechaLimite' => $t->fechaLimite ? $t->fechaLimite->format('d/m/Y') : null,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     protected function calcularDuracionFaseSegundos(array $state, string $fase): int

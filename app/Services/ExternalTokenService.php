@@ -100,7 +100,13 @@ class ExternalTokenService
                 return $nuevoToken;
             }
 
-            Log::error("[ExternalTokenService] Error refrescando token de Google: " . $response->body());
+            $error = $response->json('error');
+            if ($error === 'invalid_grant') {
+                Log::warning("[ExternalTokenService] Refresh token de Google revocado o expirado para usuario {$integracion->idUsuario}. Limpiando integración.");
+                $integracion->delete();
+            } else {
+                Log::error("[ExternalTokenService] Error refrescando token de Google: " . $response->body());
+            }
         } catch (\Exception $e) {
             Log::error("[ExternalTokenService] Excepción refrescando token de Google: " . $e->getMessage());
         }
@@ -137,7 +143,13 @@ class ExternalTokenService
                 return $nuevoToken;
             }
 
-            Log::error("[ExternalTokenService] Error refrescando token de Spotify: " . $response->body());
+            $error = $response->json('error');
+            if ($error === 'invalid_grant') {
+                Log::warning("[ExternalTokenService] Refresh token de Spotify revocado o expirado para usuario {$integracion->idUsuario}. Limpiando integración.");
+                $integracion->delete();
+            } else {
+                Log::error("[ExternalTokenService] Error refrescando token de Spotify: " . $response->body());
+            }
         } catch (\Exception $e) {
             Log::error("[ExternalTokenService] Excepción refrescando token de Spotify: " . $e->getMessage());
         }

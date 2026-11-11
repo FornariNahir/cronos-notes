@@ -208,10 +208,11 @@ function inicializarLogicaDOM() {
             const eventosDelDia = eventosGoogleDB.filter(e => e.fecha === stringFechaFiltro);
             eventosDelDia.forEach(evento => {
                 const bloqueEvento = document.createElement("div");
-                bloqueEvento.className = "item-google-calendar-texto";
-                bloqueEvento.textContent = evento.titulo || '(Sin título)';
-                const textoHora = evento.hora_inicio ? ` (${evento.hora_inicio})` : '';
-                bloqueEvento.title = `[Google Calendar] ${evento.titulo}${textoHora}`;
+                bloqueEvento.className = "bloque-google-item";
+                
+                const textoHora = evento.hora_inicio ? `${evento.hora_inicio} ` : '';
+                bloqueEvento.innerHTML = `<i class="bi bi-calendar2-event me-1 opacity-75"></i><span class="text-truncate">${textoHora}${evento.titulo || '(Sin título)'}</span>`;
+                bloqueEvento.title = `[Google Calendar] ${evento.titulo || '(Sin título)'} ${textoHora ? '(' + textoHora.trim() + ')' : ''}`;
 
                 // Clic en el evento de Google abre el modal especial de Google Calendar
                 bloqueEvento.addEventListener("click", function (e) {
@@ -454,6 +455,17 @@ function inicializarLogicaDOM() {
           <span class="btn-vincular-google-texto">Vincular con Google Calendar</span>
         </a>
       </div>
+      <div v-else class="sidebar-google-section mt-auto pt-3 pb-3 px-2">
+        <div class="d-flex align-items-center justify-content-between p-2 rounded-3 border bg-white shadow-xs">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
+            <span class="small fw-semibold text-truncate" style="font-size: 0.75rem; color: #374151;">Google Calendar</span>
+          </div>
+          <a href="/auth/google-calendar/redirect" class="small text-decoration-none fw-medium d-flex align-items-center gap-1" title="Sincronizar o reconectar cuenta" style="font-size: 0.72rem; color: #1682ec;">
+            <i class="bi bi-arrow-repeat"></i> Sincronizar
+          </a>
+        </div>
+      </div>
     </template>
 
     <div class="main-layout-calendario p-3 p-md-4">
@@ -558,7 +570,7 @@ function inicializarLogicaDOM() {
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
                     <div class="header-detalle-marron p-4 text-white position-relative" style="background-color: #612c2d;">
                         <div class="d-flex align-items-center mb-2">
-                            <span class="badge bg-white rounded-pill px-3 py-1.5 fw-bold" style="color: #1a73e8; font-size: 0.75rem;">
+                            <span class="badge bg-white rounded-pill px-3 py-1.5 fw-bold" style="color: #612c2d; font-size: 0.75rem;">
                                 Evento de Google Calendar
                             </span>
                         </div>
@@ -724,15 +736,17 @@ function inicializarLogicaDOM() {
 
 /* COMPONENTE INTERACTIVO DE RECORDATORIO GOOGLE CALENDAR (RF-M15) */
 .bloque-google-item {
-    font-size: 0.72rem; padding: 3px 6px; border-radius: 6px;
+    font-size: 0.72rem; padding: 4px 6px; border-radius: 6px;
     font-weight: 600; white-space: nowrap; text-overflow: ellipsis;
-    overflow: hidden; cursor: pointer; border-left: 3px solid #56241e;
-    background-color: #eef3fc; color: #56241e;
+    overflow: hidden; cursor: pointer; border-left: 3px solid #612c2d;
+    background-color: #fbede9; color: #612c2d;
     transition: transform 0.15s ease, filter 0.15s ease;
     display: flex; align-items: center;
+    margin-top: 3px;
 }
-.bloque-google-item:hover { transform: translateY(-1px); filter: brightness(0.95); }
-.header-detalle-google { background-color: #56241e; }
+.bloque-google-item:hover { transform: translateY(-1px); filter: brightness(0.96); }
+.bloque-google-item i { font-size: 0.75rem; color: #612c2d; }
+.header-detalle-google { background-color: #612c2d; }
 
 .t-alta { background-color: var(--alta-bg); color: var(--alta-borde); border-left-color: var(--alta-borde); }
 .t-media { background-color: var(--media-bg); color: var(--media-borde); border-left-color: var(--media-borde); }
@@ -893,13 +907,20 @@ body.cn-body-dark .btn-guardar-modal:hover {
     background-color: #fbe8da !important;
 }
 
-body.cn-body-dark .bloque-google-item {
+body.cn-body-dark .bloque-google-item,
+body.cn-body-dark .item-google-calendar-texto {
     background-color: #3b2222 !important;
     color: #ffd8bf !important;
+    border-left-color: #e38e76 !important;
 }
 
-body.cn-body-dark .bloque-google-item:hover {
+body.cn-body-dark .bloque-google-item:hover,
+body.cn-body-dark .item-google-calendar-texto:hover {
     background-color: #4a2b2b !important;
+}
+
+body.cn-body-dark .bloque-google-item i {
+    color: #ffd8bf !important;
 }
 
 body.cn-body-dark .badge.bg-white.text-secondary {
@@ -1046,9 +1067,6 @@ body.cn-body-dark .barra-bicolor-tarea {
 body.cn-body-dark .texto-contador-tarea {
     color: #fcd5b8 !important;
 }
-body.cn-body-dark .item-google-calendar-texto {
-    color: #612c2d !important;
-}
 body.cn-body-dark #btn-hoy-mes {
     color: #ffffff !important;
 }
@@ -1075,5 +1093,12 @@ body.cn-body-dark #modalVerDetalleGoogle .btn-outline-secondary {
     background-color: #612c2d !important;
     color: #fcd5b8 !important;
     border-color: #7b413f !important;
+}
+body.cn-body-dark .sidebar-google-section .bg-white {
+    background-color: #4d2323 !important;
+    border-color: #612c2d !important;
+}
+body.cn-body-dark .sidebar-google-section .bg-white span {
+    color: #fcd5b8 !important;
 }
 </style>

@@ -406,10 +406,10 @@ const cambiarPassword = () => {
                         <!-- Sección de Baja del Sistema removida para la presentación -->
                     </div>
 
-                    <!-- SECCIÓN: Integraciones y Cuentas Vinculadas (RF-M15) -->
+                    <!-- SECCIÓN: Integraciones y Cuentas Vinculadas -->
                     <div class="pt-4 border-top">
                         <h6 class="text-uppercase text-secondary small fw-bold tracking-wider mb-2">
-                            <i class="bi bi-link-45deg me-2"></i>Cuentas Vinculadas e Integraciones (RF-M15)
+                            <i class="bi bi-link-45deg me-2"></i>Cuentas Vinculadas e Integraciones
                         </h6>
                         <p class="text-secondary small mb-3">Conectá tus servicios externos para sincronizar el calendario y habilitar música de estudio en la Sesión Zen.</p>
 

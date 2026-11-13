@@ -8,7 +8,7 @@ El requerimiento comprende dos ejes principales de integración:
 
 ### 1.1. Sincronización con Google Calendar
 - **Exportación de Compromisos (Cronos ➔ Google Calendar):** Permite exportar tareas con fecha y hora límite (`fechaLimite`) y bloques de estudio Pomodoro al calendario principal de Google del usuario, identificados con el prefijo `[Cronos]`.
-- **Proyección de Agenda y Recordatorios (Google Calendar ➔ Cronos):** Consulta los eventos programados en Google Calendar y los muestra en la vista mensual de [`Calendario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/Calendario.vue) como recordatorios diferenciados de las tareas nativas.
+- **Proyección de Agenda y Recordatorios (Google Calendar ➔ Cronos):** Consulta los eventos programados en Google Calendar y los muestra en la vista mensual de [Calendario.vue](/resources/js/Pages/Calendario.vue) como recordatorios diferenciados de las tareas nativas.
 - **Delimitación de Dominio:** Los eventos traídos de Google Calendar se muestran en modo de lectura y no se registran como tareas en la base de datos local. Esto evita alterar las métricas de avance, rachas de estudio o porcentajes de cumplimiento del usuario. Si el usuario desea planificar una sesión de estudio en base a un evento externo, dispone de la opción de convertirlo manualmente en una tarea nativa de Cronos.
 
 ### 1.2. Integración Musical con Spotify (Web API & Web Playback SDK)
@@ -17,17 +17,12 @@ El requerimiento comprende dos ejes principales de integración:
   2. ☕ **Café & Jazz:** Jazz suave y acústico con ambientación relajada.
   3. 🎹 **Piano & Clásica:** Piezas de piano y música clásica para momentos de mayor concentración.
 - **Convivencia con el Mezclador de Sonidos (RF-M06):** El reproductor de Spotify complementa los sonidos ambientales del sistema (lluvia, café, ruido blanco, etc.), permitiendo combinarlos en simultáneo durante la sesión de estudio (por ejemplo, escuchar música lo-fi con sonido de lluvia de fondo).
-- **Controles en [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue):** Controles de reproducción básicos (play, pausa, avanzar, retroceder y volumen) junto con la información de la pista actual (título, artista y portada del álbum).
+- **Controles en [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue):** Controles de reproducción básicos (play, pausa, avanzar, retroceder y volumen) junto con la información de la pista actual (título, artista y portada del álbum).
 - **Soporte según Tipo de Cuenta (Premium vs. Free):**
   - **Cuentas Spotify Premium:** Reproducción directa en el navegador mediante el Web Playback SDK de Spotify.
   - **Cuentas Spotify Free:** Debido a restricciones de la API de Spotify para cuentas gratuitas en navegadores web, el sistema detecta el valor `product: 'free'` y ofrece un enlace directo (*deeplink*) para abrir la lista elegida en la aplicación oficial de Spotify (`spotify:playlist:...`), manteniendo el temporizador y el mezclador activos en Cronos Notes.
 
-### 1.3. Objetivo General
-Unificar la agenda personal y la música de concentración dentro del entorno de estudio de Cronos Notes, reduciendo la necesidad de alternar entre pestañas y aplicaciones externas durante las sesiones de estudio.
-
----
-
-## 2. Modelo de Dominio: Tareas vs. Recordatorios de Calendario
+### 1.3. Modelo de Dominio: Tareas vs. Recordatorios de Calendario
 
 Para mantener la consistencia de las estadísticas de estudio y no mezclar compromisos personales externos con tareas académicas locales, se establece la siguiente distinción:
 
@@ -39,9 +34,12 @@ Para mantener la consistencia de las estadísticas de estudio y no mezclar compr
 | **Representación Visual** | Tarjeta con color de prioridad (Alta: Rojo, Media: Amarillo, Baja: Azul) | Bloque con ícono de Google Calendar, borde bordó y horario (`14:00 - 15:30`) |
 | **Interacción** | Permite marcar como completada, editar o iniciar Pomodoro | Muestra detalles del evento, link a Google Calendar y botón *"Convertir en Tarea"* |
 
+### 1.4. Objetivo General
+Unificar la agenda personal y la música de concentración dentro del entorno de estudio de Cronos Notes, reduciendo la necesidad de alternar entre pestañas y aplicaciones externas durante las sesiones de estudio.
+
 ---
 
-## 3. Tecnologías, Herramientas y Librerías
+## 2. Tecnologías, Herramientas y Librerías
 
 - **Google Calendar API (v3):** Endpoints REST oficiales para consultar calendarios activos (`/calendarList`) y eventos por rango de fechas (`/calendars/{calendarId}/events`), con soporte para calendarios primarios y secundarios.
 - **Spotify Web API & Web Playback SDK:** Protocolo OAuth 2.0 y biblioteca JavaScript (`spotify-player.js`) para transferir la reproducción y controlar el audio dentro del navegador.
@@ -53,33 +51,38 @@ Para mantener la consistencia de las estadísticas de estudio y no mezclar compr
 
 ---
 
-## 4. Archivos Involucrados en el Requerimiento
+## 3. Archivos Involucrados en el Requerimiento
 
 ### Frontend (Vue 3)
-- [`Calendario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/Calendario.vue) - Cuadrícula del calendario mensual. Renderiza las tareas nativas y los eventos externos en formato de píldora bordó (`.bloque-google-item`). Incluye el modal `#modalVerDetalleGoogle` y el panel lateral de estado de sincronización.
-- [`SpotifyPlayer.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/components/SpotifyPlayer.vue) - Componente del reproductor de música con portada de álbum, título, artista, control de volumen, selector de listas curadas y gestión del enlace externo para cuentas gratuitas.
-- [`SesionZen.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/pomodoro/SesionZen.vue) - Vista de estudio del temporizador Pomodoro que integra el reproductor de Spotify junto con el mezclador de sonidos ambientales.
-- [`PerfilUsuario.vue`](file:///C:/Users/della/cronos-notes/resources/js/Pages/PerfilUsuario.vue) - Sección de configuración donde el usuario puede conectar, comprobar y desvincular las cuentas de Google Calendar y Spotify.
+- [Calendario.vue](/resources/js/Pages/Calendario.vue) - Cuadrícula del calendario mensual. Renderiza las tareas nativas y los eventos externos en formato de píldora bordó (`.bloque-google-item`). Incluye el modal `#modalVerDetalleGoogle` y el panel lateral de estado de sincronización.
+- [SpotifyPlayer.vue](/resources/js/Pages/pomodoro/components/SpotifyPlayer.vue) - Componente del reproductor de música con portada de álbum, título, artista, control de volumen, selector de listas curadas y gestión del enlace externo para cuentas gratuitas.
+- [SesionZen.vue](/resources/js/Pages/pomodoro/SesionZen.vue) - Vista de estudio del temporizador Pomodoro que integra el reproductor de Spotify junto con el mezclador de sonidos ambientales.
+- [PerfilUsuario.vue](/resources/js/Pages/PerfilUsuario.vue) - Sección de configuración donde el usuario puede conectar, comprobar y desvincular las cuentas de Google Calendar y Spotify.
 
-### Backend y Controladores (Laravel)
-- [`GoogleCalendarController.php`](file:///C:/Users/della/cronos-notes/app/Http/Controllers/GoogleCalendarController.php) - Controlador que maneja la redirección a Google, el callback de autorización, la desconexión y la prueba de conectividad.
-- [`SpotifyController.php`](file:///C:/Users/della/cronos-notes/app/Http/Controllers/SpotifyController.php) - Controlador que gestiona la autenticación con Spotify, la consulta de datos del perfil (`/v1/me`) y la selección de listas.
-- [`GoogleAuthController.php`](file:///C:/Users/della/cronos-notes/app/Http/Controllers/Auth/GoogleAuthController.php) - Controlador de autenticación con Google Login con configuración SSL adaptada a desarrollo local.
+### Backend & Controladores (Laravel)
+- [GoogleCalendarController.php](/app/Http/Controllers/GoogleCalendarController.php) - Controlador que maneja la redirección a Google, el callback de autorización, la desconexión y la prueba de conectividad.
+- [SpotifyController.php](/app/Http/Controllers/SpotifyController.php) - Controlador que gestiona la autenticación con Spotify, la consulta de datos del perfil (`/v1/me`) y la selección de listas.
+- [GoogleAuthController.php](/app/Http/Controllers/Auth/GoogleAuthController.php) - Controlador de autenticación con Google Login con configuración SSL adaptada a desarrollo local.
 
 ### Servicios de Negocio (Backend Services)
-- [`GoogleCalendarService.php`](file:///C:/Users/della/cronos-notes/app/Services/GoogleCalendarService.php) - Servicio que realiza las consultas a la API de Google Calendar: listado de calendarios del usuario, filtrado por fechas y normalización de eventos.
-- [`ExternalTokenService.php`](file:///C:/Users/della/cronos-notes/app/Services/ExternalTokenService.php) - Servicio encargado de recuperar y renovar tokens de acceso. Detecta respuestas `invalid_grant` para eliminar automáticamente registros vencidos y mantener la interfaz sincronizada.
+- [GoogleCalendarService.php](/app/Services/GoogleCalendarService.php) - Servicio que realiza las consultas a la API de Google Calendar: listado de calendarios del usuario, filtrado por fechas y normalización de eventos.
+- [ExternalTokenService.php](/app/Services/ExternalTokenService.php) - Servicio encargado de recuperar y renovar tokens de acceso. Detecta respuestas `invalid_grant` para eliminar automáticamente registros vencidos y mantener la interfaz sincronizada.
 
-### Modelos y Configuración
-- [`IntegracionExterna.php`](file:///C:/Users/della/cronos-notes/app/Models/IntegracionExterna.php) - Modelo Eloquent para la tabla `integracion_externa`.
-- [`config/services.php`](file:///C:/Users/della/cronos-notes/config/services.php) - Configuración de credenciales OAuth, callbacks y opciones de Guzzle para Google y Spotify.
-- [`routes/web.php`](file:///C:/Users/della/cronos-notes/routes/web.php) - Definición de rutas web y de API para el flujo de vinculación y sincronización.
+### Modelos y Datos (Eloquent ORM)
+- [IntegracionExterna.php](/app/Models/IntegracionExterna.php) - Modelo Eloquent para la tabla `integracion_externa` para persistir los tokens OAuth y fechas de sincronización.
+- [Tarea.php](/app/Models/Tarea.php) - Modelo de tareas utilizado para la comparación de dominio y la conversión opcional de eventos externos en tareas de Cronos.
+
+### Enrutamiento y Base de Datos
+- [web.php](/routes/web.php) - Definición de rutas web y de API para el flujo de vinculación, endpoints de eventos y control de Spotify.
+- [auth.php](/routes/auth.php) - Rutas de autenticación OAuth para Google Login (`/auth/google` y `/auth/google/callback`).
+- [services.php](/config/services.php) - Configuración de credenciales de cliente OAuth, URLs de callback y parámetros HTTP de Guzzle para Google y Spotify.
+- [2026_01_01_000010_create_integracion_externa_table.php](/database/migrations/2026_01_01_000010_create_integracion_externa_table.php) - Migración de base de datos para la estructura de la tabla `integracion_externa`.
 
 ---
 
-## 5. Flujo de Datos y Control
+## 4. Flujo de Datos y Control
 
-### 5.1. Diagrama de Secuencia General del Requerimiento
+### 4.1. Diagrama de Secuencia General del Requerimiento
 
 ```mermaid
 sequenceDiagram
@@ -151,7 +154,7 @@ sequenceDiagram
     end
 ```
 
-### 5.2. Detalle del Flujo de Control Paso a Paso
+### 4.2. Detalle del Flujo de Control Paso a Paso
 
 1. **Autorización y Vinculación Inicial (OAuth 2.0):**
    - El usuario pulsa *"Vincular con Google Calendar"* desde el perfil o el calendario.
@@ -173,7 +176,7 @@ sequenceDiagram
 
 ---
 
-## 6. Pruebas y Validación (QA)
+## 5. Pruebas y Validación (QA)
 
 ### Caso de Prueba 1: Vinculación con Google Calendar
 1. **Precondición:** Usuario autenticado en Cronos Notes sin integración de Google Calendar activa.
@@ -205,7 +208,7 @@ sequenceDiagram
 
 ---
 
-## 7. Diseño de Frontend (Capturas para el Informe)
+## 6. Diseño de Frontend (Capturas para el Informe)
 
 Para el informe final y la documentación del proyecto, se sugiere incluir las siguientes 5 capturas de pantalla que muestran las pantallas y componentes desarrollados:
 

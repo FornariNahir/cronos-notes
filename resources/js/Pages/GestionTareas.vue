@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useForm, router, Head } from '@inertiajs/vue3';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
 import SubtaskBreakdownModal from '@/Components/SubtaskBreakdownModal.vue';
@@ -250,19 +251,11 @@ const guardarEdicionSubtarea = async (subtarea) => {
     if (!tituloEditando.value.trim()) return;
     guardandoEdicion.value = true;
     try {
-        const res = await fetch(route('subtareas.update', subtarea.idSubtarea), {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                titulo: tituloEditando.value.trim(),
-                estimacionEsfuerzo: pomodorosEditando.value
-            })
+        const response = await axios.put(route('subtareas.update', subtarea.idSubtarea), {
+            titulo: tituloEditando.value.trim(),
+            estimacionEsfuerzo: pomodorosEditando.value
         });
-        const data = await res.json();
+        const data = response.data;
         if (data.success) {
             subtarea.titulo = data.subtarea.titulo;
             subtarea.estimacionEsfuerzo = data.subtarea.estimacionEsfuerzo;
@@ -283,15 +276,8 @@ const toggleSubtarea = async (subtarea) => {
     if (props.perfilActivo?.permisoCompartido === 'Lector') return;
     loadingToggleSubtarea.value[subtarea.idSubtarea] = true;
     try {
-        const res = await fetch(route('subtareas.toggle', subtarea.idSubtarea), {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json'
-            }
-        });
-        const data = await res.json();
+        const response = await axios.patch(route('subtareas.toggle', subtarea.idSubtarea));
+        const data = response.data;
         if (data.success) {
             subtarea.completada = data.subtarea.completada;
             if (data.tarea) {
@@ -328,15 +314,8 @@ const toggleSubtareaDesdeTarjeta = async (tarea, subtarea) => {
     if (props.perfilActivo?.permisoCompartido === 'Lector') return;
     loadingToggleSubtarea.value[subtarea.idSubtarea] = true;
     try {
-        const res = await fetch(route('subtareas.toggle', subtarea.idSubtarea), {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json'
-            }
-        });
-        const data = await res.json();
+        const response = await axios.patch(route('subtareas.toggle', subtarea.idSubtarea));
+        const data = response.data;
         if (data.success) {
             subtarea.completada = data.subtarea.completada;
             if (data.tarea) {
@@ -361,19 +340,11 @@ const agregarSubtarea = async () => {
     agregandoSubtarea.value = true;
     errorSubtarea.value = '';
     try {
-        const res = await fetch(route('subtareas.store', tareaDetalle.value.idTarea), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                titulo: nuevaSubtareaTitulo.value.trim(),
-                estimacionEsfuerzo: nuevaSubtareaPomodoros.value
-            })
+        const response = await axios.post(route('subtareas.store', tareaDetalle.value.idTarea), {
+            titulo: nuevaSubtareaTitulo.value.trim(),
+            estimacionEsfuerzo: nuevaSubtareaPomodoros.value
         });
-        const data = await res.json();
+        const data = response.data;
         if (data.success) {
             if (!tareaDetalle.value.subtareas) {
                 tareaDetalle.value.subtareas = [];
@@ -387,10 +358,10 @@ const agregarSubtarea = async () => {
             nuevaSubtareaTitulo.value = '';
             nuevaSubtareaPomodoros.value = 1;
         } else {
-            errorSubtarea.value = data.error || 'No se pudo agregar la subtarea.';
+            errorSubtarea.value = data.message || data.error || 'No se pudo agregar la subtarea.';
         }
     } catch (e) {
-        errorSubtarea.value = 'Error al comunicarse con el servidor.';
+        errorSubtarea.value = e.response?.data?.message || e.response?.data?.error || 'Error al comunicarse con el servidor.';
     } finally {
         agregandoSubtarea.value = false;
     }
@@ -400,15 +371,8 @@ const eliminarSubtarea = async (subtarea) => {
     if (props.perfilActivo?.permisoCompartido === 'Lector') return;
     eliminandoSubtarea.value[subtarea.idSubtarea] = true;
     try {
-        const res = await fetch(route('subtareas.destroy', subtarea.idSubtarea), {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                'Accept': 'application/json'
-            }
-        });
-        const data = await res.json();
+        const response = await axios.delete(route('subtareas.destroy', subtarea.idSubtarea));
+        const data = response.data;
         if (data.success) {
             tareaDetalle.value.subtareas = tareaDetalle.value.subtareas.filter(s => s.idSubtarea !== subtarea.idSubtarea);
             if (data.tarea) {

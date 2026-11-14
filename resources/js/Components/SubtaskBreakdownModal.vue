@@ -249,7 +249,7 @@ const guardar = async () => {
                   <div 
                     v-for="(sub, index) in subtareasPropuestas" 
                     :key="index"
-                    class="d-flex align-items-center gap-2 p-2 mb-2 bg-white rounded border shadow-2xs"
+                    class="d-flex align-items-center gap-2 p-2 mb-2 rounded border shadow-2xs subtask-suggested-item"
                     :class="{'opacity-50': !sub.seleccionada}"
                   >
                     <!-- Checkbox de selección -->
@@ -301,7 +301,7 @@ const guardar = async () => {
                 </div>
 
                 <!-- Barra Resumen de Esfuerzo Proyectado -->
-                <div class="d-flex justify-content-between align-items-center p-2.5 rounded bg-warning-subtle text-dark mb-3 border border-warning-subtle">
+                <div class="d-flex justify-content-between align-items-center p-2.5 rounded mb-3 border subtask-summary-banner">
                   <span class="small fw-semibold">
                     <i class="bi bi-check2-circle text-success me-1"></i>
                     {{ subtareasSeleccionadas.length }} de {{ subtareasPropuestas.length }} subtareas seleccionadas
@@ -312,7 +312,7 @@ const guardar = async () => {
                 </div>
 
                 <!-- Selector si ya existen subtareas previas -->
-                <div v-if="tieneSubtareasPrevias" class="p-3 mb-3 bg-light rounded border">
+                <div v-if="tieneSubtareasPrevias" class="p-3 mb-3 rounded border subtask-existing-banner">
                   <div class="small fw-bold text-dark mb-1">
                     <i class="bi bi-exclamation-circle text-info me-1"></i>
                     Esta tarea ya tiene {{ tarea.subtareas.length }} subtarea(s) guardada(s):
@@ -412,6 +412,22 @@ const guardar = async () => {
   font-size: 11px;
 }
 
+.subtask-suggested-item {
+  background-color: #ffffff;
+  border-color: #dee2e6 !important;
+}
+
+.subtask-summary-banner {
+  background-color: #fff3cd;
+  border-color: #ffe69c !important;
+  color: #664d03;
+}
+
+.subtask-existing-banner {
+  background-color: #f8f9fa;
+  border-color: #dee2e6 !important;
+}
+
 .alert-icon-wrap {
   width: 70px;
   height: 70px;
@@ -460,5 +476,112 @@ const guardar = async () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+</style>
+
+<style>
+/* Modo Oscuro Global para SubtaskBreakdownModal (teleportado a body) */
+body.cn-body-dark .subtask-breakdown-content {
+  background-color: #4d2323 !important;
+  border: 1px solid #7b413f !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .modal-body {
+  background-color: #4d2323 !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content h5,
+body.cn-body-dark .subtask-breakdown-content h6,
+body.cn-body-dark .subtask-breakdown-content .text-dark {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content p,
+body.cn-body-dark .subtask-breakdown-content .text-secondary,
+body.cn-body-dark .subtask-breakdown-content .text-muted {
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .lista-subtareas-sugeridas {
+  background-color: #3b1717 !important;
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-suggested-item {
+  background-color: #431c1c !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-suggested-item input {
+  background-color: #321313 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-suggested-item input::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-summary-banner {
+  background-color: rgba(244, 190, 149, 0.12) !important;
+  border-color: rgba(244, 190, 149, 0.28) !important;
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .badge-pomodoro-total {
+  background-color: rgba(244, 190, 149, 0.2) !important;
+  color: #f4be95 !important;
+  border-color: rgba(244, 190, 149, 0.4) !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-existing-banner {
+  background-color: #3b1717 !important;
+  border-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-existing-banner label {
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .subtask-existing-banner strong {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .alert-icon-wrap {
+  background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .btn-outline-secondary {
+  border-color: #7b413f !important;
+  color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .btn-outline-secondary:hover {
+  background-color: #7b413f !important;
+  color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .border-top {
+  border-color: #7b413f !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .text-marron {
+  color: #f4be95 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .btn-marron {
+  background-color: #f4be95 !important;
+  color: #4d2323 !important;
+  font-weight: 600 !important;
+}
+
+body.cn-body-dark .subtask-breakdown-content .btn-marron:hover:not(:disabled) {
+  background-color: #fbe8da !important;
+  color: #4d2323 !important;
 }
 </style>

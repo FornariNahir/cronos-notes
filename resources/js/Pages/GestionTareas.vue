@@ -519,15 +519,15 @@ const textoEstado = (estado) => {
                         </div>
 
                         <!-- Progreso y Acordeón de Subtareas en Tarjeta -->
-                        <div v-if="tarea.subtareas && tarea.subtareas.length > 0" class="mt-2 mb-1 p-2 rounded bg-light border-0">
+                        <div v-if="tarea.subtareas && tarea.subtareas.length > 0" class="mt-2 mb-1 p-2 rounded subtask-card-container border">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="small text-muted fw-semibold" style="font-size: 11px;">
+                                <span class="small subtask-meta-text fw-semibold" style="font-size: 11px;">
                                     <i class="bi bi-check2-square text-success me-1"></i>
                                     {{ completadasSubtareas(tarea) }}/{{ tarea.subtareas.length }} subtareas ({{ porcentajeSubtareas(tarea) }}%)
                                 </span>
                                 <button 
                                     type="button" 
-                                    class="btn btn-sm btn-link p-0 text-decoration-none text-muted"
+                                    class="btn btn-sm btn-link p-0 text-decoration-none btn-subtask-toggle"
                                     style="font-size: 11px;"
                                     @click.stop="toggleAcordeon(tarea.idTarea)"
                                     :title="acordeonAbierto[tarea.idTarea] ? 'Ocultar checklist' : 'Ver checklist'"
@@ -536,7 +536,7 @@ const textoEstado = (estado) => {
                                     <i class="bi ms-1" :class="acordeonAbierto[tarea.idTarea] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                                 </button>
                             </div>
-                            <div class="progress" style="height: 6px;">
+                            <div class="progress subtask-progress-track" style="height: 6px;">
                                 <div 
                                     class="progress-bar" 
                                     role="progressbar" 
@@ -554,7 +554,7 @@ const textoEstado = (estado) => {
                                     <div 
                                         v-for="sub in tarea.subtareas" 
                                         :key="sub.idSubtarea" 
-                                        class="d-flex align-items-center gap-2 py-1 px-1 rounded hover-bg-subtarea"
+                                        class="d-flex align-items-center gap-2 py-1 px-1 rounded subtask-item-row hover-bg-subtarea"
                                     >
                                         <input 
                                             type="checkbox" 
@@ -566,8 +566,8 @@ const textoEstado = (estado) => {
                                             title="Marcar como completada"
                                         >
                                         <span 
-                                            class="small text-truncate cursor-pointer flex-grow-1"
-                                            :class="sub.completada ? 'text-decoration-line-through text-muted' : 'text-dark'"
+                                            class="small text-truncate cursor-pointer flex-grow-1 subtask-title"
+                                            :class="{'is-completed': sub.completada}"
                                             style="font-size: 12px;"
                                             @click.stop="perfilActivo?.permisoCompartido !== 'Lector' && toggleSubtareaDesdeTarjeta(tarea, sub)"
                                         >
@@ -740,11 +740,11 @@ const textoEstado = (estado) => {
                     <!-- Sección de Subtareas -->
                     <div class="mb-4 pt-3 border-top">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="text-uppercase text-secondary small fw-bold tracking-wider m-0">
+                            <h6 class="text-uppercase small fw-bold tracking-wider m-0 subtask-section-title">
                                 <i class="bi bi-list-check me-1"></i> Subtareas
                             </h6>
                             <div class="d-flex align-items-center gap-2">
-                                <span v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="badge bg-light text-dark border">
+                                <span v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="badge subtask-count-badge">
                                     {{ tareaDetalle.subtareas.filter(s => s.completada).length }}/{{ tareaDetalle.subtareas.length }} completadas
                                 </span>
                                 <button 
@@ -761,12 +761,12 @@ const textoEstado = (estado) => {
                         </div>
 
                         <!-- Lista de Subtareas -->
-                        <div v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="list-group list-group-flush mb-3 rounded border">
+                        <div v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="list-group list-group-flush mb-3 rounded border subtask-detail-list">
                             <div 
                                 v-for="sub in tareaDetalle.subtareas" 
                                 :key="sub.idSubtarea"
-                                class="list-group-item d-flex align-items-center justify-content-between py-2 px-3 gap-2"
-                                :class="{'bg-light': sub.completada}"
+                                class="list-group-item d-flex align-items-center justify-content-between py-2 px-3 gap-2 subtask-detail-item"
+                                :class="{'is-completed': sub.completada}"
                             >
                                 <!-- Modo visualización / toggle -->
                                 <div v-if="subtareaEditandoId !== sub.idSubtarea" class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
@@ -779,8 +779,8 @@ const textoEstado = (estado) => {
                                         title="Marcar como completada"
                                     >
                                     <span 
-                                        class="small text-truncate cursor-pointer"
-                                        :class="sub.completada ? 'text-decoration-line-through text-muted' : 'text-dark fw-medium'"
+                                        class="small text-truncate cursor-pointer subtask-title"
+                                        :class="sub.completada ? 'is-completed' : 'fw-medium'"
                                         @click="perfilActivo?.permisoCompartido !== 'Lector' && toggleSubtarea(sub)"
                                     >
                                         {{ sub.titulo }}
@@ -793,14 +793,14 @@ const textoEstado = (estado) => {
                                 <!-- Botones acción en modo visualización -->
                                 <div v-if="subtareaEditandoId !== sub.idSubtarea && perfilActivo?.permisoCompartido !== 'Lector'" class="d-flex gap-1">
                                     <button 
-                                        class="btn btn-sm btn-link text-secondary p-0 px-1" 
+                                        class="btn btn-sm btn-link text-secondary p-0 px-1 btn-subtask-action" 
                                         @click="iniciarEdicionSubtarea(sub)"
                                         title="Editar subtarea"
                                     >
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <button 
-                                        class="btn btn-sm btn-link text-danger p-0 px-1" 
+                                        class="btn btn-sm btn-link text-danger p-0 px-1 btn-subtask-action" 
                                         :disabled="eliminandoSubtarea[sub.idSubtarea]"
                                         @click="eliminarSubtarea(sub)"
                                         title="Eliminar subtarea"
@@ -814,7 +814,7 @@ const textoEstado = (estado) => {
                                     <input 
                                         type="text" 
                                         v-model="tituloEditando" 
-                                        class="form-control form-control-sm"
+                                        class="form-control form-control-sm subtask-edit-input"
                                         maxlength="150"
                                         @keyup.enter="guardarEdicionSubtarea(sub)"
                                         @keyup.esc="cancelarEdicionSubtarea"
@@ -822,7 +822,7 @@ const textoEstado = (estado) => {
                                     <input 
                                         type="number" 
                                         v-model.number="pomodorosEditando" 
-                                        class="form-control form-control-sm" 
+                                        class="form-control form-control-sm subtask-edit-pomodoros" 
                                         style="width: 65px;"
                                         min="1" 
                                         max="4"
@@ -836,7 +836,7 @@ const textoEstado = (estado) => {
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <button 
-                                        class="btn btn-sm btn-light border px-2" 
+                                        class="btn btn-sm btn-light border px-2 btn-subtask-cancel" 
                                         @click="cancelarEdicionSubtarea"
                                     >
                                         <i class="bi bi-x-lg"></i>
@@ -850,23 +850,23 @@ const textoEstado = (estado) => {
 
                         <!-- Formulario para agregar nueva subtarea -->
                         <div v-if="perfilActivo?.permisoCompartido !== 'Lector'" class="mt-2">
-                            <div class="input-group input-group-sm">
+                            <div class="input-group input-group-sm subtask-input-group">
                                 <input 
                                     type="text" 
                                     v-model="nuevaSubtareaTitulo" 
-                                    class="form-control" 
+                                    class="form-control subtask-add-input" 
                                     placeholder="Añadir una subtarea manual..."
                                     maxlength="150"
                                     :disabled="agregandoSubtarea"
                                     @keyup.enter="agregarSubtarea"
                                 >
-                                <span class="input-group-text bg-light text-muted border-end-0" title="Pomodoros estimados (1-4)">
+                                <span class="input-group-text subtask-add-pomodoro-icon border-end-0" title="Pomodoros estimados (1-4)">
                                     🍅
                                 </span>
                                 <input 
                                     type="number" 
                                     v-model.number="nuevaSubtareaPomodoros" 
-                                    class="form-control border-start-0" 
+                                    class="form-control border-start-0 subtask-add-pomodoro-input" 
                                     style="max-width: 65px;"
                                     min="1" 
                                     max="4"
@@ -1016,6 +1016,69 @@ const textoEstado = (estado) => {
 }
 
 
+/* ESTILOS DE SUBTAREAS (MODO CLARO Y MODO OSCURO) */
+.subtask-card-container {
+    background-color: #f8f9fa;
+    border-color: #e9ecef !important;
+}
+
+.subtask-meta-text {
+    color: #6c757d;
+}
+
+.btn-subtask-toggle {
+    color: #6c757d;
+}
+
+.btn-subtask-toggle:hover {
+    color: #495057;
+}
+
+.subtask-progress-track {
+    background-color: #e9ecef;
+}
+
+.subtask-title {
+    color: #212529;
+    transition: color 0.15s ease;
+}
+
+.subtask-title.is-completed {
+    color: #8c98a4 !important;
+    text-decoration: line-through;
+}
+
+.subtask-section-title {
+    color: #6c757d;
+}
+
+.subtask-count-badge {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    font-size: 11px;
+}
+
+.subtask-detail-list {
+    border-color: #e9ecef !important;
+}
+
+.subtask-detail-item {
+    background-color: #ffffff;
+    border-color: #e9ecef !important;
+    color: #212529;
+}
+
+.subtask-detail-item.is-completed {
+    background-color: #f8f9fa;
+}
+
+.subtask-add-pomodoro-icon {
+    background-color: #f8f9fa;
+    border-color: #ced4da;
+    color: #6c757d;
+}
+
 .badge-pomodoro-pill {
     display: inline-flex;
     align-items: center;
@@ -1027,6 +1090,108 @@ const textoEstado = (estado) => {
     border: 1px solid rgba(105, 52, 46, 0.18);
     border-radius: 9999px;
     padding: 2px 7px;
+}
+
+/* SUBTAREAS: SOBRESCRITURAS MODO OSCURO (body.cn-body-dark) */
+body.cn-body-dark .subtask-card-container {
+    background-color: #3b1717 !important;
+    border-color: #7b413f !important;
+}
+
+body.cn-body-dark .subtask-meta-text {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .btn-subtask-toggle {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .btn-subtask-toggle:hover {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-progress-track {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.cn-body-dark .subtask-title {
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-title.is-completed {
+    color: #a0827e !important;
+}
+
+body.cn-body-dark .hover-bg-subtarea:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body.cn-body-dark .subtask-section-title {
+    color: #f4be95 !important;
+}
+
+body.cn-body-dark .subtask-count-badge {
+    background-color: #3b1717 !important;
+    color: #f4be95 !important;
+    border-color: #7b413f !important;
+}
+
+body.cn-body-dark .subtask-detail-list {
+    border-color: #7b413f !important;
+}
+
+body.cn-body-dark .subtask-detail-item {
+    background-color: #3b1717 !important;
+    border-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-detail-item.is-completed {
+    background-color: #2e1111 !important;
+}
+
+body.cn-body-dark .subtask-detail-item .btn-subtask-action {
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .subtask-detail-item .btn-subtask-action.text-danger {
+    color: #ea868f !important;
+}
+
+body.cn-body-dark .subtask-edit-input,
+body.cn-body-dark .subtask-edit-pomodoros {
+    background-color: #4d2323 !important;
+    border-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .btn-subtask-cancel {
+    background-color: #4d2323 !important;
+    border-color: #7b413f !important;
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .subtask-add-input,
+body.cn-body-dark .subtask-add-pomodoro-input {
+    background-color: #3b1717 !important;
+    border-color: #7b413f !important;
+    color: #ffffff !important;
+}
+
+body.cn-body-dark .subtask-add-input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.cn-body-dark .subtask-add-pomodoro-icon {
+    background-color: #3b1717 !important;
+    border-color: #7b413f !important;
+    color: #fcd5b8 !important;
+}
+
+body.cn-body-dark .badge-pomodoro-pill {
+    color: #f4be95 !important;
+    background-color: rgba(244, 190, 149, 0.16) !important;
+    border-color: rgba(244, 190, 149, 0.35) !important;
 }
 
 /* Control de vistas */

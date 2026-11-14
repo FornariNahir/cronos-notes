@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useForm, router, Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import SubtaskBreakdownModal from '@/Components/SubtaskBreakdownModal.vue';
 
 const props = defineProps({
     tareas: {
@@ -200,6 +201,25 @@ const sincronizarTareaEnLista = (tareaActualizada) => {
     if (idx !== -1) {
         tareasList.value[idx] = { ...tareasList.value[idx], ...tareaActualizada };
     }
+};
+
+const showBreakdownModal = ref(false);
+const tareaParaDesglosar = ref(null);
+
+const abrirDesgloseIA = (tarea) => {
+    tareaParaDesglosar.value = tarea;
+    showBreakdownModal.value = true;
+};
+
+const onSubtareasGuardadas = (tareaActualizada) => {
+    sincronizarTareaEnLista(tareaActualizada);
+    if (tareaDetalle.value.idTarea === tareaActualizada.idTarea) {
+        tareaDetalle.value = { ...tareaDetalle.value, ...tareaActualizada };
+    }
+};
+
+const abrirEditarDesdeDesglose = (tarea) => {
+    abrirEditarTarea(tarea);
 };
 
 const nuevaSubtareaTitulo = ref('');
@@ -610,12 +630,23 @@ const textoEstado = (estado) => {
                                 </div>
                             </div>
                         </div>
-                        <div v-if="perfilActivo?.permisoCompartido !== 'Lector'" class="d-flex gap-2 mt-3 botonera-card">
-                            <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-tarea" @click="abrirEditarTarea(tarea)">
-                                <i class="bi bi-pencil me-1"></i> Editar
-                            </button>
-                            <button class="btn btn-outline-danger w-50 btn-sm btn-eliminar-tarea" @click="eliminarTarea(tarea)">
-                                <i class="bi bi-trash me-1"></i> Eliminar
+                        <div v-if="perfilActivo?.permisoCompartido !== 'Lector'" class="mt-3">
+                            <div class="d-flex gap-2 botonera-card">
+                                <button class="btn btn-outline-secondary w-50 btn-sm btn-editar-tarea" @click="abrirEditarTarea(tarea)">
+                                    <i class="bi bi-pencil me-1"></i> Editar
+                                </button>
+                                <button class="btn btn-outline-danger w-50 btn-sm btn-eliminar-tarea" @click="eliminarTarea(tarea)">
+                                    <i class="bi bi-trash me-1"></i> Eliminar
+                                </button>
+                            </div>
+                            <button 
+                                v-if="tarea.estadoTarea !== 'Completado'"
+                                class="btn btn-outline-info btn-sm w-100 mt-2 d-flex align-items-center justify-content-center gap-1 btn-desglosar-ia"
+                                @click.stop="abrirDesgloseIA(tarea)"
+                                title="Desglosar tarea en subtareas inteligentes con IA"
+                            >
+                                <i class="bi bi-magic"></i>
+                                <span>Desglosar con IA</span>
                             </button>
                         </div>
                     </div>
@@ -748,9 +779,21 @@ const textoEstado = (estado) => {
                             <h6 class="text-uppercase text-secondary small fw-bold tracking-wider m-0">
                                 <i class="bi bi-list-check me-1"></i> Subtareas
                             </h6>
-                            <span v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="badge bg-light text-dark border">
-                                {{ tareaDetalle.subtareas.filter(s => s.completada).length }}/{{ tareaDetalle.subtareas.length }} completadas
-                            </span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="badge bg-light text-dark border">
+                                    {{ tareaDetalle.subtareas.filter(s => s.completada).length }}/{{ tareaDetalle.subtareas.length }} completadas
+                                </span>
+                                <button 
+                                    v-if="perfilActivo?.permisoCompartido !== 'Lector' && tareaDetalle.estadoTarea !== 'Completado'"
+                                    type="button" 
+                                    class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 py-1 px-2"
+                                    style="font-size: 11px;"
+                                    @click="abrirDesgloseIA(tareaDetalle)"
+                                    title="Desglosar tarea con Inteligencia Artificial"
+                                >
+                                    <i class="bi bi-magic"></i> Desglosar con IA
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Lista de Subtareas -->
@@ -897,6 +940,14 @@ const textoEstado = (estado) => {
       :is-danger="confirmConfig.isDanger"
       @close="showConfirmModal = false"
       @confirm="handleConfirm"
+    />
+    <SubtaskBreakdownModal
+      :show="showBreakdownModal"
+      :tarea="tareaParaDesglosar"
+      :perfil-activo="perfilActivo"
+      @close="showBreakdownModal = false"
+      @guardado="onSubtareasGuardadas"
+      @solicitar-editar-tarea="abrirEditarDesdeDesglose"
     />
   </Teleport>
 

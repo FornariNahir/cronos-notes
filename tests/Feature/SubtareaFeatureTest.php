@@ -238,4 +238,79 @@ class SubtareaFeatureTest extends TestCase
 
         $this->assertDatabaseMissing('subtareas', ['idSubtarea' => $sub->idSubtarea]);
     }
+
+    public function test_guardar_lote_en_modo_reemplazar_elimina_subtareas_previas_y_actualiza_esfuerzo(): void
+    {
+        [$owner, $perfil, $tarea] = $this->crearEscenario();
+
+        // Subtarea previa que debe ser reemplazada
+        $subPrevia = Subtarea::create([
+            'idTarea' => $tarea->idTarea,
+            'titulo' => 'Subtarea vieja',
+            'estimacionEsfuerzo' => 1,
+            'orden' => 1,
+        ]);
+
+        $response = $this->actingAs($owner)->postJson(route('subtareas.guardar-lote', $tarea->idTarea), [
+            'modo' => 'reemplazar',
+            'subtareas' => [
+                ['titulo' => 'Paso nuevo 1', 'estimacionPomodoros' => 2],
+                ['titulo' => 'Paso nuevo 2', 'estimacionPomodoros' => 3],
+            ]
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonCount(2, 'tarea.subtareas');
+
+        $this->assertDatabaseMissing('subtareas', ['idSubtarea' => $subPrevia->idSubtarea]);
+        $this->assertDatabaseHas('subtareas', ['idTarea' => $tarea->idTarea, 'titulo' => 'Paso nuevo 1', 'orden' => 1]);
+        $this->assertDatabaseHas('subtareas', ['idTarea' => $tarea->idTarea, 'titulo' => 'Paso nuevo 2', 'orden' => 2]);
+
+        $tarea->refresh();
+        $this->assertEquals(5, $tarea->estimacionEsfuerzo); // 2 + 3
+    }
+
+    public function test_guardar_lote_en_modo_anexar_agrega_al_final_con_orden_consecutivo(): void
+    {
+        [$owner, $perfil, $tarea] = $this->crearEscenario();
+
+        $subPrevia = Subtarea::create([
+            'idTarea' => $tarea->idTarea,
+            'titulo' => 'Subtarea previa que se conserva',
+            'estimacionEsfuerzo' => 2,
+            'orden' => 1,
+        ]);
+
+        $response = $this->actingAs($owner)->postJson(route('subtareas.guardar-lote', $tarea->idTarea), [
+            'modo' => 'anexar',
+            'subtareas' => [
+                ['titulo' => 'Paso anexado 1', 'estimacionPomodoros' => 1],
+            ]
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonCount(2, 'tarea.subtareas');
+
+        $this->assertDatabaseHas('subtareas', ['idSubtarea' => $subPrevia->idSubtarea]);
+        $this->assertDatabaseHas('subtareas', ['idTarea' => $tarea->idTarea, 'titulo' => 'Paso anexado 1', 'orden' => 2]);
+
+        $tarea->refresh();
+        $this->assertEquals(3, $tarea->estimacionEsfuerzo); // 2 + 1
+    }
+
+    public function test_guardar_lote_rechaza_usuario_lector(): void
+    {
+        [$owner, $perfil, $tarea, $lector] = $this->crearEscenario('Lector');
+
+        $response = $this->actingAs($lector)->postJson(route('subtareas.guardar-lote', $tarea->idTarea), [
+            'modo' => 'reemplazar',
+            'subtareas' => [
+                ['titulo' => 'Paso no autorizado', 'estimacionPomodoros' => 1],
+            ]
+        ]);
+
+        $response->assertStatus(403);
+    }
 }

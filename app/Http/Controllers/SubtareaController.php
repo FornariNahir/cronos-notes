@@ -6,6 +6,7 @@ use App\Models\Subtarea;
 use App\Models\Tarea;
 use App\Models\Perfil;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class SubtareaController extends Controller
@@ -121,5 +122,46 @@ class SubtareaController extends Controller
         }
 
         return redirect()->back()->with('success', 'Subtarea eliminada correctamente.');
+    }
+
+    public function guardarLote(Request $request, $idTarea)
+    {
+        $tarea = Tarea::findOrFail($idTarea);
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'crear');
+
+        $request->validate([
+            'subtareas' => 'required|array|min:1',
+            'subtareas.*.titulo' => 'required|string|max:150',
+            'subtareas.*.estimacionPomodoros' => 'required|integer|min:1|max:4',
+            'modo' => 'required|in:reemplazar,anexar',
+        ]);
+
+        DB::transaction(function () use ($request, $tarea) {
+            if ($request->modo === 'reemplazar') {
+                $tarea->subtareas()->delete();
+                $ordenBase = 0;
+            } else {
+                $ordenBase = Subtarea::where('idTarea', $tarea->idTarea)->max('orden') ?? 0;
+            }
+
+            foreach ($request->subtareas as $sub) {
+                $ordenBase++;
+                Subtarea::create([
+                    'idTarea' => $tarea->idTarea,
+                    'titulo' => trim($sub['titulo']),
+                    'completada' => false,
+                    'estimacionEsfuerzo' => (int) $sub['estimacionPomodoros'],
+                    'orden' => $ordenBase,
+                ]);
+            }
+
+            $tarea->recalcularProgreso();
+        });
+
+        return response()->json([
+            'success' => true,
+            'tarea' => $tarea->fresh(['subtareas']),
+            'mensaje' => $request->modo === 'reemplazar' ? 'Subtareas reemplazadas correctamente.' : 'Subtareas añadidas correctamente.'
+        ]);
     }
 }

@@ -77,6 +77,7 @@ Route::middleware('auth.custom')->group(function () {
 
     // SUBTAREAS
     Route::post('/tareas/{idTarea}/subtareas', [SubtareaController::class, 'store'])->name('subtareas.store');
+    Route::post('/tareas/{idTarea}/subtareas/lote', [SubtareaController::class, 'guardarLote'])->name('subtareas.guardar-lote');
     Route::put('/subtareas/{idSubtarea}', [SubtareaController::class, 'update'])->name('subtareas.update');
     Route::patch('/subtareas/{idSubtarea}/toggle', [SubtareaController::class, 'toggle'])->name('subtareas.toggle');
     Route::delete('/subtareas/{idSubtarea}', [SubtareaController::class, 'destroy'])->name('subtareas.destroy');

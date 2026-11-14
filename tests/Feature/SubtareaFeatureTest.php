@@ -313,4 +313,34 @@ class SubtareaFeatureTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_pomodoro_index_incluye_subtareas_ordenadas_para_espacio_zen(): void
+    {
+        [$owner, $perfil, $tarea] = $this->crearEscenario();
+
+        Subtarea::create([
+            'idTarea' => $tarea->idTarea,
+            'titulo' => 'Segundo paso',
+            'orden' => 2,
+            'estimacionEsfuerzo' => 1,
+        ]);
+        Subtarea::create([
+            'idTarea' => $tarea->idTarea,
+            'titulo' => 'Primer paso',
+            'orden' => 1,
+            'estimacionEsfuerzo' => 1,
+        ]);
+
+        $response = $this->actingAs($owner)
+            ->withSession(['perfilActivo' => $perfil->idPerfil])
+            ->get(route('pomodoro.index'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn ($page) => 
+            $page->component('pomodoro/SesionZen')
+                ->has('tareas', 1)
+                ->where('tareas.0.subtareas.0.titulo', 'Primer paso')
+                ->where('tareas.0.subtareas.1.titulo', 'Segundo paso')
+        );
+    }
 }

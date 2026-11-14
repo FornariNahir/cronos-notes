@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, reactive, nextTick } from 'vue';
 import { Link, usePage, router, useForm, Head } from '@inertiajs/vue3';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { usePomodoroTimer } from '@/Composables/usePomodoroTimer';
 import { vDraggable } from '@/Directives/vDraggable';
@@ -300,6 +301,84 @@ const {
 watch(() => localSesionActiva.value, () => {
   initTimer();
 }, { immediate: true });
+
+// --- GESTIÓN DE SUBTAREAS EN ESPACIO ZEN (RF-M16 - OPCIÓN A) ---
+const tareasLocales = ref([]);
+
+watch(() => props.tareas, (newVal) => {
+  tareasLocales.value = newVal ? JSON.parse(JSON.stringify(newVal)) : [];
+}, { immediate: true, deep: true });
+
+const mostrarChecklistTimer = ref(false);
+const loadingToggleSubtarea = ref({});
+
+// Vista previa en configuración (Setup)
+const tareaSeleccionadaPreview = computed(() => {
+  if (!quickStartTaskId.value) return null;
+  return tareasLocales.value.find(t => t.idTarea == quickStartTaskId.value) || null;
+});
+
+const subtareasPreview = computed(() => tareaSeleccionadaPreview.value?.subtareas || []);
+const subtareasPendientesPreview = computed(() => subtareasPreview.value.filter(s => !s.completada));
+const totalPomodorosPreview = computed(() => {
+  return subtareasPreview.value.reduce((acc, s) => acc + (Number(s.estimacionEsfuerzo) || 0), 0);
+});
+const pomodorosPendientesPreview = computed(() => {
+  return subtareasPendientesPreview.value.reduce((acc, s) => acc + (Number(s.estimacionEsfuerzo) || 0), 0);
+});
+
+// Tarea y subtareas en sesión activa
+const tareaActiva = computed(() => {
+  if (!localSesionActiva.value?.idTarea) return null;
+  return tareasLocales.value.find(t => t.idTarea == localSesionActiva.value.idTarea) || null;
+});
+
+const subtareasActivas = computed(() => tareaActiva.value?.subtareas || []);
+
+const subtareaEnFoco = computed(() => {
+  return subtareasActivas.value.find(s => !s.completada) || null;
+});
+
+const subtareasCompletadasCount = computed(() => {
+  return subtareasActivas.value.filter(s => s.completada).length;
+});
+
+const porcentajeSubtareasActivas = computed(() => {
+  if (!subtareasActivas.value.length) return 0;
+  return Math.round((subtareasCompletadasCount.value / subtareasActivas.value.length) * 100);
+});
+
+const toggleSubtareaZen = async (sub) => {
+  if (!sub || loadingToggleSubtarea.value[sub.idSubtarea]) return;
+
+  const anteriorEstado = sub.completada;
+  // Actualización optimista inmediata
+  sub.completada = !sub.completada;
+  loadingToggleSubtarea.value[sub.idSubtarea] = true;
+
+  try {
+    const response = await axios.patch(route('subtareas.toggle', sub.idSubtarea), {}, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+
+    if (response.data?.tarea) {
+      const idx = tareasLocales.value.findIndex(t => t.idTarea == response.data.tarea.idTarea);
+      if (idx !== -1) {
+        tareasLocales.value[idx] = response.data.tarea;
+      }
+    }
+  } catch (error) {
+    console.error('Error al actualizar estado de subtarea:', error);
+    // Revertir cambio optimista
+    sub.completada = anteriorEstado;
+    showCustomAlert('Error', 'No se pudo actualizar el estado de la subtarea. Inténtalo nuevamente.');
+  } finally {
+    loadingToggleSubtarea.value[sub.idSubtarea] = false;
+  }
+};
 
 const displayTime = computed(() => {
   const mins = Math.floor(timerTime.value / 60);
@@ -888,6 +967,90 @@ watch(cornellTab, async () => {
             <div class="phase-indicator">{{ phaseText }}</div>
             <div v-if="localSesionActiva.tituloTarea" class="task-badge">{{ localSesionActiva.tituloTarea }}</div>
             
+            <!-- Subtareas: Modo Enfoque Paso a Paso (Opción A) -->
+            <div v-if="tareaActiva && subtareasActivas.length > 0" class="zen-subtasks-widget mt-2 w-100">
+              <!-- Cabecera de progreso y toggle de acordeón -->
+              <div class="zen-subtasks-header d-flex align-items-center justify-content-between mb-1">
+                <span class="zen-subtasks-counter">
+                  <i class="bi bi-list-task me-1"></i>
+                  {{ subtareasCompletadasCount }} de {{ subtareasActivas.length }} ({{ porcentajeSubtareasActivas }}%)
+                </span>
+                <button 
+                  type="button" 
+                  class="zen-subtasks-toggle-btn"
+                  @click.stop="mostrarChecklistTimer = !mostrarChecklistTimer"
+                  :title="mostrarChecklistTimer ? 'Ver solo paso en foco' : 'Ver todas las subtareas'"
+                >
+                  <span>{{ mostrarChecklistTimer ? 'Paso en foco' : 'Ver todas' }}</span>
+                  <i class="bi ms-1" :class="mostrarChecklistTimer ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                </button>
+              </div>
+
+              <!-- Barra de progreso miniatura -->
+              <div class="zen-subtasks-progressbar-track mb-2">
+                <div 
+                  class="zen-subtasks-progressbar-fill" 
+                  :style="{ width: `${porcentajeSubtareasActivas}%` }"
+                ></div>
+              </div>
+
+              <!-- Vista 1: Paso en Foco (Principal) -->
+              <div v-if="!mostrarChecklistTimer" class="zen-focus-step-card">
+                <div v-if="subtareaEnFoco" class="zen-focus-step-content d-flex align-items-center gap-2">
+                  <button 
+                    type="button" 
+                    class="zen-subtask-check-btn" 
+                    :class="{ 'is-loading': loadingToggleSubtarea[subtareaEnFoco.idSubtarea] }"
+                    @click.stop="toggleSubtareaZen(subtareaEnFoco)"
+                    title="Marcar subtarea como completada"
+                  >
+                    <i class="bi bi-circle"></i>
+                  </button>
+                  <div class="zen-focus-info flex-grow-1 min-w-0">
+                    <span class="zen-focus-label">Paso en foco</span>
+                    <div class="zen-focus-title text-truncate" :title="subtareaEnFoco.titulo">
+                      {{ subtareaEnFoco.titulo }}
+                    </div>
+                  </div>
+                  <span v-if="subtareaEnFoco.estimacionEsfuerzo" class="zen-subtask-tomato-pill flex-shrink-0" title="Estimación de pomodoros">
+                    🍅 {{ subtareaEnFoco.estimacionEsfuerzo }}
+                  </span>
+                </div>
+
+                <!-- Si todas las subtareas ya fueron completadas -->
+                <div v-else class="zen-focus-all-done d-flex align-items-center justify-content-center gap-2 py-1">
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                  <span class="zen-focus-done-text">¡Todas las subtareas completadas!</span>
+                </div>
+              </div>
+
+              <!-- Vista 2: Acordeón con Checklist completo -->
+              <div v-else class="zen-subtasks-accordion-list">
+                <div 
+                  v-for="sub in subtareasActivas" 
+                  :key="sub.idSubtarea" 
+                  class="zen-accordion-item d-flex align-items-center gap-2"
+                  :class="{ 'is-completed': sub.completada, 'is-focus': subtareaEnFoco && subtareaEnFoco.idSubtarea === sub.idSubtarea }"
+                >
+                  <button 
+                    type="button" 
+                    class="zen-subtask-check-btn" 
+                    :class="{ 'is-checked': sub.completada, 'is-loading': loadingToggleSubtarea[sub.idSubtarea] }"
+                    @click.stop="toggleSubtareaZen(sub)"
+                    :title="sub.completada ? 'Marcar como pendiente' : 'Marcar como completada'"
+                  >
+                    <i class="bi" :class="sub.completada ? 'bi-check-circle-fill text-success' : 'bi-circle'"></i>
+                  </button>
+                  <span class="zen-accordion-title flex-grow-1 text-truncate" :title="sub.titulo">
+                    {{ sub.titulo }}
+                  </span>
+                  <span v-if="sub.estimacionEsfuerzo" class="zen-subtask-tomato-pill flex-shrink-0">
+                    🍅 {{ sub.estimacionEsfuerzo }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <!-- Indicador de Ciclos con Emojis de Tomate -->
             <div class="cycles-indicator mt-2">
               <span class="cycles-text">Ciclo {{ currentCycle }} de {{ localSesionActiva.sesionesPrevioDescansoLargo }}</span>
@@ -937,10 +1100,44 @@ watch(cornellTab, async () => {
             <div class="setup-body mt-2">
               <div v-if="!isGuest">
                 <label class="zen-label">Tarea a realizar (Opcional)</label>
-                <select v-model="quickStartTaskId" class="form-select-zen mb-3">
+                <select v-model="quickStartTaskId" class="form-select-zen" :class="{ 'mb-2': tareaSeleccionadaPreview && subtareasPreview.length > 0, 'mb-3': !(tareaSeleccionadaPreview && subtareasPreview.length > 0) }">
                   <option value="">Sin tarea específica</option>
-                  <option v-for="t in tareas" :key="t.idTarea" :value="t.idTarea">{{ t.tituloTarea }}</option>
+                  <option v-for="t in tareasLocales" :key="t.idTarea" :value="t.idTarea">{{ t.tituloTarea }}</option>
                 </select>
+
+                <!-- Vista previa compacta de subtareas en Setup -->
+                <div v-if="tareaSeleccionadaPreview && subtareasPreview.length > 0" class="zen-subtasks-setup-preview mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span class="preview-title">
+                      <i class="bi bi-list-check me-1"></i> Subtareas asociadas
+                    </span>
+                    <span class="preview-badge-pomodoro">
+                      🍅 {{ pomodorosPendientesPreview }} pomodoro{{ pomodorosPendientesPreview === 1 ? '' : 's' }}
+                    </span>
+                  </div>
+                  <div class="preview-stats mb-2">
+                    {{ subtareasPreview.length - subtareasPendientesPreview.length }} de {{ subtareasPreview.length }} completadas ({{ Math.round(((subtareasPreview.length - subtareasPendientesPreview.length) / subtareasPreview.length) * 100) }}%)
+                  </div>
+                  <div class="preview-subtasks-list">
+                    <div 
+                      v-for="sub in subtareasPreview.slice(0, 3)" 
+                      :key="sub.idSubtarea" 
+                      class="preview-subtask-item d-flex align-items-center justify-content-between"
+                      :class="{ 'is-completed': sub.completada }"
+                    >
+                      <div class="d-flex align-items-center text-truncate me-2">
+                        <i class="bi me-1" :class="sub.completada ? 'bi-check-circle-fill text-success' : 'bi-circle opacity-50'"></i>
+                        <span class="preview-subtask-title text-truncate">{{ sub.titulo }}</span>
+                      </div>
+                      <span v-if="sub.estimacionEsfuerzo" class="preview-subtask-tomato flex-shrink-0">
+                        🍅 {{ sub.estimacionEsfuerzo }}
+                      </span>
+                    </div>
+                    <div v-if="subtareasPreview.length > 3" class="preview-more-subtasks mt-1 text-center">
+                      +{{ subtareasPreview.length - 3 }} subtarea{{ subtareasPreview.length - 3 === 1 ? '' : 's' }} más
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <button @click="iniciarInicioRapido" class="btn-zen-primary w-100 mb-3">Inicio Rápido (25 min)</button>
@@ -979,7 +1176,12 @@ watch(cornellTab, async () => {
 
         <!-- Minimized View -->
         <div v-show="isMinimized" class="timer-minimized-view" @click="toggleMinimize($event)">
-          <span v-if="localSesionActiva" class="mini-time">{{ displayTime }}</span>
+          <span v-if="localSesionActiva" class="mini-time d-flex align-items-center gap-1">
+            <span>{{ displayTime }}</span>
+            <span v-if="tareaActiva && subtareasActivas.length > 0" class="mini-subtask-indicator" :title="`${subtareasCompletadasCount}/${subtareasActivas.length} subtareas completadas`">
+              • {{ subtareasCompletadasCount }}/{{ subtareasActivas.length }}
+            </span>
+          </span>
           <span v-else class="mini-icon">Setup</span>
         </div>
       </div>
@@ -1595,7 +1797,25 @@ watch(cornellTab, async () => {
             <i class="bi bi-check-circle-fill text-success"></i>
           </div>
           <h3 class="zen-modal-title">¿Completaste la tarea?</h3>
-          <p class="zen-modal-text">¿Lograste terminar la tarea: <strong>"{{ localSesionActiva?.tituloTarea }}"</strong>?</p>
+          <p class="zen-modal-text mb-2">¿Lograste terminar la tarea: <strong>"{{ localSesionActiva?.tituloTarea }}"</strong>?</p>
+
+          <!-- Resumen de progreso de subtareas en fin de sesión -->
+          <div v-if="tareaActiva && subtareasActivas.length > 0" class="zen-modal-subtasks-summary mb-3 p-2 rounded">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="zen-modal-subtasks-label">Progreso de subtareas</span>
+              <span class="zen-modal-subtasks-count">{{ subtareasCompletadasCount }} de {{ subtareasActivas.length }} ({{ porcentajeSubtareasActivas }}%)</span>
+            </div>
+            <div class="zen-subtasks-progressbar-track mb-2">
+              <div class="zen-subtasks-progressbar-fill" :style="{ width: `${porcentajeSubtareasActivas}%` }"></div>
+            </div>
+            <div v-if="porcentajeSubtareasActivas === 100" class="zen-modal-subtasks-status text-success d-flex align-items-center gap-1 justify-content-center">
+              <i class="bi bi-check-circle-fill"></i> ¡Todas las subtareas fueron completadas!
+            </div>
+            <div v-else class="zen-modal-subtasks-status text-muted d-flex align-items-center gap-1 justify-content-center">
+              <i class="bi bi-info-circle"></i> Aún quedan {{ subtareasActivas.length - subtareasCompletadasCount }} subtarea(s) pendiente(s).
+            </div>
+          </div>
+
           <div class="zen-modal-actions">
             <button class="zen-btn-secondary" @click="handleTaskCompletionPrompt(false)">No, sigue pendiente</button>
             <button class="zen-btn-primary" @click="handleTaskCompletionPrompt(true)">Sí, completada</button>
@@ -2878,6 +3098,317 @@ watch(cornellTab, async () => {
 }
 .pomodoro-zen-container.dark-mode .btn-cancel-session:hover {
   background: rgba(255, 181, 181, 0.1);
+}
+
+/* --- SUBTAREAS EN ESPACIO ZEN (RF-M16 - OPCIÓN A) --- */
+
+/* Setup: Preview de subtareas */
+.zen-subtasks-setup-preview {
+  background: rgba(123, 65, 63, 0.06);
+  border: 1px solid rgba(123, 65, 63, 0.18);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.82rem;
+}
+.preview-title {
+  font-weight: 600;
+  color: #4d2323;
+  font-size: 0.8rem;
+}
+.preview-badge-pomodoro {
+  background: rgba(244, 190, 149, 0.35);
+  color: #4d2323;
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(123, 65, 63, 0.15);
+}
+.preview-stats {
+  color: #7b413f;
+  font-size: 0.75rem;
+}
+.preview-subtask-item {
+  padding: 3px 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.78rem;
+  color: #3b1717;
+}
+.preview-subtask-item.is-completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.preview-subtask-tomato {
+  font-size: 0.72rem;
+  color: #7b413f;
+  font-weight: 600;
+}
+.preview-more-subtasks {
+  font-size: 0.72rem;
+  color: #7b413f;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Timer Widget: Widget de Subtareas */
+.zen-subtasks-widget {
+  width: 100%;
+  max-width: 320px;
+  text-align: left;
+}
+.zen-subtasks-header {
+  font-size: 0.78rem;
+}
+.zen-subtasks-counter {
+  color: #6b4c3f;
+  font-weight: 600;
+}
+.zen-subtasks-toggle-btn {
+  background: rgba(123, 65, 63, 0.08);
+  color: #7b413f;
+  border: none;
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+.zen-subtasks-toggle-btn:hover {
+  background: rgba(123, 65, 63, 0.16);
+  color: #4d2323;
+}
+
+/* Barra de progreso */
+.zen-subtasks-progressbar-track {
+  height: 5px;
+  width: 100%;
+  background: rgba(123, 65, 63, 0.12);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.zen-subtasks-progressbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7b413f, #4d2323);
+  border-radius: 10px;
+  transition: width 0.35s ease;
+}
+
+/* Paso en Foco (Card principal) */
+.zen-focus-step-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(123, 65, 63, 0.2);
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.zen-focus-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #7b413f;
+  display: block;
+  line-height: 1.1;
+}
+.zen-focus-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #3b1717;
+  line-height: 1.3;
+}
+.zen-subtask-check-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 1rem;
+  line-height: 1;
+  color: #7b413f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+.zen-subtask-check-btn:hover {
+  transform: scale(1.15);
+  color: #28a745;
+}
+.zen-subtask-check-btn.is-checked {
+  color: #28a745 !important;
+}
+.zen-subtask-tomato-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: rgba(244, 190, 149, 0.35);
+  color: #4d2323;
+  border: 1px solid rgba(123, 65, 63, 0.15);
+  display: inline-flex;
+  align-items: center;
+}
+.zen-focus-all-done {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #28a745;
+}
+
+/* Acordeón: Lista completa */
+.zen-subtasks-accordion-list {
+  max-height: 125px;
+  overflow-y: auto;
+  padding-right: 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zen-subtasks-accordion-list::-webkit-scrollbar {
+  width: 4px;
+}
+.zen-subtasks-accordion-list::-webkit-scrollbar-thumb {
+  background: rgba(123, 65, 63, 0.25);
+  border-radius: 4px;
+}
+.zen-accordion-item {
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #3b1717;
+  transition: all 0.15s ease;
+}
+.zen-accordion-item.is-focus {
+  border-color: rgba(123, 65, 63, 0.4);
+  background: rgba(244, 190, 149, 0.22);
+  font-weight: 600;
+}
+.zen-accordion-item.is-completed {
+  opacity: 0.6;
+}
+.zen-accordion-item.is-completed .zen-accordion-title {
+  text-decoration: line-through;
+  color: #6c757d;
+}
+
+/* Minimized indicator */
+.mini-subtask-indicator {
+  font-size: 0.72rem;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+/* Modal feedback */
+.zen-modal-subtasks-summary {
+  background: rgba(123, 65, 63, 0.06);
+  border: 1px solid rgba(123, 65, 63, 0.15);
+  text-align: left;
+}
+.zen-modal-subtasks-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #4d2323;
+}
+.zen-modal-subtasks-count {
+  font-size: 0.75rem;
+  color: #7b413f;
+}
+.zen-modal-subtasks-status {
+  font-size: 0.75rem;
+}
+
+/* Modo oscuro para subtareas */
+.pomodoro-zen-container.dark-mode .zen-subtasks-setup-preview {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+.pomodoro-zen-container.dark-mode .preview-title {
+  color: #fcd5b8;
+}
+.pomodoro-zen-container.dark-mode .preview-badge-pomodoro {
+  background: rgba(244, 190, 149, 0.2);
+  color: #fcd5b8;
+  border-color: rgba(244, 190, 149, 0.3);
+}
+.pomodoro-zen-container.dark-mode .preview-stats {
+  color: #f4be95;
+}
+.pomodoro-zen-container.dark-mode .preview-subtask-item {
+  border-top-color: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+.pomodoro-zen-container.dark-mode .preview-subtask-tomato,
+.pomodoro-zen-container.dark-mode .preview-more-subtasks {
+  color: #fcd5b8;
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-counter {
+  color: #fcd5b8;
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4be95;
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-progressbar-track {
+  background: rgba(255, 255, 255, 0.15);
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-progressbar-fill {
+  background: linear-gradient(90deg, #f4be95, #fcd5b8);
+}
+.pomodoro-zen-container.dark-mode .zen-focus-step-card {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.pomodoro-zen-container.dark-mode .zen-focus-label {
+  color: #f4be95;
+}
+.pomodoro-zen-container.dark-mode .zen-focus-title {
+  color: #ffffff;
+}
+.pomodoro-zen-container.dark-mode .zen-subtask-check-btn {
+  color: #f4be95;
+}
+.pomodoro-zen-container.dark-mode .zen-subtask-tomato-pill {
+  background: rgba(244, 190, 149, 0.18);
+  color: #fcd5b8;
+  border-color: rgba(244, 190, 149, 0.3);
+}
+.pomodoro-zen-container.dark-mode .zen-subtasks-accordion-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+.pomodoro-zen-container.dark-mode .zen-accordion-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.pomodoro-zen-container.dark-mode .zen-accordion-item.is-focus {
+  border-color: rgba(244, 190, 149, 0.45);
+  background: rgba(244, 190, 149, 0.14);
+}
+.pomodoro-zen-container.dark-mode .zen-accordion-item.is-completed .zen-accordion-title {
+  color: #adb5bd;
+}
+.pomodoro-zen-container.dark-mode .zen-modal-subtasks-summary {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+.pomodoro-zen-container.dark-mode .zen-modal-subtasks-label {
+  color: #fcd5b8;
+}
+.pomodoro-zen-container.dark-mode .zen-modal-subtasks-count {
+  color: #f4be95;
+}
+
+body.distraction-free-mode .zen-subtasks-widget {
+  max-width: 360px;
 }
 </style>
 

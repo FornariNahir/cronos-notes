@@ -24,12 +24,20 @@ class PomodoroController extends Controller
         $estadisticaService->verificarRachaPerdida(Auth::user()->idUsuario);
 
         $configs = ConfiguracionPomodoro::where('idUsuario', Auth::user()->idUsuario)->get();
-        $tareas = Tarea::where('idPerfil', $perfilActivoId)
-            ->where('estadoTarea', '!=', 'Completado')
-            ->withSum('sesionesPomodoro as sesiones_pomodoro_sum_ciclos_completados', 'ciclosCompletados')
-            ->get();
-
         $sesionActiva = session('sesionPomodoroActiva');
+
+        $tareas = Tarea::where('idPerfil', $perfilActivoId)
+            ->where(function ($query) use ($sesionActiva) {
+                $query->where('estadoTarea', '!=', 'Completado');
+                if (!empty($sesionActiva['idTarea'])) {
+                    $query->orWhere('idTarea', $sesionActiva['idTarea']);
+                }
+            })
+            ->withSum('sesionesPomodoro as sesiones_pomodoro_sum_ciclos_completados', 'ciclosCompletados')
+            ->with(['subtareas' => function ($q) {
+                $q->orderBy('orden', 'asc');
+            }])
+            ->get();
 
         $apuntes = \App\Models\Apunte::where('idPerfil', $perfilActivoId)
             ->orderBy('fechaCreacion', 'desc')

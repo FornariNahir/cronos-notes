@@ -37,8 +37,9 @@ class TareaController extends Controller
         // Verificar que el usuario tenga acceso al perfil activo
         $this->verificarAccesoPerfil($perfilActivoId, 'ver');
 
-        // Retornamos todas las tareas del perfil para que la vista las filtre dinámicamente
+        // Retornamos todas las tareas del perfil con sus subtareas para que la vista las filtre dinámicamente
         $tareas = Tarea::where('idPerfil', $perfilActivoId)
+            ->with('subtareas')
             ->orderBy('fechaLimite', 'asc')
             ->get();
 

@@ -288,6 +288,54 @@ const toggleSubtarea = async (subtarea) => {
     }
 };
 
+const acordeonAbierto = ref({});
+const toggleAcordeon = (idTarea) => {
+    acordeonAbierto.value[idTarea] = !acordeonAbierto.value[idTarea];
+};
+
+const completadasSubtareas = (tarea) => {
+    if (!tarea.subtareas) return 0;
+    return tarea.subtareas.filter(s => s.completada).length;
+};
+
+const porcentajeSubtareas = (tarea) => {
+    if (!tarea.subtareas || tarea.subtareas.length === 0) return 0;
+    const completadas = completadasSubtareas(tarea);
+    return Math.round((completadas / tarea.subtareas.length) * 100);
+};
+
+const toggleSubtareaDesdeTarjeta = async (tarea, subtarea) => {
+    if (props.perfilActivo?.permisoCompartido === 'Lector') return;
+    loadingToggleSubtarea.value[subtarea.idSubtarea] = true;
+    try {
+        const res = await fetch(route('subtareas.toggle', subtarea.idSubtarea), {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            subtarea.completada = data.subtarea.completada;
+            if (data.tarea) {
+                tarea.estadoTarea = data.tarea.estadoTarea;
+                tarea.estimacionEsfuerzo = data.tarea.estimacionEsfuerzo;
+                tarea.subtareas = data.tarea.subtareas;
+                sincronizarTareaEnLista(data.tarea);
+                if (tareaDetalle.value.idTarea === data.tarea.idTarea) {
+                    tareaDetalle.value = { ...tareaDetalle.value, ...data.tarea };
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error al alternar subtarea desde tarjeta:', e);
+    } finally {
+        loadingToggleSubtarea.value[subtarea.idSubtarea] = false;
+    }
+};
+
 const agregarSubtarea = async () => {
     if (!nuevaSubtareaTitulo.value.trim()) return;
     agregandoSubtarea.value = true;
@@ -485,11 +533,78 @@ const textoEstado = (estado) => {
                         <div v-if="tarea.sugerenciaIA" class="mt-2 mb-1 p-2 bg-light rounded text-dark small border-start border-3 border-info sugerencia-ia-box">
                             <i class="bi bi-robot text-info me-1"></i> <strong>IA:</strong> {{ tarea.sugerenciaIA }}
                         </div>
+
+                        <!-- Progreso y Acordeón de Subtareas en Tarjeta -->
+                        <div v-if="tarea.subtareas && tarea.subtareas.length > 0" class="mt-2 mb-1 p-2 rounded bg-light border-0">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small text-muted fw-semibold" style="font-size: 11px;">
+                                    <i class="bi bi-check2-square text-success me-1"></i>
+                                    {{ completadasSubtareas(tarea) }}/{{ tarea.subtareas.length }} subtareas ({{ porcentajeSubtareas(tarea) }}%)
+                                </span>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-sm btn-link p-0 text-decoration-none text-muted"
+                                    style="font-size: 11px;"
+                                    @click.stop="toggleAcordeon(tarea.idTarea)"
+                                    :title="acordeonAbierto[tarea.idTarea] ? 'Ocultar checklist' : 'Ver checklist'"
+                                >
+                                    <span>{{ acordeonAbierto[tarea.idTarea] ? 'Ocultar' : 'Ver checklist' }}</span>
+                                    <i class="bi ms-1" :class="acordeonAbierto[tarea.idTarea] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                                </button>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div 
+                                    class="progress-bar" 
+                                    role="progressbar" 
+                                    :style="{ width: porcentajeSubtareas(tarea) + '%' }" 
+                                    :class="porcentajeSubtareas(tarea) === 100 ? 'bg-success' : 'bg-primary'"
+                                    :aria-valuenow="porcentajeSubtareas(tarea)" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100"
+                                ></div>
+                            </div>
+
+                            <!-- Lista desplegable de subtareas dentro de la tarjeta -->
+                            <div v-if="acordeonAbierto[tarea.idTarea]" class="mt-2 pt-2 border-top">
+                                <div class="d-flex flex-column gap-1" style="max-height: 180px; overflow-y: auto;">
+                                    <div 
+                                        v-for="sub in tarea.subtareas" 
+                                        :key="sub.idSubtarea" 
+                                        class="d-flex align-items-center gap-2 py-1 px-1 rounded hover-bg-subtarea"
+                                    >
+                                        <input 
+                                            type="checkbox" 
+                                            class="form-check-input mt-0 cursor-pointer"
+                                            :checked="sub.completada"
+                                            :disabled="perfilActivo?.permisoCompartido === 'Lector' || loadingToggleSubtarea[sub.idSubtarea]"
+                                            @click.stop
+                                            @change="toggleSubtareaDesdeTarjeta(tarea, sub)"
+                                            title="Marcar como completada"
+                                        >
+                                        <span 
+                                            class="small text-truncate cursor-pointer flex-grow-1"
+                                            :class="sub.completada ? 'text-decoration-line-through text-muted' : 'text-dark'"
+                                            style="font-size: 12px;"
+                                            @click.stop="perfilActivo?.permisoCompartido !== 'Lector' && toggleSubtareaDesdeTarjeta(tarea, sub)"
+                                        >
+                                            {{ sub.titulo }}
+                                        </span>
+                                        <span class="badge bg-warning-subtle text-dark border-0 p-1" style="font-size: 10px;">
+                                            🍅 {{ sub.estimacionEsfuerzo }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                             <span class="badge badge-estado" :class="claseEstado(tarea.estadoTarea)">
                                 <i class="bi me-1" :class="iconoEstado(tarea.estadoTarea)"></i> {{ textoEstado(tarea.estadoTarea) }}
                             </span>
                             <div class="d-flex gap-3">
+                                <div v-if="tarea.estimacionEsfuerzo" class="small text-muted metadata-pomodoro" title="Estimación total de Pomodoros">
+                                    🍅 {{ tarea.estimacionEsfuerzo }} Pomodoros
+                                </div>
                                 <div class="small text-muted metadata-fecha">
                                     <i class="bi bi-calendar-event me-1"></i> {{ formatDateView(tarea.fechaLimite) }}
                                 </div>
@@ -849,6 +964,13 @@ const textoEstado = (estado) => {
 }
 .card-tarea:hover {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.hover-bg-subtarea {
+    transition: background-color 0.15s ease-in-out;
+}
+.hover-bg-subtarea:hover {
+    background-color: #f1f3f5;
 }
 
 .heading-titulo {

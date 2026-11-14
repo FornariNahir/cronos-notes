@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import axios from 'axios';
 
 const props = defineProps({
   show: {
@@ -55,24 +56,13 @@ const solicitarDesglose = async () => {
   modoGuardado.value = tieneSubtareasPrevias.value ? 'reemplazar' : 'reemplazar';
 
   try {
-    const response = await fetch(route('tareas.desglosar-ia', props.tarea.idTarea), {
-      method: 'POST',
+    const response = await axios.post(route('tareas.desglosar-ia', props.tarea.idTarea), {}, {
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
       }
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 422) {
-        estado.value = 'sin_descripcion';
-        return;
-      }
-      throw new Error(data.error || 'No pudimos desglosar la tarea con Inteligencia Artificial.');
-    }
+    const data = response.data;
 
     if (data.subtareas && Array.isArray(data.subtareas)) {
       subtareasPropuestas.value = data.subtareas.map(s => ({
@@ -85,7 +75,11 @@ const solicitarDesglose = async () => {
       throw new Error('La respuesta de la IA no contiene una lista de subtareas válida.');
     }
   } catch (err) {
-    mensajeError.value = err.message || 'Ocurrió un error al comunicarse con el servicio de IA.';
+    if (err.response && err.response.status === 422) {
+      estado.value = 'sin_descripcion';
+      return;
+    }
+    mensajeError.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Ocurrió un error al comunicarse con el servicio de IA.';
     estado.value = 'error';
   }
 };
@@ -136,26 +130,22 @@ const guardar = async () => {
       modo: tieneSubtareasPrevias.value ? modoGuardado.value : 'reemplazar',
     };
 
-    const response = await fetch(route('subtareas.guardar-lote', props.tarea.idTarea), {
-      method: 'POST',
+    const response = await axios.post(route('subtareas.guardar-lote', props.tarea.idTarea), payload, {
       headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
         'Accept': 'application/json',
       },
-      body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = response.data;
 
-    if (!response.ok || !data.success) {
+    if (!data.success) {
       throw new Error(data.error || data.message || 'Error al persistir las subtareas.');
     }
 
     emit('guardado', data.tarea);
     emit('close');
   } catch (err) {
-    errorGuardado.value = err.message || 'Ocurrió un error al guardar el desglose.';
+    errorGuardado.value = err.response?.data?.error || err.response?.data?.message || err.message || 'Ocurrió un error al guardar el desglose.';
   } finally {
     guardando.value = false;
   }
@@ -316,7 +306,7 @@ const guardar = async () => {
                     <i class="bi bi-check2-circle text-success me-1"></i>
                     {{ subtareasSeleccionadas.length }} de {{ subtareasPropuestas.length }} subtareas seleccionadas
                   </span>
-                  <span class="badge bg-white text-dark border fw-bold px-2.5 py-1.5" style="font-size: 12px;">
+                  <span class="badge badge-pomodoro-total fw-bold px-2.5 py-1.5" style="font-size: 12px;">
                     🍅 Total: {{ totalPomodorosEstimados }} Pomodoros
                   </span>
                 </div>
@@ -426,6 +416,12 @@ const guardar = async () => {
   width: 70px;
   height: 70px;
   background-color: #fff3cd;
+}
+
+.badge-pomodoro-total {
+  background-color: rgba(105, 52, 46, 0.08);
+  color: #69342e;
+  border: 1px solid rgba(105, 52, 46, 0.2);
 }
 
 .btn-marron {

@@ -609,7 +609,7 @@ const textoEstado = (estado) => {
                                         >
                                             {{ sub.titulo }}
                                         </span>
-                                        <span class="badge bg-warning-subtle text-dark border-0 p-1" style="font-size: 10px;">
+                                        <span class="badge-pomodoro-pill" style="font-size: 10px; padding: 1px 6px;">
                                             🍅 {{ sub.estimacionEsfuerzo }}
                                         </span>
                                     </div>
@@ -821,7 +821,7 @@ const textoEstado = (estado) => {
                                     >
                                         {{ sub.titulo }}
                                     </span>
-                                    <span class="badge bg-warning-subtle text-dark border ms-auto" style="font-size: 11px;">
+                                    <span class="badge-pomodoro-pill ms-auto" style="font-size: 11px;">
                                         🍅 {{ sub.estimacionEsfuerzo }}
                                     </span>
                                 </div>
@@ -896,13 +896,13 @@ const textoEstado = (estado) => {
                                     :disabled="agregandoSubtarea"
                                     @keyup.enter="agregarSubtarea"
                                 >
-                                <span class="input-group-text bg-white" title="Pomodoros estimados (1-4)">
+                                <span class="input-group-text bg-light text-muted border-end-0" title="Pomodoros estimados (1-4)">
                                     🍅
                                 </span>
                                 <input 
                                     type="number" 
                                     v-model.number="nuevaSubtareaPomodoros" 
-                                    class="form-control" 
+                                    class="form-control border-start-0" 
                                     style="max-width: 65px;"
                                     min="1" 
                                     max="4"
@@ -1051,6 +1051,19 @@ const textoEstado = (estado) => {
     color: #4b5563;
 }
 
+
+.badge-pomodoro-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #69342e;
+    background-color: rgba(105, 52, 46, 0.08);
+    border: 1px solid rgba(105, 52, 46, 0.18);
+    border-radius: 9999px;
+    padding: 2px 7px;
+}
 
 /* Control de vistas */
 .vista-grid .text-desc {

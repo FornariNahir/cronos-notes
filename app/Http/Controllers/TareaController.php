@@ -10,6 +10,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use App\Services\EstadisticaService;
+use App\Services\TaskBreakdownService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class TareaController extends Controller
@@ -317,6 +318,36 @@ class TareaController extends Controller
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Excepción durante el procesamiento de la respuesta de la IA: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function desglosarConIA(Request $request, $id, TaskBreakdownService $service)
+    {
+        $tarea = Tarea::findOrFail($id);
+
+        // Verificar acceso de modificación en el perfil (Editor o Administrador)
+        $this->verificarAccesoPerfil($tarea->idPerfil, 'modificar');
+
+        // Validar precondición de contexto
+        if (empty(trim($tarea->descripcionTarea ?? ''))) {
+            return response()->json([
+                'error' => 'Para desglosar con IA, la tarea debe tener una descripción detallada que proporcione contexto.'
+            ], 422);
+        }
+
+        try {
+            $subtareas = $service->desglosar($tarea);
+
+            return response()->json([
+                'success' => true,
+                'subtareas' => $subtareas,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 502);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error inesperado al procesar el desglose: ' . $e->getMessage()], 500);
         }
     }
 }

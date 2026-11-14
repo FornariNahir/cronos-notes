@@ -67,6 +67,8 @@ Route::middleware('auth.custom')->group(function () {
     Route::get('/tareas/priorizar-ia', [TareaController::class, 'priorizarConIA'])
         ->name('tareas.priorizar-ia')
         ->middleware('throttle:3,1440'); // Límite: 3 peticiones cada 1440 minutos (24hs)
+    Route::post('/tareas/{id}/desglosar-ia', [TareaController::class, 'desglosarConIA'])
+        ->name('tareas.desglosar-ia');
     Route::get('/tareas/{id}', [TareaController::class, 'show'])->name('tareas.show');
     Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');

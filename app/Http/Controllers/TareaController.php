@@ -157,6 +157,9 @@ class TareaController extends Controller
             'fechaFinTarea' => now()->format('Y-m-d')
         ]);
 
+        // Sincronizar subtareas asociadas al completar la tarea directamente
+        $tarea->subtareas()->update(['completada' => true]);
+
         $estadisticaService = new EstadisticaService();
         $estadisticaService->sumarTareaCompletada(Auth::user()->idUsuario);
 

@@ -195,8 +195,176 @@ const eliminarTarea = (tarea) => {
     });
 };
 
+const sincronizarTareaEnLista = (tareaActualizada) => {
+    const idx = tareasList.value.findIndex(t => t.idTarea === tareaActualizada.idTarea);
+    if (idx !== -1) {
+        tareasList.value[idx] = { ...tareasList.value[idx], ...tareaActualizada };
+    }
+};
+
+const nuevaSubtareaTitulo = ref('');
+const nuevaSubtareaPomodoros = ref(1);
+const agregandoSubtarea = ref(false);
+const errorSubtarea = ref('');
+const loadingToggleSubtarea = ref({});
+const eliminandoSubtarea = ref({});
+
+const subtareaEditandoId = ref(null);
+const tituloEditando = ref('');
+const pomodorosEditando = ref(1);
+const guardandoEdicion = ref(false);
+
+const iniciarEdicionSubtarea = (subtarea) => {
+    subtareaEditandoId.value = subtarea.idSubtarea;
+    tituloEditando.value = subtarea.titulo;
+    pomodorosEditando.value = subtarea.estimacionEsfuerzo || 1;
+};
+
+const cancelarEdicionSubtarea = () => {
+    subtareaEditandoId.value = null;
+    tituloEditando.value = '';
+    pomodorosEditando.value = 1;
+};
+
+const guardarEdicionSubtarea = async (subtarea) => {
+    if (!tituloEditando.value.trim()) return;
+    guardandoEdicion.value = true;
+    try {
+        const res = await fetch(route('subtareas.update', subtarea.idSubtarea), {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                titulo: tituloEditando.value.trim(),
+                estimacionEsfuerzo: pomodorosEditando.value
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            subtarea.titulo = data.subtarea.titulo;
+            subtarea.estimacionEsfuerzo = data.subtarea.estimacionEsfuerzo;
+            if (data.tarea) {
+                tareaDetalle.value.estimacionEsfuerzo = data.tarea.estimacionEsfuerzo;
+                sincronizarTareaEnLista(data.tarea);
+            }
+            cancelarEdicionSubtarea();
+        }
+    } catch (e) {
+        console.error('Error al editar subtarea:', e);
+    } finally {
+        guardandoEdicion.value = false;
+    }
+};
+
+const toggleSubtarea = async (subtarea) => {
+    if (props.perfilActivo?.permisoCompartido === 'Lector') return;
+    loadingToggleSubtarea.value[subtarea.idSubtarea] = true;
+    try {
+        const res = await fetch(route('subtareas.toggle', subtarea.idSubtarea), {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            subtarea.completada = data.subtarea.completada;
+            if (data.tarea) {
+                tareaDetalle.value.estadoTarea = data.tarea.estadoTarea;
+                tareaDetalle.value.estimacionEsfuerzo = data.tarea.estimacionEsfuerzo;
+                tareaDetalle.value.subtareas = data.tarea.subtareas;
+                sincronizarTareaEnLista(data.tarea);
+            }
+        }
+    } catch (e) {
+        console.error('Error al alternar subtarea:', e);
+    } finally {
+        loadingToggleSubtarea.value[subtarea.idSubtarea] = false;
+    }
+};
+
+const agregarSubtarea = async () => {
+    if (!nuevaSubtareaTitulo.value.trim()) return;
+    agregandoSubtarea.value = true;
+    errorSubtarea.value = '';
+    try {
+        const res = await fetch(route('subtareas.store', tareaDetalle.value.idTarea), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                titulo: nuevaSubtareaTitulo.value.trim(),
+                estimacionEsfuerzo: nuevaSubtareaPomodoros.value
+            })
+        });
+        const data = await res.json();
+        if (data.success) {
+            if (!tareaDetalle.value.subtareas) {
+                tareaDetalle.value.subtareas = [];
+            }
+            tareaDetalle.value.subtareas.push(data.subtarea);
+            if (data.tarea) {
+                tareaDetalle.value.estadoTarea = data.tarea.estadoTarea;
+                tareaDetalle.value.estimacionEsfuerzo = data.tarea.estimacionEsfuerzo;
+                sincronizarTareaEnLista(data.tarea);
+            }
+            nuevaSubtareaTitulo.value = '';
+            nuevaSubtareaPomodoros.value = 1;
+        } else {
+            errorSubtarea.value = data.error || 'No se pudo agregar la subtarea.';
+        }
+    } catch (e) {
+        errorSubtarea.value = 'Error al comunicarse con el servidor.';
+    } finally {
+        agregandoSubtarea.value = false;
+    }
+};
+
+const eliminarSubtarea = async (subtarea) => {
+    if (props.perfilActivo?.permisoCompartido === 'Lector') return;
+    eliminandoSubtarea.value[subtarea.idSubtarea] = true;
+    try {
+        const res = await fetch(route('subtareas.destroy', subtarea.idSubtarea), {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                'Accept': 'application/json'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            tareaDetalle.value.subtareas = tareaDetalle.value.subtareas.filter(s => s.idSubtarea !== subtarea.idSubtarea);
+            if (data.tarea) {
+                tareaDetalle.value.estadoTarea = data.tarea.estadoTarea;
+                tareaDetalle.value.estimacionEsfuerzo = data.tarea.estimacionEsfuerzo;
+                sincronizarTareaEnLista(data.tarea);
+            }
+        }
+    } catch (e) {
+        console.error('Error al eliminar subtarea:', e);
+    } finally {
+        eliminandoSubtarea.value[subtarea.idSubtarea] = false;
+    }
+};
+
 const abrirDetalle = (tarea) => {
-    tareaDetalle.value = tarea;
+    if (!tarea.subtareas) {
+        tarea.subtareas = [];
+    }
+    tareaDetalle.value = { ...tarea };
+    subtareaEditandoId.value = null;
+    errorSubtarea.value = '';
+    nuevaSubtareaTitulo.value = '';
+    nuevaSubtareaPomodoros.value = 1;
     if (modalDetalleInstance) modalDetalleInstance.show();
 };
 
@@ -455,6 +623,146 @@ const textoEstado = (estado) => {
                             <div class="small text-uppercase text-secondary fw-bold text-lbl">Estado Actual</div>
                             <div class="d-flex align-items-center gap-2 fw-semibold text-dark small mt-1">
                                 <i class="bi bi-info-circle text-marron-institucional"></i> <span>{{ textoEstado(tareaDetalle.estadoTarea) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Subtareas -->
+                    <div class="mb-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="text-uppercase text-secondary small fw-bold tracking-wider m-0">
+                                <i class="bi bi-list-check me-1"></i> Subtareas
+                            </h6>
+                            <span v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="badge bg-light text-dark border">
+                                {{ tareaDetalle.subtareas.filter(s => s.completada).length }}/{{ tareaDetalle.subtareas.length }} completadas
+                            </span>
+                        </div>
+
+                        <!-- Lista de Subtareas -->
+                        <div v-if="tareaDetalle.subtareas && tareaDetalle.subtareas.length > 0" class="list-group list-group-flush mb-3 rounded border">
+                            <div 
+                                v-for="sub in tareaDetalle.subtareas" 
+                                :key="sub.idSubtarea"
+                                class="list-group-item d-flex align-items-center justify-content-between py-2 px-3 gap-2"
+                                :class="{'bg-light': sub.completada}"
+                            >
+                                <!-- Modo visualización / toggle -->
+                                <div v-if="subtareaEditandoId !== sub.idSubtarea" class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                                    <input 
+                                        type="checkbox" 
+                                        class="form-check-input mt-0 cursor-pointer"
+                                        :checked="sub.completada"
+                                        :disabled="perfilActivo?.permisoCompartido === 'Lector' || loadingToggleSubtarea[sub.idSubtarea]"
+                                        @change="toggleSubtarea(sub)"
+                                        title="Marcar como completada"
+                                    >
+                                    <span 
+                                        class="small text-truncate cursor-pointer"
+                                        :class="sub.completada ? 'text-decoration-line-through text-muted' : 'text-dark fw-medium'"
+                                        @click="perfilActivo?.permisoCompartido !== 'Lector' && toggleSubtarea(sub)"
+                                    >
+                                        {{ sub.titulo }}
+                                    </span>
+                                    <span class="badge bg-warning-subtle text-dark border ms-auto" style="font-size: 11px;">
+                                        🍅 {{ sub.estimacionEsfuerzo }}
+                                    </span>
+                                </div>
+
+                                <!-- Botones acción en modo visualización -->
+                                <div v-if="subtareaEditandoId !== sub.idSubtarea && perfilActivo?.permisoCompartido !== 'Lector'" class="d-flex gap-1">
+                                    <button 
+                                        class="btn btn-sm btn-link text-secondary p-0 px-1" 
+                                        @click="iniciarEdicionSubtarea(sub)"
+                                        title="Editar subtarea"
+                                    >
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button 
+                                        class="btn btn-sm btn-link text-danger p-0 px-1" 
+                                        :disabled="eliminandoSubtarea[sub.idSubtarea]"
+                                        @click="eliminarSubtarea(sub)"
+                                        title="Eliminar subtarea"
+                                    >
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Modo edición inline -->
+                                <div v-else-if="subtareaEditandoId === sub.idSubtarea" class="d-flex align-items-center gap-2 w-100">
+                                    <input 
+                                        type="text" 
+                                        v-model="tituloEditando" 
+                                        class="form-control form-control-sm"
+                                        maxlength="150"
+                                        @keyup.enter="guardarEdicionSubtarea(sub)"
+                                        @keyup.esc="cancelarEdicionSubtarea"
+                                    >
+                                    <input 
+                                        type="number" 
+                                        v-model.number="pomodorosEditando" 
+                                        class="form-control form-control-sm" 
+                                        style="width: 65px;"
+                                        min="1" 
+                                        max="4"
+                                        title="Pomodoros (1-4)"
+                                    >
+                                    <button 
+                                        class="btn btn-sm btn-success px-2" 
+                                        :disabled="guardandoEdicion || !tituloEditando.trim()"
+                                        @click="guardarEdicionSubtarea(sub)"
+                                    >
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <button 
+                                        class="btn btn-sm btn-light border px-2" 
+                                        @click="cancelarEdicionSubtarea"
+                                    >
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-muted small py-2 px-1 fst-italic">
+                            No hay subtareas definidas para esta tarea.
+                        </div>
+
+                        <!-- Formulario para agregar nueva subtarea -->
+                        <div v-if="perfilActivo?.permisoCompartido !== 'Lector'" class="mt-2">
+                            <div class="input-group input-group-sm">
+                                <input 
+                                    type="text" 
+                                    v-model="nuevaSubtareaTitulo" 
+                                    class="form-control" 
+                                    placeholder="Añadir una subtarea manual..."
+                                    maxlength="150"
+                                    :disabled="agregandoSubtarea"
+                                    @keyup.enter="agregarSubtarea"
+                                >
+                                <span class="input-group-text bg-white" title="Pomodoros estimados (1-4)">
+                                    🍅
+                                </span>
+                                <input 
+                                    type="number" 
+                                    v-model.number="nuevaSubtareaPomodoros" 
+                                    class="form-control" 
+                                    style="max-width: 65px;"
+                                    min="1" 
+                                    max="4"
+                                    title="Pomodoros (1-4)"
+                                    :disabled="agregandoSubtarea"
+                                    @keyup.enter="agregarSubtarea"
+                                >
+                                <button 
+                                    class="btn btn-marron" 
+                                    type="button" 
+                                    :disabled="agregandoSubtarea || !nuevaSubtareaTitulo.trim()"
+                                    @click="agregarSubtarea"
+                                >
+                                    <i class="bi bi-plus-lg me-1"></i> {{ agregandoSubtarea ? '...' : 'Añadir' }}
+                                </button>
+                            </div>
+                            <div v-if="errorSubtarea" class="text-danger small mt-1">
+                                {{ errorSubtarea }}
                             </div>
                         </div>
                     </div>

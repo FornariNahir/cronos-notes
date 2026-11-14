@@ -39,4 +39,39 @@ class Tarea extends Model
     {
         return $this->hasMany(SesionPomodoro::class, 'idTarea', 'idTarea');
     }
+
+    public function subtareas()
+    {
+        return $this->hasMany(Subtarea::class, 'idTarea', 'idTarea')->orderBy('orden', 'asc');
+    }
+
+    /**
+     * Recalcula la estimación de esfuerzo y el estado de la tarea en base a sus subtareas.
+     */
+    public function recalcularProgreso(): void
+    {
+        $subtareas = $this->subtareas()->get();
+        $total = $subtareas->count();
+
+        if ($total > 0) {
+            $this->estimacionEsfuerzo = (int) $subtareas->sum('estimacionEsfuerzo');
+
+            $completadas = $subtareas->where('completada', true)->count();
+
+            if ($completadas === $total) {
+                $this->estadoTarea = 'Completado';
+                $this->fechaFinTarea = now()->toDateString();
+            } elseif ($completadas > 0) {
+                $this->estadoTarea = 'En Progreso';
+                $this->fechaFinTarea = null;
+            } else {
+                if ($this->estadoTarea === 'Completado') {
+                    $this->estadoTarea = 'Pendiente';
+                }
+                $this->fechaFinTarea = null;
+            }
+
+            $this->save();
+        }
+    }
 }

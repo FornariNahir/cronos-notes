@@ -14,6 +14,7 @@ use App\Http\Controllers\ApunteController;
 use App\Http\Controllers\PerfilCompartidoController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\SpotifyController;
+use App\Http\Controllers\SubtareaController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -71,6 +72,12 @@ Route::middleware('auth.custom')->group(function () {
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
     Route::patch('/tareas/{id}/completar', [TareaController::class, 'completar'])->name('tareas.completar');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
+
+    // SUBTAREAS
+    Route::post('/tareas/{idTarea}/subtareas', [SubtareaController::class, 'store'])->name('subtareas.store');
+    Route::put('/subtareas/{idSubtarea}', [SubtareaController::class, 'update'])->name('subtareas.update');
+    Route::patch('/subtareas/{idSubtarea}/toggle', [SubtareaController::class, 'toggle'])->name('subtareas.toggle');
+    Route::delete('/subtareas/{idSubtarea}', [SubtareaController::class, 'destroy'])->name('subtareas.destroy');
 
     // POMODORO (Autenticado)
     Route::get('/pomodoro', [PomodoroController::class, 'index'])->name('pomodoro.index');
